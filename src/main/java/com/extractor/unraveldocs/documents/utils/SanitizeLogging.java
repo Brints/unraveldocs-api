@@ -8,6 +8,9 @@ public class SanitizeLogging {
         if (input == null) {
             return "null";
         }
-        return input.replace('\n', '_').replace('\r', '_');
+
+        return input.replaceAll("[^a-zA-Z0-9_\\-.]", "_")
+                   .replaceAll("_+", "_")
+                   .replaceAll("^_|_$", "");
     }
 }

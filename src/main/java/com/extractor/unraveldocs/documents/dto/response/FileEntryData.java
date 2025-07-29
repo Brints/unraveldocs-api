@@ -9,7 +9,7 @@ import lombok.*;
 public class FileEntryData {
     private String documentId;
     private String originalFileName;
-    private Long fileSize;
+    private long fileSize;
     private String fileUrl;
     private String status;
 }

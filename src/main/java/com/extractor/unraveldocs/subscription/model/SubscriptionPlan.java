@@ -35,6 +35,7 @@ public class SubscriptionPlan {
     @Column(nullable = false, length = 3)
     private SubscriptionCurrency currency;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "billing_interval_unit")
     private BillingIntervalUnit billingIntervalUnit;
 

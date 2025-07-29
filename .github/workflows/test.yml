@@ -15,13 +15,13 @@ jobs:
       SPRING_JPA_HIBERNATE_DDL-AUTO: validate
       SPRING_JPA_SHOW_SQL: true
       SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
-      CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
-      CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
-      CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
-      CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
       APP_JWT_SECRET: test-secret-1234567890-1234567890-1234567890
       APP_JWT_EXPIRATION_MILLISECONDS: 86400000
-
+      AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY }}
+      AWS_CLOUDFRONT_URL: ${{ secrets.AWS_CLOUDFRONT_URL }}
+      AWS_S3_REGION: ${{ secrets.AWS_S3_REGION }}
+      AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+      AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
     services:
       postgres:
         image: postgres:latest

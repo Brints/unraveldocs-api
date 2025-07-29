@@ -122,7 +122,8 @@ public class DocumentUploadImpl implements DocumentUploadService {
                     savedCollection.getCollectionStatus());
         } else {
             if (totalFiles > 0) {
-                log.info("No document collection created as all {} files failed validation for user {}", totalFiles,
+                log.info("No document collection created as all {} files failed validation for user {}",
+                        totalFiles,
                         s.sanitizeLogging(user.getId()));
             }
         }
