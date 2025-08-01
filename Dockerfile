@@ -23,5 +23,8 @@ RUN ./mvnw package -DskipTests
 # Expose the port your application runs on
 EXPOSE 8080
 
+# Copy the generated JAR file to the container
+COPY target/UnravelDocs.jar UnravelDocs.jar
+
 # Command to run the application
-ENTRYPOINT ["java", "-jar", "target/UnravelDocs.jar"]
+ENTRYPOINT ["java", "-jar", "UnravelDocs.jar"]
