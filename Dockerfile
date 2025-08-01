@@ -8,6 +8,9 @@ WORKDIR /app
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
 
+# Make the Maven wrapper executable
+RUN chmod +x mvnw
+
 # Download dependencies. This layer is cached if pom.xml doesn't change.
 RUN ./mvnw dependency:go-offline
 
