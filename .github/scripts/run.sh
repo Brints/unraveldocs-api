@@ -3,29 +3,29 @@
 set -e
 
 # Fetch secrets from AWS SSM Parameter Store
-APP_BASE_URL=$(aws ssm get-parameter --name /unraveldocs/APP_BASE_URL --with-decryption --query 'Parameter.Value' --output text)
-RDS_ENDPOINT=$(aws ssm get-parameter --name /unraveldocs/RDS_ENDPOINT --with-decryption --query 'Parameter.Value' --output text)
-RDS_USERNAME=$(aws ssm get-parameter --name /unraveldocs/RDS_USERNAME --with-decryption --query 'Parameter.Value' --output text)
-RDS_PASSWORD=$(aws ssm get-parameter --name /unraveldocs/RDS_PASSWORD --with-decryption --query 'Parameter.Value' --output text)
-JWT_SECRET=$(aws ssm get-parameter --name /unraveldocs/JWT_SECRET --with-decryption --query 'Parameter.Value' --output text)
-AWS_ACCESS_KEY=$(aws ssm get-parameter --name /unraveldocs/AWS_ACCESS_KEY --with-decryption --query 'Parameter.Value' --output text)
-AWS_SECRET_KEY=$(aws ssm get-parameter --name /unraveldocs/AWS_SECRET_KEY --with-decryption --query 'Parameter.Value' --output text)
-AWS_CLOUDFRONT_URL=$(aws ssm get-parameter --name /unraveldocs/AWS_CLOUDFRONT_URL --with-decryption --query 'Parameter.Value' --output text)
-MAILGUN_API_KEY=$(aws ssm get-parameter --name /unraveldocs/MAILGUN_API_KEY --with-decryption --query 'Parameter.Value' --output text)
-MAILGUN_DOMAIN=$(aws ssm get-parameter --name /unraveldocs/MAILGUN_DOMAIN --with-decryption --query 'Parameter.Value' --output text)
-MAILGUN_SIGNINGIN_KEY=$(aws ssm get-parameter --name /unraveldocs/MAILGUN_SIGNINGIN_KEY --with-decryption --query 'Parameter.Value' --output text)
-CLOUDINARY_CLOUD_NAME=$(aws ssm get-parameter --name /unraveldocs/CLOUDINARY_CLOUD_NAME --with-decryption --query 'Parameter.Value' --output text)
-CLOUDINARY_API_KEY=$(aws ssm get-parameter --name /unraveldocs/CLOUDINARY_API_KEY --with-decryption --query 'Parameter.Value' --output text)
-CLOUDINARY_API_SECRET=$(aws ssm get-parameter --name /unraveldocs/CLOUDINARY_API_SECRET --with-decryption --query 'Parameter.Value' --output text)
-TWILIO_ACCOUNT_SID=$(aws ssm get-parameter --name /unraveldocs/TWILIO_ACCOUNT_SID --with-decryption --query 'Parameter.Value' --output text)
-TWILIO_AUTH_TOKEN=$(aws ssm get-parameter --name /unraveldocs/TWILIO_AUTH_TOKEN --with-decryption --query 'Parameter.Value' --output text)
-TWILIO_PHONE_NUMBER=$(aws ssm get-parameter --name /unraveldocs/TWILIO_PHONE_NUMBER --with-decryption --query 'Parameter.Value' --output text)
-ELASTICACHE_ENDPOINT=$(aws ssm get-parameter --name /unraveldocs/ELASTICACHE_ENDPOINT --with-decryption --query 'Parameter.Value' --output text)
-ELASTICACHE_PORT=$(aws ssm get-parameter --name /unraveldocs/ELASTICACHE_PORT --with-decryption --query 'Parameter.Value' --output text)
-RABBITMQ_ENDPOINT=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_ENDPOINT --with-decryption --query 'Parameter.Value' --output text)
-RABBITMQ_PORT=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_PORT --with-decryption --query 'Parameter.Value' --output text)
-RABBITMQ_USERNAME=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_USERNAME --with-decryption --query 'Parameter.Value' --output text)
-RABBITMQ_PASSWORD=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_PASSWORD --with-decryption --query 'Parameter.Value' --output text)
+APP_BASE_URL=$(aws ssm get-parameter --name /unraveldocs/APP_BASE_URL --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+RDS_ENDPOINT=$(aws ssm get-parameter --name /unraveldocs/RDS_ENDPOINT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+RDS_USERNAME=$(aws ssm get-parameter --name /unraveldocs/RDS_USERNAME --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+RDS_PASSWORD=$(aws ssm get-parameter --name /unraveldocs/RDS_PASSWORD --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+JWT_SECRET=$(aws ssm get-parameter --name /unraveldocs/JWT_SECRET --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+AWS_ACCESS_KEY=$(aws ssm get-parameter --name /unraveldocs/AWS_ACCESS_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+AWS_SECRET_KEY=$(aws ssm get-parameter --name /unraveldocs/AWS_SECRET_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+AWS_CLOUDFRONT_URL=$(aws ssm get-parameter --name /unraveldocs/AWS_CLOUDFRONT_URL --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+MAILGUN_API_KEY=$(aws ssm get-parameter --name /unraveldocs/MAILGUN_API_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+MAILGUN_DOMAIN=$(aws ssm get-parameter --name /unraveldocs/MAILGUN_DOMAIN --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+MAILGUN_SIGNINGIN_KEY=$(aws ssm get-parameter --name /unraveldocs/MAILGUN_SIGNINGIN_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+CLOUDINARY_CLOUD_NAME=$(aws ssm get-parameter --name /unraveldocs/CLOUDINARY_CLOUD_NAME --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+CLOUDINARY_API_KEY=$(aws ssm get-parameter --name /unraveldocs/CLOUDINARY_API_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+CLOUDINARY_API_SECRET=$(aws ssm get-parameter --name /unraveldocs/CLOUDINARY_API_SECRET --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+TWILIO_ACCOUNT_SID=$(aws ssm get-parameter --name /unraveldocs/TWILIO_ACCOUNT_SID --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+TWILIO_AUTH_TOKEN=$(aws ssm get-parameter --name /unraveldocs/TWILIO_AUTH_TOKEN --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+TWILIO_PHONE_NUMBER=$(aws ssm get-parameter --name /unraveldocs/TWILIO_PHONE_NUMBER --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+ELASTICACHE_ENDPOINT=$(aws ssm get-parameter --name /unraveldocs/ELASTICACHE_ENDPOINT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+ELASTICACHE_PORT=$(aws ssm get-parameter --name /unraveldocs/ELASTICACHE_PORT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+RABBITMQ_ENDPOINT=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_ENDPOINT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+RABBITMQ_PORT=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_PORT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+RABBITMQ_USERNAME=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_USERNAME --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+RABBITMQ_PASSWORD=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_PASSWORD --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
 
 # Stop and remove existing container if running
 docker rm -f unraveldocs-api || true
@@ -33,6 +33,7 @@ docker rm -f unraveldocs-api || true
 # Run the Docker container with all environment variables
 docker run -d --name unraveldocs-api \
   -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=prod \
   -e APP_BASE_URL="$APP_BASE_URL" \
   -e RDS_ENDPOINT="$RDS_ENDPOINT" \
   -e RDS_USERNAME="$RDS_USERNAME" \
