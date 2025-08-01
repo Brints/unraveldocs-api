@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.extractor</groupId>
     <artifactId>UnravelDocs</artifactId>
-    <version>4.1.4</version>
+    <version>4.1.5</version>
     <name>UnravelDocs</name>
     <description>UnravelDocs</description>
     <url/>
