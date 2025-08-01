@@ -36,8 +36,6 @@ application.properties
 application.yml
 application-dev.properties
 application-dev.yml
-application-prod.properties
-application-prod.yml
 .env
 rest-client.private.env.json
 http-client.private.env.json
