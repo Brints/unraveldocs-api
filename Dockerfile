@@ -18,7 +18,7 @@ RUN ./mvnw dependency:go-offline
 COPY src ./src
 
 # Package the application into a JAR file
-RUN ./mvnw package -DskipTests
+RUN ./mvnw package -DskipTests && ls -la /app/target/
 
 # Use a smaller base image for the final application
 FROM openjdk:21-jdk-slim
@@ -27,7 +27,7 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copy the Maven wrapper and the project definition file from the build stage
-COPY --from=build /app/target/UnravelDocs.jar UnravelDocs.jar
+COPY --from=build /app/target/*.jar UnravelDocs.jar
 
 # Expose the port your application runs on
 EXPOSE 8080
