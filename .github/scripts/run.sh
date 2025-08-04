@@ -58,6 +58,10 @@ if [ -n "$(docker images -f "dangling=true" -q)" ]; then
     docker image prune -f
 fi
 
+# Prune the Docker system to free up disk space
+echo "Pruning Docker system..."
+docker system prune -af
+
 # Run the new container in detached mode
 echo "Starting new container..."
 docker run \

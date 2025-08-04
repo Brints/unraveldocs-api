@@ -49,8 +49,10 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs:
+          env:
             AWS_REGION: ${{ env.AWS_REGION }}
+            ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+            ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
           script: |
             export AWS_REGION=${{ env.AWS_REGION }}
             # The EC2 instance role will be used for AWS commands
@@ -61,5 +63,4 @@ jobs:
             docker pull ${{ steps.build-image.outputs.image }}
 
             # Execute the deployment script located in the EC2 user's home directory
-            # Ensure it has execute permissions (chmod +x run.sh)
             ./run.sh
