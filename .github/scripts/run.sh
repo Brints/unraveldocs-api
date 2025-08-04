@@ -5,15 +5,15 @@ set -o pipefail # Exit if any command in a pipeline fails
 
 # Function to fetch a parameter and exit if it's empty
 fetch_parameter() {
-     local value
-     # Add the --region flag to the aws command
-     value=$(aws ssm get-parameter --name "$1" --with-decryption --query 'Parameter.Value' --output text --region "${AWS_REGION}" | tr -d '\r\n')
-     if [ -z "$value" ]; then
-       echo "Error: SSM Parameter $1 is empty or could not be fetched." >&2
-       exit 1
-     fi
-     echo "$value"
-   }
+    local value
+    local region="${AWS_REGION:-eu-north-1}"
+    value=$(aws ssm get-parameter --name "$1" --with-decryption --query 'Parameter.Value' --output text --region "$region" | tr -d '\r\n')
+    if [ -z "$value" ]; then
+      echo "Error: SSM Parameter $1 is empty or could not be fetched." >&2
+      exit 1
+    fi
+    echo "$value"
+}
 
 # Fetch secrets from AWS SSM Parameter Store
 APP_BASE_URL=$(fetch_parameter "/unraveldocs/APP_BASE_URL")
