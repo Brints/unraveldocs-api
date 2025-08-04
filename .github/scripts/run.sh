@@ -1,46 +1,75 @@
 #!/bin/bash
 
 set -e
+set -o pipefail # Exit if any command in a pipeline fails
+
+# Function to fetch a parameter and exit if it's empty
+fetch_parameter() {
+  local value
+  value=$(aws ssm get-parameter --name "$1" --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+  if [ -z "$value" ]; then
+    echo "Error: SSM Parameter $1 is empty or could not be fetched." >&2
+    exit 1
+  fi
+  echo "$value"
+}
 
 # Fetch secrets from AWS SSM Parameter Store
-APP_BASE_URL=$(aws ssm get-parameter --name /unraveldocs/APP_BASE_URL --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-RDS_ENDPOINT=$(aws ssm get-parameter --name /unraveldocs/RDS_ENDPOINT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-RDS_USERNAME=$(aws ssm get-parameter --name /unraveldocs/RDS_USERNAME --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-RDS_PASSWORD=$(aws ssm get-parameter --name /unraveldocs/RDS_PASSWORD --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-JWT_SECRET=$(aws ssm get-parameter --name /unraveldocs/JWT_SECRET --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-AWS_ACCESS_KEY=$(aws ssm get-parameter --name /unraveldocs/AWS_ACCESS_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-AWS_SECRET_KEY=$(aws ssm get-parameter --name /unraveldocs/AWS_SECRET_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-AWS_CLOUDFRONT_URL=$(aws ssm get-parameter --name /unraveldocs/AWS_CLOUDFRONT_URL --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-MAILGUN_API_KEY=$(aws ssm get-parameter --name /unraveldocs/MAILGUN_API_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-MAILGUN_DOMAIN=$(aws ssm get-parameter --name /unraveldocs/MAILGUN_DOMAIN --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-MAILGUN_SIGNINGIN_KEY=$(aws ssm get-parameter --name /unraveldocs/MAILGUN_SIGNINGIN_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-CLOUDINARY_CLOUD_NAME=$(aws ssm get-parameter --name /unraveldocs/CLOUDINARY_CLOUD_NAME --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-CLOUDINARY_API_KEY=$(aws ssm get-parameter --name /unraveldocs/CLOUDINARY_API_KEY --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-CLOUDINARY_API_SECRET=$(aws ssm get-parameter --name /unraveldocs/CLOUDINARY_API_SECRET --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-TWILIO_ACCOUNT_SID=$(aws ssm get-parameter --name /unraveldocs/TWILIO_ACCOUNT_SID --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-TWILIO_AUTH_TOKEN=$(aws ssm get-parameter --name /unraveldocs/TWILIO_AUTH_TOKEN --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-TWILIO_PHONE_NUMBER=$(aws ssm get-parameter --name /unraveldocs/TWILIO_PHONE_NUMBER --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-ELASTICACHE_ENDPOINT=$(aws ssm get-parameter --name /unraveldocs/ELASTICACHE_ENDPOINT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-ELASTICACHE_PORT=$(aws ssm get-parameter --name /unraveldocs/ELASTICACHE_PORT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-RABBITMQ_ENDPOINT=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_ENDPOINT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-RABBITMQ_PORT=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_PORT --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-RABBITMQ_USERNAME=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_USERNAME --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
-RABBITMQ_PASSWORD=$(aws ssm get-parameter --name /unraveldocs/RABBITMQ_PASSWORD --with-decryption --query 'Parameter.Value' --output text | tr -d '\r\n')
+APP_BASE_URL=$(fetch_parameter "/unraveldocs/APP_BASE_URL")
+RDS_ENDPOINT=$(fetch_parameter "/unraveldocs/RDS_ENDPOINT")
+RDS_USERNAME=$(fetch_parameter "/unraveldocs/RDS_USERNAME")
+RDS_PASSWORD=$(fetch_parameter "/unraveldocs/RDS_PASSWORD")
+JWT_SECRET=$(fetch_parameter "/unraveldocs/JWT_SECRET")
+AWS_CLOUDFRONT_URL=$(fetch_parameter "/unraveldocs/AWS_CLOUDFRONT_URL")
+MAILGUN_API_KEY=$(fetch_parameter "/unraveldocs/MAILGUN_API_KEY")
+MAILGUN_DOMAIN=$(fetch_parameter "/unraveldocs/MAILGUN_DOMAIN")
+MAILGUN_SIGNINGIN_KEY=$(fetch_parameter "/unraveldocs/MAILGUN_SIGNINGIN_KEY")
+CLOUDINARY_CLOUD_NAME=$(fetch_parameter "/unraveldocs/CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY=$(fetch_parameter "/unraveldocs/CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET=$(fetch_parameter "/unraveldocs/CLOUDINARY_API_SECRET")
+TWILIO_ACCOUNT_SID=$(fetch_parameter "/unraveldocs/TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN=$(fetch_parameter "/unraveldocs/TWILIO_AUTH_TOKEN")
+TWILIO_PHONE_NUMBER=$(fetch_parameter "/unraveldocs/TWILIO_PHONE_NUMBER")
+ELASTICACHE_ENDPOINT=$(fetch_parameter "/unraveldocs/ELASTICACHE_ENDPOINT")
+ELASTICACHE_PORT=$(fetch_parameter "/unraveldocs/ELASTICACHE_PORT")
+RABBITMQ_ENDPOINT=$(fetch_parameter "/unraveldocs/RABBITMQ_ENDPOINT")
+RABBITMQ_PORT=$(fetch_parameter "/unraveldocs/RABBITMQ_PORT")
+RABBITMQ_USERNAME=$(fetch_parameter "/unraveldocs/RABBITMQ_USERNAME")
+RABBITMQ_PASSWORD=$(fetch_parameter "/unraveldocs/RABBITMQ_PASSWORD")
 
-# Stop and remove existing container if running
-docker rm -f unraveldocs-api || true
+# Define variables
+CONTAINER_NAME="unraveldocs-api"
+IMAGE_NAME="${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
 
-# Run the Docker container with all environment variables
-docker run -d --name unraveldocs-api \
+# Stop and remove the existing container if it's running
+if [ "$(docker ps -q -f name=^/${CONTAINER_NAME}$)" ]; then
+    echo "Stopping existing container..."
+    docker stop "${CONTAINER_NAME}"
+fi
+if [ "$(docker ps -aq -f status=exited -f name=^/${CONTAINER_NAME}$)" ]; then
+    echo "Removing exited container..."
+    docker rm "${CONTAINER_NAME}"
+fi
+
+# Clean up old, untagged (dangling) images
+if [ -n "$(docker images -f "dangling=true" -q)" ]; then
+    echo "Pruning dangling images..."
+    docker image prune -f
+fi
+
+# Run the new container in detached mode
+echo "Starting new container..."
+docker run \
+  --detach \
+  --name "${CONTAINER_NAME}" \
   -p 8080:8080 \
+  --restart always \
   -e SPRING_PROFILES_ACTIVE=prod \
   -e APP_BASE_URL="$APP_BASE_URL" \
   -e RDS_ENDPOINT="$RDS_ENDPOINT" \
   -e RDS_USERNAME="$RDS_USERNAME" \
   -e RDS_PASSWORD="$RDS_PASSWORD" \
   -e JWT_SECRET="$JWT_SECRET" \
-  -e AWS_ACCESS_KEY="$AWS_ACCESS_KEY" \
-  -e AWS_SECRET_KEY="$AWS_SECRET_KEY" \
   -e AWS_CLOUDFRONT_URL="$AWS_CLOUDFRONT_URL" \
   -e MAILGUN_API_KEY="$MAILGUN_API_KEY" \
   -e MAILGUN_DOMAIN="$MAILGUN_DOMAIN" \
@@ -57,4 +86,6 @@ docker run -d --name unraveldocs-api \
   -e RABBITMQ_PORT="$RABBITMQ_PORT" \
   -e RABBITMQ_USERNAME="$RABBITMQ_USERNAME" \
   -e RABBITMQ_PASSWORD="$RABBITMQ_PASSWORD" \
-  985420682262.dkr.ecr.eu-north-1.amazonaws.com/unraveldocs-api:latest
+  "${IMAGE_NAME}"
+
+echo "Deployment script finished successfully."

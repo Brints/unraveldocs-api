@@ -294,7 +294,6 @@
             <plugin>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
-<!--                <version>10.20.1</version>-->
                 <configuration>
                     <url>${spring.datasource.url}</url>
                     <user>${spring.datasource.username}</user>
@@ -302,6 +301,12 @@
                 </configuration>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
     </build>
 
 </project>
