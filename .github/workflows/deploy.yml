@@ -49,9 +49,10 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          env:
+          envs:
             AWS_REGION: ${{ env.AWS_REGION }}
           script: |
+            export AWS_REGION=${{ env.AWS_REGION }}
             # The EC2 instance role will be used for AWS commands
             # Log in to ECR using the instance role
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
