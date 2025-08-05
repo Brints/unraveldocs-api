@@ -1,4 +1,3 @@
-# .github/workflows/deploy.yml
 name: Deploy to AWS EC2
 
 on:
