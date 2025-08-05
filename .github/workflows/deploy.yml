@@ -44,21 +44,20 @@ jobs:
       - name: Deploy to EC2 instance
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          env:
-            AWS_REGION: ${{ env.AWS_REGION }}
-            ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
-            ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
-          script: |
-            export AWS_REGION=${{ env.AWS_REGION }}
-            # The EC2 instance role will be used for AWS commands
-            # Log in to ECR using the instance role
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
-
-            # Pull the latest image from ECR
-            docker pull ${{ steps.build-image.outputs.image }}
-
-            # Execute the deployment script located in the EC2 user's home directory
-            ./run.sh
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USERNAME }}
+            key: ${{ secrets.EC2_SSH_KEY }}
+            script: |
+              # The EC2 instance role will be used for AWS commands
+              # Log in to ECR using the instance role
+              aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+              
+              # Pull the latest image from ECR
+              docker pull ${{ steps.build-image.outputs.image }}
+              
+              # Execute the deployment script located in the EC2 user's home directory
+              # Pass environment variables to the script
+              export AWS_REGION=${{ env.AWS_REGION }}
+              export ECR_REGISTRY=${{ env.ECR_REGISTRY }}
+              export ECR_REPOSITORY=${{ env.ECR_REPOSITORY }}
+              ./run.sh
