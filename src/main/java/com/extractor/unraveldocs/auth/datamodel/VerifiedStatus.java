@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.auth.enums;
+package com.extractor.unraveldocs.auth.datamodel;
 
 import lombok.Getter;
 

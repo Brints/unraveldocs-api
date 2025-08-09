@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.admin.repository;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.user.model.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;

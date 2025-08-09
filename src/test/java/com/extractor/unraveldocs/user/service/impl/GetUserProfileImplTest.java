@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.user.service.impl;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.dto.UserData;

@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.user.model;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.model.UserVerification;
 import com.extractor.unraveldocs.documents.model.DocumentCollection;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;

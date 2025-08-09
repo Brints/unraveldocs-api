@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.admin.dto.request;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;

@@ -125,7 +125,7 @@ class BulkDocumentUploadExtractionImplTest {
 
         verify(ocrDataRepository, times(1)).saveAll(anyList());
         ArgumentCaptor<OcrRequestMessage> messageCaptor = ArgumentCaptor.forClass(OcrRequestMessage.class);
-        verify(rabbitTemplate, times(2)).convertAndSend(eq(RabbitMQConfig.EXCHANGE_NAME), eq(RabbitMQConfig.ROUTING_KEY), messageCaptor.capture());
+        verify(rabbitTemplate, times(2)).convertAndSend(eq(RabbitMQConfig.OCR_EXCHANGE_NAME), eq(RabbitMQConfig.OCR_ROUTING_KEY), messageCaptor.capture());
 
         List<OcrRequestMessage> capturedMessages = messageCaptor.getAllValues();
         assertEquals(savedCollection.getId(), capturedMessages.get(0).getCollectionId());

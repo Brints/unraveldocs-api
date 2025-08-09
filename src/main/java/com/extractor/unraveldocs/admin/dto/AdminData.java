@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.admin.dto;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.shared.request.UserDataProjection;
 import lombok.AllArgsConstructor;
 import lombok.Data;

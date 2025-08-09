@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.documents.service.impl;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionResponse;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionUploadData;
 import com.extractor.unraveldocs.documents.dto.response.FileEntryData;

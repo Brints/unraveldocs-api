@@ -16,7 +16,7 @@ public class OcrMessageListener {
     private final ProcessOcrService ocrService;
     private final SanitizeLogging s;
 
-    @RabbitListener(queues = RabbitMQConfig.QUEUE_NAME)
+    @RabbitListener(queues = RabbitMQConfig.OCR_QUEUE_NAME)
     public void receiveMessage(OcrRequestMessage message) {
         log.info("Received OCR request for collection ID: {}, document ID: {}",
                 s.sanitizeLogging(message.getCollectionId()),

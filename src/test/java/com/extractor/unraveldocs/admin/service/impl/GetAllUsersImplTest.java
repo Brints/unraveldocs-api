@@ -4,7 +4,7 @@ import com.extractor.unraveldocs.admin.dto.request.UserFilterDto;
 import com.extractor.unraveldocs.admin.dto.response.UserListData;
 import com.extractor.unraveldocs.admin.dto.response.UserSummary;
 import com.extractor.unraveldocs.admin.impl.GetAllUsersImpl;
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.model.User;

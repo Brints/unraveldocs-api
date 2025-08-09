@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.ocrprocessing.utils;
 
 import com.extractor.unraveldocs.documents.model.FileEntry;
-import com.extractor.unraveldocs.ocrprocessing.enums.OcrStatus;
+import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;

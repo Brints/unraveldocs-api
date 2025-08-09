@@ -3,7 +3,7 @@ package com.extractor.unraveldocs.ocrprocessing.impl;
 import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.documents.repository.DocumentCollectionRepository;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
-import com.extractor.unraveldocs.ocrprocessing.enums.OcrStatus;
+import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
 import com.extractor.unraveldocs.ocrprocessing.interfaces.ExtractTextFromDocumentService;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;

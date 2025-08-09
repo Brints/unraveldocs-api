@@ -10,9 +10,13 @@ import com.extractor.unraveldocs.documents.model.DocumentCollection;
 import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.documents.repository.DocumentCollectionRepository;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
+import com.extractor.unraveldocs.events.BaseEvent;
+import com.extractor.unraveldocs.events.EventMetadata;
+import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
-import com.extractor.unraveldocs.ocrprocessing.dto.request.OcrRequestMessage;
-import com.extractor.unraveldocs.ocrprocessing.enums.OcrStatus;
+import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
+import com.extractor.unraveldocs.ocrprocessing.events.OcrEventMapper;
+import com.extractor.unraveldocs.ocrprocessing.events.OcrRequestedEvent;
 import com.extractor.unraveldocs.ocrprocessing.interfaces.BulkDocumentUploadExtractionService;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
@@ -21,7 +25,6 @@ import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.utils.imageupload.FileUploadValidationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +36,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import static com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService.getStorageFailures;
 
@@ -42,7 +46,8 @@ import static com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService.g
 public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtractionService {
     private final DocumentCollectionRepository documentCollectionRepository;
     private final OcrDataRepository ocrDataRepository;
-    private final RabbitTemplate rabbitTemplate;
+    private final EventPublisherService eventPublisherService;
+    private final OcrEventMapper ocrEventMapper;
     private final SanitizeLogging s;
     private final FileStorageService fileStorageService;
 
@@ -62,7 +67,6 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
 
         for (MultipartFile file : files) {
             String originalFilename = Objects.requireNonNullElse(file.getOriginalFilename(), "unnamed_file");
-            //String originalFilename = file.getOriginalFilename();
 
             FileEntryData.FileEntryDataBuilder fileEntryDataBuilder = FileEntryData.builder()
                     .originalFileName(originalFilename)
@@ -73,7 +77,6 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
 
                 try {
                     FileEntry fileEntry = fileStorageService.handleSuccessfulFileUpload(file, originalFilename);
-
                     processedFiles.add(fileEntry);
 
                     OcrData ocrData = new OcrData();
@@ -86,20 +89,12 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
                             .status(DocumentUploadState.SUCCESS.toString());
                     successfulUploads++;
                 } catch (Exception e) {
-                    storageFailures =
-                            getStorageFailures(
-                                    processedFiles,
-                                    storageFailures,
-                                    originalFilename, e, log, s);
-                    log.warn("File {} failed to upload to storage: {}",
-                            s.sanitizeLogging(originalFilename),
-                            s.sanitizeLogging(e.getMessage()));
+                    storageFailures = getStorageFailures(processedFiles, storageFailures, originalFilename, e, log, s);
+                    log.warn("File {} failed to upload to storage: {}", s.sanitizeLogging(originalFilename), s.sanitizeLogging(e.getMessage()));
                     fileEntryDataBuilder.status(DocumentUploadState.FAILED_STORAGE_UPLOAD.toString());
                 }
             } catch (BadRequestException | IllegalArgumentException validationEx) {
-                log.warn("Validation failed for file {}: {}",
-                        s.sanitizeLogging(originalFilename),
-                        s.sanitizeLogging(validationEx.getMessage()));
+                log.warn("Validation failed for file {}: {}", s.sanitizeLogging(originalFilename), s.sanitizeLogging(validationEx.getMessage()));
                 String tempDocumentId = java.util.UUID.randomUUID().toString();
                 fileEntryDataBuilder.documentId(tempDocumentId)
                         .status(DocumentUploadState.FAILED_VALIDATION.toString());
@@ -127,8 +122,6 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
             }
 
             DocumentCollection savedCollection = documentCollectionRepository.save(documentCollection);
-            documentCollectionRepository.flush(); // Ensure the collection is saved before accessing its ID
-
             savedCollectionId = savedCollection.getId();
 
             if (!ocrDataToSave.isEmpty()) {
@@ -144,34 +137,38 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
                 @Override
                 public void afterCommit() {
                     successfulFiles.forEach(fileEntry -> {
-                        OcrRequestMessage message = new OcrRequestMessage(finalSavedCollectionId, fileEntry.getDocumentId());
-                        rabbitTemplate.convertAndSend(
-                                RabbitMQConfig.EXCHANGE_NAME,
-                                RabbitMQConfig.ROUTING_KEY,
-                                message);
-                        log.info("Sent OCR request for document: {}", s.sanitizeLogging(fileEntry.getDocumentId()));
+                        OcrRequestedEvent payload = ocrEventMapper.toOcrRequestedEvent(fileEntry, finalSavedCollectionId);
+                        EventMetadata metadata = EventMetadata.builder()
+                                .eventType("OcrRequested")
+                                .eventSource("BulkDocumentUploadExtractionImpl")
+                                .eventTimestamp(System.currentTimeMillis())
+                                .correlationId(UUID.randomUUID().toString())
+                                .userId(user.getId())
+                                .build();
+                        BaseEvent<OcrRequestedEvent> event = BaseEvent.<OcrRequestedEvent>builder()
+                                .metadata(metadata)
+                                .payload(payload)
+                                .build();
+
+                        eventPublisherService.publishEvent(
+                                RabbitMQConfig.OCR_EXCHANGE_NAME,
+                                "unraveldocs.ocr.request",
+                                event);
                     });
                 }
             });
 
             log.info("Document collection {} created with {} processed files for user {}. Status: {}",
-                    s.sanitizeLogging(savedCollectionId),
-                    processedFiles.size(),
-                    s.sanitizeLogging(user.getId()),
-                    savedCollection.getCollectionStatus());
+                    s.sanitizeLogging(savedCollectionId), processedFiles.size(), s.sanitizeLogging(user.getId()), savedCollection.getCollectionStatus());
         } else {
             if (totalFiles > 0) {
-                log.info(
-                        "No document collection created as all {} files failed validation for user {}",
-                        totalFiles,
-                        s.sanitizeLogging(user.getId()));
+                log.info("No document collection created as all {} files failed validation for user {}", totalFiles, s.sanitizeLogging(user.getId()));
             }
         }
 
         String apiResponseMessage;
         if (successfulUploads > 0) {
-            apiResponseMessage = String.format("%d document(s) uploaded successfully and queued for processing. %d failed.",
-                    successfulUploads, validationFailures + storageFailures);
+            apiResponseMessage = String.format("%d document(s) uploaded successfully and queued for processing. %d failed.", successfulUploads, validationFailures + storageFailures);
         } else {
             apiResponseMessage = "All document uploads failed.";
         }

@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.shared.request;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 
 import java.time.OffsetDateTime;
 

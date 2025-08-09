@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.ocrprocessing.enums;
+package com.extractor.unraveldocs.ocrprocessing.datamodel;
 
 import lombok.Getter;
 

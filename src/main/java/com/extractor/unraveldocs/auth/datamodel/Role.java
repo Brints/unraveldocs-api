@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.auth.enums;
+package com.extractor.unraveldocs.auth.datamodel;
 
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import lombok.Getter;

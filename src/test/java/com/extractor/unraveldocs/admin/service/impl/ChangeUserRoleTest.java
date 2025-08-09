@@ -3,7 +3,7 @@ package com.extractor.unraveldocs.admin.service.impl;
 import com.extractor.unraveldocs.admin.dto.AdminData;
 import com.extractor.unraveldocs.admin.dto.request.ChangeRoleDto;
 import com.extractor.unraveldocs.admin.impl.ChangeUserRoleImpl;
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.exceptions.custom.UnauthorizedException;

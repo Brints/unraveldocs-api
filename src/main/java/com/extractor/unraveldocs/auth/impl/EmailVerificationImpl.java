@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.auth.impl;
 
 import com.extractor.unraveldocs.auth.dto.request.ResendEmailVerificationDto;
-import com.extractor.unraveldocs.auth.enums.VerifiedStatus;
+import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.interfaces.EmailVerificationService;
 import com.extractor.unraveldocs.auth.model.UserVerification;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;

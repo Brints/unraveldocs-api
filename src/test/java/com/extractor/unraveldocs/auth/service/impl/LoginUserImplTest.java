@@ -2,7 +2,7 @@ package com.extractor.unraveldocs.auth.service.impl;
 
 import com.extractor.unraveldocs.auth.dto.LoginData;
 import com.extractor.unraveldocs.auth.dto.request.LoginRequestDto;
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.impl.LoginUserImpl;
 import com.extractor.unraveldocs.auth.model.UserVerification;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
