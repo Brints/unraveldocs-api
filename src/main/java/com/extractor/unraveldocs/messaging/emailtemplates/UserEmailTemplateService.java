@@ -3,6 +3,7 @@ package com.extractor.unraveldocs.messaging.emailtemplates;
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
 import com.extractor.unraveldocs.messaging.emailservice.EmailOrchestratorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -16,7 +17,12 @@ public class UserEmailTemplateService {
 
     private final EmailOrchestratorService emailOrchestratorService;
 
+    @Value("${app.base.url}")
+    private String baseUrl;
+
     public void sendPasswordResetToken(String email, String firstName, String lastName, String token, String expiration) {
+        String resetUrl = baseUrl + "/api/v1/user/reset-password?token=" + token + "&email=" + email;
+
         EmailMessage message = EmailMessage.builder()
                 .to(email)
                 .subject("Password Reset Token")
@@ -24,8 +30,7 @@ public class UserEmailTemplateService {
                 .templateModel(Map.of(
                         "firstName", firstName,
                         "lastName", lastName,
-                        "email", email,
-                        "token", token,
+                        "resetUrl", resetUrl,
                         "expiration", expiration
                 ))
                 .build();
