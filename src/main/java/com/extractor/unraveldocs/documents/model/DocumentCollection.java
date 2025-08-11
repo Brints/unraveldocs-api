@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.documents.model;
 
-import com.extractor.unraveldocs.documents.enums.DocumentStatus;
+import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
 import com.extractor.unraveldocs.user.model.User;
 import jakarta.persistence.*;
 import lombok.*;

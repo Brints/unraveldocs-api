@@ -5,7 +5,7 @@ import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionRespon
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionSummary;
 import com.extractor.unraveldocs.documents.dto.response.FileEntryData;
 import com.extractor.unraveldocs.documents.dto.response.GetDocumentCollectionData;
-import com.extractor.unraveldocs.documents.enums.DocumentStatus;
+import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
 import com.extractor.unraveldocs.documents.impl.GetDocumentServiceImpl;
 import com.extractor.unraveldocs.documents.model.DocumentCollection;
 import com.extractor.unraveldocs.documents.model.FileEntry;

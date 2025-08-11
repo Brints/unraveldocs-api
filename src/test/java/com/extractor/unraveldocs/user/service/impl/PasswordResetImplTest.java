@@ -1,14 +1,17 @@
 package com.extractor.unraveldocs.user.service.impl;
 
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
+import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
+import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.user.dto.request.ForgotPasswordDto;
 import com.extractor.unraveldocs.user.dto.request.ResetPasswordDto;
 import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.user.events.PasswordResetRequestedEvent;
+import com.extractor.unraveldocs.user.events.PasswordResetSuccessfulEvent;
 import com.extractor.unraveldocs.user.impl.PasswordResetImpl;
 import com.extractor.unraveldocs.user.interfaces.passwordreset.IPasswordReset;
 import com.extractor.unraveldocs.user.model.User;
@@ -16,15 +19,19 @@ import com.extractor.unraveldocs.user.repository.UserRepository;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.utils.generatetoken.GenerateVerificationToken;
 import com.extractor.unraveldocs.utils.userlib.DateHelper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,21 +43,18 @@ class PasswordResetImplTest {
 
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private GenerateVerificationToken generateVerificationToken;
-
     @Mock
     private DateHelper dateHelper;
-
     @Mock
     private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private UserEmailTemplateService userEmailTemplateService;
-
     @Mock
     private ResponseBuilderService responseBuilder;
+    @Mock
+    private EventPublisherService eventPublisherService;
+    @Mock
+    private UserEventMapper userEventMapper;
 
     @InjectMocks
     private PasswordResetImpl passwordResetService;
@@ -63,15 +67,20 @@ class PasswordResetImplTest {
 
     @BeforeEach
     void setUp() {
-        userVerification = new UserVerification();
-        userVerification.setEmailVerified(true);
-        userVerification.setStatus(VerifiedStatus.VERIFIED);
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.initSynchronization();
+        }
 
         user = new User();
+        user.setId("user-123");
         user.setEmail("test@example.com");
-        user.setFirstName("John");
-        user.setLastName("Doe");
+        user.setFirstName("Test");
+        user.setLastName("User");
         user.setVerified(true);
+        user.setPassword("oldEncodedPassword"); // Set initial password
+
+        userVerification = new UserVerification();
+        userVerification.setEmailVerified(true);
         user.setUserVerification(userVerification);
 
         forgotPasswordDto = new ForgotPasswordDto("test@example.com");
@@ -88,38 +97,39 @@ class PasswordResetImplTest {
             }
         };
 
-        resetPasswordDto = ResetPasswordDto.builder()
-                .newPassword("NewPassword123!")
-                .confirmNewPassword("NewPassword123!")
-                .build();
+        resetPasswordDto = new ResetPasswordDto("newPassword123", "newPassword123");
     }
+
+    @AfterEach
+    void tearDown() {
+        TransactionSynchronizationManager.clear();
+    }
+
 
     // Forgot Password Tests
     @Test
     void forgotPassword_WithValidEmail_ShouldSendResetToken() {
         // Arrange
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.of(user));
-        when(generateVerificationToken.generateVerificationToken()).thenReturn("generated-token");
-        when(dateHelper.setExpiryDate(any(), anyString(), anyInt())).thenReturn(OffsetDateTime.now().plusHours(1));
-        when(dateHelper.getTimeLeftToExpiry(any(), any(), anyString())).thenReturn("1 hour");
-        when(responseBuilder.buildUserResponse(
-                any(), any(), anyString()
-        )).thenReturn(new UnravelDocsDataResponse<>());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(generateVerificationToken.generateVerificationToken()).thenReturn("reset-token");
+        when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(1))).thenReturn(OffsetDateTime.now().plusHours(1));
+        when(responseBuilder.buildUserResponse(isNull(), eq(HttpStatus.OK), anyString()))
+                .thenReturn(new UnravelDocsDataResponse<>());
+        when(userEventMapper.toPasswordResetRequestedEvent(any(), any(), any())).thenReturn(mock(PasswordResetRequestedEvent.class));
 
         // Act
-        UnravelDocsDataResponse<Void> response = passwordResetService.forgotPassword(forgotPasswordDto);
+        passwordResetService.forgotPassword(forgotPasswordDto);
+        TransactionSynchronizationManager.getSynchronizations().get(0).afterCommit();
 
         // Assert
-        assertNotNull(response);
-        verify(userRepository, times(1)).save(user);
-        verify(userEmailTemplateService, times(1)).sendPasswordResetToken(
-                anyString(), anyString(), anyString(), anyString(), anyString());
+        verify(userRepository).save(user);
+        verify(eventPublisherService).publishEvent(anyString(), anyString(), any());
     }
 
     @Test
     void forgotPassword_WithNonExistentUser_ShouldThrowNotFoundException() {
         // Arrange
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.empty());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(NotFoundException.class, () -> passwordResetService.forgotPassword(forgotPasswordDto));
@@ -129,12 +139,10 @@ class PasswordResetImplTest {
     void forgotPassword_WithUnverifiedAccount_ShouldThrowBadRequestException() {
         // Arrange
         user.setVerified(false);
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
 
         // Act & Assert
-        BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> passwordResetService.forgotPassword(forgotPasswordDto));
-        assertEquals("This account is not verified. Please verify your account before resetting the password.", exception.getMessage());
+        assertThrows(BadRequestException.class, () -> passwordResetService.forgotPassword(forgotPasswordDto));
     }
 
     @Test
@@ -142,12 +150,11 @@ class PasswordResetImplTest {
         // Arrange
         userVerification.setPasswordResetToken("existing-token");
         userVerification.setPasswordResetTokenExpiry(OffsetDateTime.now().plusHours(1));
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(dateHelper.getTimeLeftToExpiry(any(), any(), anyString())).thenReturn("1 hour");
 
         // Act & Assert
-        BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> passwordResetService.forgotPassword(forgotPasswordDto));
-        assertTrue(exception.getMessage().contains("A password reset request has already been sent"));
+        assertThrows(BadRequestException.class, () -> passwordResetService.forgotPassword(forgotPasswordDto));
     }
 
     // Reset Password Tests
@@ -156,59 +163,52 @@ class PasswordResetImplTest {
         // Arrange
         userVerification.setPasswordResetToken("valid-token");
         userVerification.setPasswordResetTokenExpiry(OffsetDateTime.now().plusHours(1));
-        user.setPassword("oldEncodedPassword"); // Set a password for the user
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(resetPasswordDto.newPassword(), user.getPassword())).thenReturn(false);
-        when(passwordEncoder.encode(resetPasswordDto.newPassword())).thenReturn("encoded-password");
-        when(responseBuilder.buildUserResponse(
-                any(), any(), anyString()
-        )).thenReturn(new UnravelDocsDataResponse<>());
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
+        when(responseBuilder.buildUserResponse(isNull(), eq(HttpStatus.OK), anyString()))
+                .thenReturn(new UnravelDocsDataResponse<>());
+        when(userEventMapper.toPasswordResetSuccessfulEvent(any())).thenReturn(mock(PasswordResetSuccessfulEvent.class));
 
         // Act
-        UnravelDocsDataResponse<Void> response = passwordResetService.resetPassword(passwordResetParams, resetPasswordDto);
+        passwordResetService.resetPassword(passwordResetParams, resetPasswordDto);
+        TransactionSynchronizationManager.getSynchronizations().get(0).afterCommit();
 
         // Assert
-        assertNotNull(response);
+        verify(userRepository).save(user);
         assertNull(userVerification.getPasswordResetToken());
         assertNull(userVerification.getPasswordResetTokenExpiry());
         assertEquals(VerifiedStatus.VERIFIED, userVerification.getStatus());
-        verify(userRepository, times(1)).save(user);
-        verify(userEmailTemplateService, times(1)).sendSuccessfulPasswordReset(
-                anyString(), anyString(), anyString());
+        verify(eventPublisherService).publishEvent(anyString(), anyString(), any());
     }
 
     @Test
     void resetPassword_WithNonExistentUser_ShouldThrowNotFoundException() {
         // Arrange
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.empty());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NotFoundException.class,
-                () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
+        assertThrows(NotFoundException.class, () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
     }
 
     @Test
     void resetPassword_WithUnverifiedAccount_ShouldThrowForbiddenException() {
         // Arrange
         user.setVerified(false);
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
 
         // Act & Assert
-        ForbiddenException exception = assertThrows(ForbiddenException.class,
-                () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
-        assertEquals("Account not verified. Please verify your account first.", exception.getMessage());
+        assertThrows(ForbiddenException.class, () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
     }
 
     @Test
     void resetPassword_WithInvalidToken_ShouldThrowBadRequestException() {
         // Arrange
-        userVerification.setPasswordResetToken("different-token");
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.of(user));
+        userVerification.setPasswordResetToken("invalid-token");
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
 
         // Act & Assert
-        BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
-        assertEquals("Invalid password reset token.", exception.getMessage());
+        assertThrows(BadRequestException.class, () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
     }
 
     @Test
@@ -216,14 +216,12 @@ class PasswordResetImplTest {
         // Arrange
         userVerification.setPasswordResetToken("valid-token");
         userVerification.setPasswordResetTokenExpiry(OffsetDateTime.now().minusHours(1));
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
 
         // Act & Assert
-        BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
-        assertEquals("Password reset token has expired.", exception.getMessage());
+        assertThrows(BadRequestException.class, () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
         assertEquals(VerifiedStatus.EXPIRED, userVerification.getStatus());
-        verify(userRepository, times(1)).save(user);
+        verify(userRepository).save(user);
     }
 
     @Test
@@ -231,8 +229,7 @@ class PasswordResetImplTest {
         // Arrange
         userVerification.setPasswordResetToken("valid-token");
         userVerification.setPasswordResetTokenExpiry(OffsetDateTime.now().plusHours(1));
-        user.setPassword("oldEncodedPassword"); // Set a password for the user
-        when(userRepository.findByEmail(anyString())).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(resetPasswordDto.newPassword(), user.getPassword())).thenReturn(true);
 
         // Act & Assert

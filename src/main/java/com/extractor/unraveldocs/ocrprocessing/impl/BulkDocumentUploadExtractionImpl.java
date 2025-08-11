@@ -4,8 +4,8 @@ import com.extractor.unraveldocs.config.RabbitMQConfig;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionResponse;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionUploadData;
 import com.extractor.unraveldocs.documents.dto.response.FileEntryData;
-import com.extractor.unraveldocs.documents.enums.DocumentStatus;
-import com.extractor.unraveldocs.documents.enums.DocumentUploadState;
+import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
+import com.extractor.unraveldocs.documents.datamodel.DocumentUploadState;
 import com.extractor.unraveldocs.documents.model.DocumentCollection;
 import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.documents.repository.DocumentCollectionRepository;
@@ -143,7 +143,6 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
                                 .eventSource("BulkDocumentUploadExtractionImpl")
                                 .eventTimestamp(System.currentTimeMillis())
                                 .correlationId(UUID.randomUUID().toString())
-                                .userId(user.getId())
                                 .build();
                         BaseEvent<OcrRequestedEvent> event = BaseEvent.<OcrRequestedEvent>builder()
                                 .metadata(metadata)
@@ -151,8 +150,8 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
                                 .build();
 
                         eventPublisherService.publishEvent(
-                                RabbitMQConfig.OCR_EXCHANGE_NAME,
-                                "unraveldocs.ocr.request",
+                                RabbitMQConfig.OCR_EVENTS_EXCHANGE,
+                                RabbitMQConfig.OCR_ROUTING_KEY,
                                 event);
                     });
                 }

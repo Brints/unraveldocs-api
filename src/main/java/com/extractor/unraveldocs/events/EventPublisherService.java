@@ -18,7 +18,8 @@ public class EventPublisherService {
     public <T> void publishEvent(String exchange, String routingKey, BaseEvent<T> event) {
         try {
             MessageProperties messageProperties = new MessageProperties();
-            messageProperties.setHeader("eventType", event.getMetadata().getEventType());
+            // In EventPublisherService
+            messageProperties.setHeader("__TypeId__", event.getMetadata().getEventType());
             messageProperties.setCorrelationId(event.getMetadata().getCorrelationId());
             Message message = messageConverter.toMessage(event, messageProperties);
 

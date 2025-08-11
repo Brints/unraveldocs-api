@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.messaging.emailtemplates;
 
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
-import com.extractor.unraveldocs.messaging.service.EmailPublisherService;
+import com.extractor.unraveldocs.messaging.emailservice.EmailOrchestratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +13,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class UserEmailTemplateService {
-    private final EmailPublisherService emailPublisherService;
+
+    private final EmailOrchestratorService emailOrchestratorService;
 
     public void sendPasswordResetToken(String email, String firstName, String lastName, String token, String expiration) {
         EmailMessage message = EmailMessage.builder()
@@ -28,8 +29,7 @@ public class UserEmailTemplateService {
                         "expiration", expiration
                 ))
                 .build();
-
-        emailPublisherService.queueEmail(message);
+        emailOrchestratorService.sendEmail(message);
     }
 
     public void sendSuccessfulPasswordReset(String email, String firstName, String lastName) {
@@ -42,8 +42,7 @@ public class UserEmailTemplateService {
                         "lastName", lastName
                 ))
                 .build();
-
-        emailPublisherService.queueEmail(message);
+        emailOrchestratorService.sendEmail(message);
     }
 
     public void sendSuccessfulPasswordChange(String email, String firstName, String lastName) {
@@ -56,8 +55,7 @@ public class UserEmailTemplateService {
                         "lastName", lastName
                 ))
                 .build();
-
-        emailPublisherService.queueEmail(message);
+        emailOrchestratorService.sendEmail(message);
     }
 
     public void scheduleUserDeletion(String email, String firstName, String lastName, OffsetDateTime deletionDate) {
@@ -72,8 +70,7 @@ public class UserEmailTemplateService {
                         "deletionDate", deletionDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
                 ))
                 .build();
-
-        emailPublisherService.queueEmail(message);
+        emailOrchestratorService.sendEmail(message);
     }
 
     public void sendDeletedAccountEmail(String email) {
@@ -83,7 +80,6 @@ public class UserEmailTemplateService {
                 .templateName("accountDeleted")
                 .templateModel(Map.of())
                 .build();
-
-        emailPublisherService.queueEmail(message);
+        emailOrchestratorService.sendEmail(message);
     }
 }

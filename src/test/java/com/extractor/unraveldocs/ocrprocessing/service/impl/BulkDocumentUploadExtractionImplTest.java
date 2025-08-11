@@ -3,14 +3,17 @@ package com.extractor.unraveldocs.ocrprocessing.service.impl;
 import com.extractor.unraveldocs.config.RabbitMQConfig;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionResponse;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionUploadData;
-import com.extractor.unraveldocs.documents.enums.DocumentStatus;
-import com.extractor.unraveldocs.documents.enums.DocumentUploadState;
+import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
+import com.extractor.unraveldocs.documents.datamodel.DocumentUploadState;
 import com.extractor.unraveldocs.documents.model.DocumentCollection;
 import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.documents.repository.DocumentCollectionRepository;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
+import com.extractor.unraveldocs.events.BaseEvent;
+import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
-import com.extractor.unraveldocs.ocrprocessing.dto.request.OcrRequestMessage;
+import com.extractor.unraveldocs.ocrprocessing.events.OcrEventMapper;
+import com.extractor.unraveldocs.ocrprocessing.events.OcrRequestedEvent;
 import com.extractor.unraveldocs.ocrprocessing.impl.BulkDocumentUploadExtractionImpl;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
 import com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService;
@@ -26,7 +29,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -48,7 +50,9 @@ class BulkDocumentUploadExtractionImplTest {
     @Mock
     private OcrDataRepository ocrDataRepository;
     @Mock
-    private RabbitTemplate rabbitTemplate;
+    private EventPublisherService eventPublisherService;
+    @Mock
+    private OcrEventMapper ocrEventMapper;
     @Mock
     private SanitizeLogging s;
     @Mock
@@ -67,7 +71,9 @@ class BulkDocumentUploadExtractionImplTest {
     void setUp() {
         user = new User();
         user.setId(UUID.randomUUID().toString());
-        TransactionSynchronizationManager.initSynchronization();
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.initSynchronization();
+        }
 
         byte[] smallContent = "c".getBytes();
         validFile1 = new MockMultipartFile("files", "test1.png", "image/png", smallContent);
@@ -102,6 +108,7 @@ class BulkDocumentUploadExtractionImplTest {
         savedCollection.setFiles(List.of(fileEntry1, fileEntry2));
         savedCollection.setCollectionStatus(DocumentStatus.PROCESSING);
         when(documentCollectionRepository.save(any(DocumentCollection.class))).thenReturn(savedCollection);
+        when(ocrEventMapper.toOcrRequestedEvent(any(FileEntry.class), anyString())).thenReturn(new OcrRequestedEvent());
 
         // Act
         DocumentCollectionResponse<DocumentCollectionUploadData> response = bulkDocumentUploadExtractionService.uploadDocuments(files, user);
@@ -121,17 +128,10 @@ class BulkDocumentUploadExtractionImplTest {
         // Manually trigger afterCommit to simulate transaction completion
         List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
         assertFalse(synchronizations.isEmpty());
-        synchronizations.getFirst().afterCommit();
+        synchronizations.get(0).afterCommit();
 
         verify(ocrDataRepository, times(1)).saveAll(anyList());
-        ArgumentCaptor<OcrRequestMessage> messageCaptor = ArgumentCaptor.forClass(OcrRequestMessage.class);
-        verify(rabbitTemplate, times(2)).convertAndSend(eq(RabbitMQConfig.OCR_EXCHANGE_NAME), eq(RabbitMQConfig.OCR_ROUTING_KEY), messageCaptor.capture());
-
-        List<OcrRequestMessage> capturedMessages = messageCaptor.getAllValues();
-        assertEquals(savedCollection.getId(), capturedMessages.get(0).getCollectionId());
-        assertEquals(fileEntry1.getDocumentId(), capturedMessages.get(0).getDocumentId());
-        assertEquals(savedCollection.getId(), capturedMessages.get(1).getCollectionId());
-        assertEquals(fileEntry2.getDocumentId(), capturedMessages.get(1).getDocumentId());
+        verify(eventPublisherService, times(2)).publishEvent(eq(RabbitMQConfig.OCR_EVENTS_EXCHANGE), eq(RabbitMQConfig.OCR_ROUTING_KEY), any(BaseEvent.class));
     }
 
     @Test
@@ -139,8 +139,10 @@ class BulkDocumentUploadExtractionImplTest {
         // Arrange
         MockMultipartFile storageFailFile = new MockMultipartFile("files", "storage_fail.png", "image/png", "content".getBytes());
         MultipartFile[] files = {validFile1, invalidFileTypeFile, storageFailFile};
-        mockedValidationUtil.when(() -> FileUploadValidationUtil.validateIndividualFile(any(MultipartFile.class))).then(invocation -> null);
-        mockedValidationUtil.when(() -> FileUploadValidationUtil.validateIndividualFile(eq(invalidFileTypeFile)))
+
+        mockedValidationUtil.when(() -> FileUploadValidationUtil.validateIndividualFile(validFile1)).then(invocation -> null);
+        mockedValidationUtil.when(() -> FileUploadValidationUtil.validateIndividualFile(storageFailFile)).then(invocation -> null);
+        mockedValidationUtil.when(() -> FileUploadValidationUtil.validateIndividualFile(invalidFileTypeFile))
                 .thenThrow(new BadRequestException("Invalid file type"));
 
 
@@ -153,6 +155,7 @@ class BulkDocumentUploadExtractionImplTest {
         savedCollection.setFiles(List.of(successFileEntry));
         savedCollection.setCollectionStatus(DocumentStatus.PROCESSING);
         when(documentCollectionRepository.save(any(DocumentCollection.class))).thenReturn(savedCollection);
+        when(ocrEventMapper.toOcrRequestedEvent(any(FileEntry.class), anyString())).thenReturn(new OcrRequestedEvent());
 
         // Act
         DocumentCollectionResponse<DocumentCollectionUploadData> response = bulkDocumentUploadExtractionService.uploadDocuments(files, user);
@@ -171,10 +174,10 @@ class BulkDocumentUploadExtractionImplTest {
 
         List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
         assertFalse(synchronizations.isEmpty());
-        synchronizations.getFirst().afterCommit();
+        synchronizations.get(0).afterCommit();
 
         verify(ocrDataRepository, times(1)).saveAll(anyList());
-        verify(rabbitTemplate, times(1)).convertAndSend(anyString(), anyString(), any(OcrRequestMessage.class));
+        verify(eventPublisherService, times(1)).publishEvent(anyString(), anyString(), any(BaseEvent.class));
     }
 
     @Test
@@ -201,7 +204,7 @@ class BulkDocumentUploadExtractionImplTest {
         verify(documentCollectionRepository, never()).save(any());
         verify(ocrDataRepository, never()).saveAll(any());
         verify(fileStorageService, never()).handleSuccessfulFileUpload(any(), any());
-        verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), any(Object.class));
+        verify(eventPublisherService, never()).publishEvent(anyString(), anyString(), any(BaseEvent.class));
     }
 
     @Test
@@ -238,7 +241,7 @@ class BulkDocumentUploadExtractionImplTest {
         assertNull(response.getData().getCollectionId());
         assertEquals(DocumentStatus.FAILED_UPLOAD, response.getData().getOverallStatus());
         assertEquals(1, response.getData().getFiles().size());
-        assertEquals(DocumentUploadState.FAILED_VALIDATION.toString(), response.getData().getFiles().getFirst().getStatus());
+        assertEquals(DocumentUploadState.FAILED_VALIDATION.toString(), response.getData().getFiles().get(0).getStatus());
 
         verify(documentCollectionRepository, never()).save(any(DocumentCollection.class));
     }

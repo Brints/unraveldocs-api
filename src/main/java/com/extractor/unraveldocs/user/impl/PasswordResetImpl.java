@@ -1,27 +1,37 @@
 package com.extractor.unraveldocs.user.impl;
 
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
+import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
+import com.extractor.unraveldocs.config.RabbitMQConfig;
+import com.extractor.unraveldocs.events.BaseEvent;
+import com.extractor.unraveldocs.events.EventMetadata;
+import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.dto.request.ForgotPasswordDto;
 import com.extractor.unraveldocs.user.dto.request.ResetPasswordDto;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.user.events.PasswordResetRequestedEvent;
+import com.extractor.unraveldocs.user.events.PasswordResetSuccessfulEvent;
 import com.extractor.unraveldocs.user.interfaces.passwordreset.IPasswordReset;
 import com.extractor.unraveldocs.user.interfaces.userimpl.PasswordResetService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
-import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.utils.generatetoken.GenerateVerificationToken;
 import com.extractor.unraveldocs.utils.userlib.DateHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,10 +40,12 @@ public class PasswordResetImpl implements PasswordResetService {
     private final GenerateVerificationToken generateVerificationToken;
     private final PasswordEncoder passwordEncoder;
     private final ResponseBuilderService responseBuilder;
-    private final UserEmailTemplateService userEmailTemplateService;
     private final UserRepository userRepository;
+    private final EventPublisherService eventPublisherService;
+    private final UserEventMapper userEventMapper;
 
     @Override
+    @Transactional
     public UnravelDocsDataResponse<Void> forgotPassword(ForgotPasswordDto forgotPasswordDto) {
         String email = forgotPasswordDto.email();
         User user = userRepository.findByEmail(email)
@@ -45,38 +57,30 @@ public class PasswordResetImpl implements PasswordResetService {
             throw new BadRequestException("This account is not verified. Please verify your account before resetting the password.");
         }
 
-        if (userVerification.getPasswordResetToken() != null) {
-            throw new BadRequestException("A password reset request has already been sent. Please check your email.");
-        }
-
-        // Current time
         OffsetDateTime currentTime = OffsetDateTime.now();
 
-        if (
+        if (userVerification.getPasswordResetToken() != null &&
                 userVerification.getPasswordResetTokenExpiry() != null &&
-                        userVerification.getPasswordResetTokenExpiry().isAfter(currentTime)
-        ){
+                userVerification.getPasswordResetTokenExpiry().isAfter(currentTime)) {
             String timeLeft = dateHelper.getTimeLeftToExpiry(currentTime, userVerification.getPasswordResetTokenExpiry(), "hours");
             throw new BadRequestException(
-                    "A password reset request has already been sent. Token expires in : " + timeLeft);
+                    "A password reset request has already been sent. Please check your email. Token expires in: " + timeLeft);
         }
 
         String token = generateVerificationToken.generateVerificationToken();
-        OffsetDateTime expiryTime = dateHelper.setExpiryDate(currentTime,"hour", 1);
+        OffsetDateTime expiryTime = dateHelper.setExpiryDate(currentTime, "hour", 1);
 
         userVerification.setPasswordResetToken(token);
         userVerification.setPasswordResetTokenExpiry(expiryTime);
         userRepository.save(user);
 
-        // TODO: Send email with the token (implementation not shown)
-        String expiration = dateHelper.getTimeLeftToExpiry(currentTime, expiryTime, "hours");
-        userEmailTemplateService.sendPasswordResetToken(
-                email,
-                user.getFirstName(),
-                user.getLastName(),
-                token,
-                expiration
-        );
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String expiration = dateHelper.getTimeLeftToExpiry(currentTime, expiryTime, "hours");
+                publishPasswordResetRequestedEvent(user, token, expiration);
+            }
+        });
 
         return responseBuilder.buildUserResponse(
                 null,
@@ -86,6 +90,7 @@ public class PasswordResetImpl implements PasswordResetService {
     }
 
     @Override
+    @Transactional
     public UnravelDocsDataResponse<Void> resetPassword(IPasswordReset params, ResetPasswordDto request) {
         String email = params.getEmail();
         String token = params.getToken();
@@ -99,7 +104,7 @@ public class PasswordResetImpl implements PasswordResetService {
             throw new ForbiddenException("Account not verified. Please verify your account first.");
         }
 
-        if (!userVerification.getPasswordResetToken().equals(token)) {
+        if (userVerification.getPasswordResetToken() == null || !userVerification.getPasswordResetToken().equals(token)) {
             throw new BadRequestException("Invalid password reset token.");
         }
 
@@ -109,30 +114,61 @@ public class PasswordResetImpl implements PasswordResetService {
             throw new BadRequestException("Password reset token has expired.");
         }
 
-        boolean isOldPassword =
-                passwordEncoder.matches(request.newPassword(), user.getPassword());
-        if (isOldPassword) {
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
             throw new BadRequestException("New password cannot be the same as the old password.");
         }
 
-        String encodedPassword = passwordEncoder.encode(request.newPassword());
-        user.setPassword(encodedPassword);
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
         userVerification.setPasswordResetToken(null);
         userVerification.setPasswordResetTokenExpiry(null);
         userVerification.setStatus(VerifiedStatus.VERIFIED);
         userRepository.save(user);
 
-        // TODO: Send email to user with the new password (implementation not shown)
-        userEmailTemplateService.sendSuccessfulPasswordReset(
-                email,
-                user.getFirstName(),
-                user.getLastName()
-        );
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                publishPasswordResetSuccessfulEvent(user);
+            }
+        });
 
         return responseBuilder.buildUserResponse(
                 null,
                 HttpStatus.OK,
                 "Password reset successfully."
+        );
+    }
+
+    private void publishPasswordResetRequestedEvent(User user, String token, String expiration) {
+        PasswordResetRequestedEvent payload = userEventMapper.toPasswordResetRequestedEvent(user, token, expiration);
+        EventMetadata metadata = EventMetadata.builder()
+                .eventType("PasswordResetRequested")
+                .eventSource("PasswordResetImpl")
+                .eventTimestamp(System.currentTimeMillis())
+                .correlationId(UUID.randomUUID().toString())
+                .build();
+        BaseEvent<PasswordResetRequestedEvent> event = new BaseEvent<>(metadata, payload);
+
+        eventPublisherService.publishEvent(
+                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                "user.password.reset.requested",
+                event
+        );
+    }
+
+    private void publishPasswordResetSuccessfulEvent(User user) {
+        PasswordResetSuccessfulEvent payload = userEventMapper.toPasswordResetSuccessfulEvent(user);
+        EventMetadata metadata = EventMetadata.builder()
+                .eventType("PasswordResetSuccessful")
+                .eventSource("PasswordResetImpl")
+                .eventTimestamp(System.currentTimeMillis())
+                .correlationId(UUID.randomUUID().toString())
+                .build();
+        BaseEvent<PasswordResetSuccessfulEvent> event = new BaseEvent<>(metadata, payload);
+
+        eventPublisherService.publishEvent(
+                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                "user.password.reset.successful",
+                event
         );
     }
 }

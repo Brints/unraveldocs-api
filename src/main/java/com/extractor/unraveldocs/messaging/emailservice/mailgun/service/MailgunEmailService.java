@@ -23,22 +23,6 @@ public class MailgunEmailService {
         this.mailgunConfig = mailgunConfig;
     }
 
-    public void sendSimpleEmail(String to, String subject, String body) {
-        Message message = Message.builder()
-                .from(mailgunConfig.getMailgunFromEmail())
-                .to(to)
-                .subject(subject)
-                .text(body)
-                .build();
-
-        try {
-            mailgunMessagesApi.sendMessage(mailgunConfig.getMailgunDomain(), message);
-        } catch (MailGunException e) {
-            throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
-        }
-    }
-
-    @Deprecated
     public void sendWithAttachment(String to, String subject, String body, File attachment) {
         Message message = Message.builder()
                 .from(mailgunConfig.getMailgunFromEmail())

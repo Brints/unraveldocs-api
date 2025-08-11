@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.ocrprocessing.dto.response;
 
-import com.extractor.unraveldocs.documents.enums.DocumentStatus;
+import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
 import lombok.Data;
 
 import java.util.List;

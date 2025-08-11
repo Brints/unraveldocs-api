@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.documents.dto.response;
 
-import com.extractor.unraveldocs.documents.enums.DocumentStatus;
+import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

@@ -3,16 +3,18 @@ package com.extractor.unraveldocs.auth.mappers;
 import com.extractor.unraveldocs.auth.dto.request.SignUpRequestDto;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.utils.userlib.UserLibrary;
-import lombok.RequiredArgsConstructor;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Mapper(componentModel = "spring")
-@RequiredArgsConstructor
 public abstract class UserMapper {
-    protected final PasswordEncoder passwordEncoder;
-    protected final UserLibrary userLibrary;
+    @Autowired
+    protected PasswordEncoder passwordEncoder;
+
+    @Autowired
+    protected UserLibrary userLibrary;
 
     @Mapping(target = "password", expression = "java(passwordEncoder.encode(request.password()))")
     @Mapping(target = "firstName", expression = "java(userLibrary.capitalizeFirstLetterOfName(request.firstName()))")

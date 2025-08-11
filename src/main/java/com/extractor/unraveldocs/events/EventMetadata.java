@@ -10,5 +10,4 @@ public class EventMetadata {
     private String eventSource;
     private long eventTimestamp;
     private String correlationId;
-    private String userId;
 }

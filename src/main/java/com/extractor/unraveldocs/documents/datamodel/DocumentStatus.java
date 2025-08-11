@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.documents.enums;
+package com.extractor.unraveldocs.documents.datamodel;
 
 public enum DocumentStatus {
     UPLOADED("uploaded"),

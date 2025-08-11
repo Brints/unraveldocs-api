@@ -8,6 +8,7 @@ import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.mappers.UserMapper;
 import com.extractor.unraveldocs.auth.mappers.UserVerificationMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
+import com.extractor.unraveldocs.config.RabbitMQConfig;
 import com.extractor.unraveldocs.events.BaseEvent;
 import com.extractor.unraveldocs.events.EventMetadata;
 import com.extractor.unraveldocs.events.EventPublisherService;
@@ -29,6 +30,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -84,41 +87,41 @@ public class SignupUserImpl implements SignupUserService {
 
         User savedUser = userRepository.save(user);
 
-        // TODO: Implement email sending service
-        String expiration = dateHelper.getTimeLeftToExpiry(now, emailVerificationTokenExpiry, "hour");
-        UserRegisteredEvent payload = userEventMapper.toUserRegisteredEvent(savedUser, emailVerificationToken, expiration);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String expiration = dateHelper.getTimeLeftToExpiry(now, emailVerificationTokenExpiry, "hour");
+                UserRegisteredEvent payload = userEventMapper.toUserRegisteredEvent(savedUser, emailVerificationToken, expiration);
 
-        EventMetadata metadata = EventMetadata.builder()
-                .eventType("UserRegisteredEvent")
-                .eventSource("SignupUserImpl")
-                .eventTimestamp(System.currentTimeMillis())
-                .correlationId(UUID.randomUUID().toString())
-                .userId(savedUser.getId())
-                .build();
+                EventMetadata metadata = EventMetadata.builder()
+                        .eventType("UserRegistered")
+                        .eventSource("SignupUserImpl")
+                        .eventTimestamp(System.currentTimeMillis())
+                        .correlationId(UUID.randomUUID().toString())
+                        .build();
 
-        BaseEvent<UserRegisteredEvent> event = BaseEvent.<UserRegisteredEvent>builder()
-                .metadata(metadata)
-                .payload(payload)
-                .build();
+                BaseEvent<UserRegisteredEvent> event = new BaseEvent<>(metadata, payload);
 
-        eventPublisherService.publishEvent(
-                "user.events.exchange",
-                "user.registered",
-                event
-        );
+                eventPublisherService.publishEvent(
+                        RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                        RabbitMQConfig.USER_REGISTERED_ROUTING_KEY,
+                        event
+                );
+            }
+        });
 
         SignupData signupData = SignupData.builder()
-                .id(user.getId())
-                .profilePicture(user.getProfilePicture())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .lastLogin(user.getLastLogin())
-                .isActive(user.isActive())
-                .isVerified(user.isVerified())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
+                .id(savedUser.getId())
+                .profilePicture(savedUser.getProfilePicture())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .email(savedUser.getEmail())
+                .role(savedUser.getRole())
+                .lastLogin(savedUser.getLastLogin())
+                .isActive(savedUser.isActive())
+                .isVerified(savedUser.isVerified())
+                .createdAt(savedUser.getCreatedAt())
+                .updatedAt(savedUser.getUpdatedAt())
                 .build();
 
         return responseBuilder.buildUserResponse(signupData, HttpStatus.CREATED, "User registered successfully");

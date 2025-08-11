@@ -111,11 +111,11 @@ public class DeleteUserImpl implements DeleteUserService {
         }
 
         UserDeletionScheduledEvent payload = userEventMapper.toUserDeletionScheduledEvent(user, deletionDate);
-        EventMetadata metadata = createEventMetadata("UserDeletionScheduled", user.getId());
+        EventMetadata metadata = createEventMetadata("UserDeletionScheduled");
         BaseEvent<UserDeletionScheduledEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
-                RabbitMQConfig.USER_EVENTS_EXCHANGE_NAME,
+                RabbitMQConfig.USER_EVENTS_EXCHANGE,
                 "user.deletion.scheduled",
                 event
         );
@@ -123,23 +123,22 @@ public class DeleteUserImpl implements DeleteUserService {
 
     private void publishUserDeletedEvent(User user) {
         UserDeletedEvent payload = userEventMapper.toUserDeletedEvent(user);
-        EventMetadata metadata = createEventMetadata("UserDeleted", user.getId());
+        EventMetadata metadata = createEventMetadata("UserDeleted");
         BaseEvent<UserDeletedEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
-                RabbitMQConfig.USER_EVENTS_EXCHANGE_NAME,
+                RabbitMQConfig.USER_EVENTS_EXCHANGE,
                 "user.deleted",
                 event
         );
     }
 
-    private EventMetadata createEventMetadata(String eventType, String userId) {
+    private EventMetadata createEventMetadata(String eventType) {
         return EventMetadata.builder()
                 .eventType(eventType)
                 .eventSource("DeleteUserImpl")
                 .eventTimestamp(System.currentTimeMillis())
                 .correlationId(UUID.randomUUID().toString())
-                .userId(userId)
                 .build();
     }
 }
