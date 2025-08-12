@@ -1,41 +1,58 @@
-#-------------------------------------------------------------------------------#
-#            Discover all capabilities of Qodana in our documentation           #
-#             https://www.jetbrains.com/help/qodana/about-qodana.html           #
-#-------------------------------------------------------------------------------#
+name: Qodana Code Quality
 
-name: Qodana
 on:
   workflow_dispatch:
   pull_request:
+    branches: [main, dev]
   push:
-    branches:
-      - main
-      - dev
-      - payments-stripe
+    branches: [main, dev]
 
 jobs:
   qodana:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
       checks: write
+      security-events: write
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - name: 'Qodana Scan'
-        uses: JetBrains/qodana-action@v2025.2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@v2024.2
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
         with:
-          # In pr-mode: 'true' Qodana checks only changed files
-          pr-mode: false
+          pr-mode: ${{ github.event_name == 'pull_request' }}
           use-caches: true
           post-pr-comment: true
           use-annotations: true
-          # Upload Qodana results (SARIF, other artifacts, logs) as an artifact to the job
-          upload-result: false
-          # quick-fixes available in Ultimate and Ultimate Plus plans
+          upload-result: true
           push-fixes: 'none'
+          fail-threshold: 0
+
+      - name: Upload SARIF file
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
+          category: qodana
