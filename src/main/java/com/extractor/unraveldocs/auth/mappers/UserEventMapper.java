@@ -40,7 +40,7 @@ public interface UserEventMapper {
             @Mapping(target = "token", source = "token"),
             @Mapping(target = "expiration", source = "expiration")
     })
-    PasswordResetRequestedEvent toPasswordResetRequestedEvent(User user, String token, String expiration);
+    PasswordResetEvent toPasswordResetRequestedEvent(User user, String token, String expiration);
 
     @Mappings({
             @Mapping(target = "email", source = "user.email"),

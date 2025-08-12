@@ -87,6 +87,7 @@ public class SignupUserImpl implements SignupUserService {
 
         User savedUser = userRepository.save(user);
 
+        // Registering a synchronization to publish the event after commit
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {

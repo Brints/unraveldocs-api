@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 @Data
 @Builder
-public class PasswordResetRequestedEvent implements Serializable {
+public class PasswordResetEvent implements Serializable {
     private String email;
     private String firstName;
     private String lastName;

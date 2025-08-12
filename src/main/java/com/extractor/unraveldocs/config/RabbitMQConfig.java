@@ -1,6 +1,7 @@
 package com.extractor.unraveldocs.config;
 
-import com.extractor.unraveldocs.events.BaseEvent;
+import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
+import com.extractor.unraveldocs.user.events.*;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -145,14 +146,17 @@ public class RabbitMQConfig {
     public DefaultClassMapper classMapper() {
         DefaultClassMapper classMapper = new DefaultClassMapper();
         Map<String, Class<?>> idClassMapping = new HashMap<>();
-        idClassMapping.put("UserRegisteredEvent", BaseEvent.class);
-        idClassMapping.put("UserDeletionScheduledEvent", BaseEvent.class);
-        idClassMapping.put("UserDeletedEvent", BaseEvent.class);
-        idClassMapping.put("OcrRequested", BaseEvent.class);
-        idClassMapping.put("PasswordChanged", BaseEvent.class);
-        idClassMapping.put("PasswordResetRequested", BaseEvent.class);
-        idClassMapping.put("PasswordResetSuccessful", BaseEvent.class);
+
+        // Map event types to their specific payload classes, not BaseEvent
+        idClassMapping.put("UserRegistered", UserRegisteredEvent.class);
+        idClassMapping.put("UserDeletionScheduled", UserDeletionScheduledEvent.class);
+        idClassMapping.put("UserDeleted", UserDeletedEvent.class);
+        idClassMapping.put("PasswordChanged", PasswordChangedEvent.class);
+        idClassMapping.put("PasswordResetRequested", PasswordResetEvent.class);
+        idClassMapping.put("PasswordResetSuccessful", PasswordResetSuccessfulEvent.class);
+
         classMapper.setIdClassMapping(idClassMapping);
+        classMapper.setTrustedPackages("*");
         return classMapper;
     }
 }

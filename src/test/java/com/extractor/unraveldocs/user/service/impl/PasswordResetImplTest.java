@@ -10,7 +10,7 @@ import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.user.dto.request.ForgotPasswordDto;
 import com.extractor.unraveldocs.user.dto.request.ResetPasswordDto;
 import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
-import com.extractor.unraveldocs.user.events.PasswordResetRequestedEvent;
+import com.extractor.unraveldocs.user.events.PasswordResetEvent;
 import com.extractor.unraveldocs.user.events.PasswordResetSuccessfulEvent;
 import com.extractor.unraveldocs.user.impl.PasswordResetImpl;
 import com.extractor.unraveldocs.user.interfaces.passwordreset.IPasswordReset;
@@ -115,7 +115,7 @@ class PasswordResetImplTest {
         when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(1))).thenReturn(OffsetDateTime.now().plusHours(1));
         when(responseBuilder.buildUserResponse(isNull(), eq(HttpStatus.OK), anyString()))
                 .thenReturn(new UnravelDocsDataResponse<>());
-        when(userEventMapper.toPasswordResetRequestedEvent(any(), any(), any())).thenReturn(mock(PasswordResetRequestedEvent.class));
+        when(userEventMapper.toPasswordResetRequestedEvent(any(), any(), any())).thenReturn(mock(PasswordResetEvent.class));
 
         // Act
         passwordResetService.forgotPassword(forgotPasswordDto);

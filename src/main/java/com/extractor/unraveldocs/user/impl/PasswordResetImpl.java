@@ -14,7 +14,7 @@ import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.dto.request.ForgotPasswordDto;
 import com.extractor.unraveldocs.user.dto.request.ResetPasswordDto;
-import com.extractor.unraveldocs.user.events.PasswordResetRequestedEvent;
+import com.extractor.unraveldocs.user.events.PasswordResetEvent;
 import com.extractor.unraveldocs.user.events.PasswordResetSuccessfulEvent;
 import com.extractor.unraveldocs.user.interfaces.passwordreset.IPasswordReset;
 import com.extractor.unraveldocs.user.interfaces.userimpl.PasswordResetService;
@@ -139,14 +139,14 @@ public class PasswordResetImpl implements PasswordResetService {
     }
 
     private void publishPasswordResetRequestedEvent(User user, String token, String expiration) {
-        PasswordResetRequestedEvent payload = userEventMapper.toPasswordResetRequestedEvent(user, token, expiration);
+        PasswordResetEvent payload = userEventMapper.toPasswordResetRequestedEvent(user, token, expiration);
         EventMetadata metadata = EventMetadata.builder()
                 .eventType("PasswordResetRequested")
                 .eventSource("PasswordResetImpl")
                 .eventTimestamp(System.currentTimeMillis())
                 .correlationId(UUID.randomUUID().toString())
                 .build();
-        BaseEvent<PasswordResetRequestedEvent> event = new BaseEvent<>(metadata, payload);
+        BaseEvent<PasswordResetEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
                 RabbitMQConfig.USER_EVENTS_EXCHANGE,
