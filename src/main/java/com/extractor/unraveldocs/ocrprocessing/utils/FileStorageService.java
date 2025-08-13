@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.ocrprocessing.utils;
 
-import com.extractor.unraveldocs.documents.enums.DocumentUploadState;
+import com.extractor.unraveldocs.documents.datamodel.DocumentUploadState;
 import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.utils.imageupload.aws.AwsS3Service;

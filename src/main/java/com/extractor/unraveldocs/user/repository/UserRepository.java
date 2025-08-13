@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.user.repository;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.user.model.User;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -46,7 +46,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     );
 
     @Cacheable("superAdminExists")
-    @Query("SELECT COUNT(u) = 0 FROM User u WHERE u.role = com.extractor.unraveldocs.auth.enums.Role.SUPER_ADMIN")
+    @Query("SELECT COUNT(u) = 0 FROM User u WHERE u.role = com.extractor.unraveldocs.auth.datamodel.Role.SUPER_ADMIN")
     boolean superAdminExists();
 
     @Query("SELECT u FROM User u WHERE u.lastLogin < :threshold AND u.deletedAt IS NULL")

@@ -1,26 +1,120 @@
 version: '3.8'
+
 services:
-  localstack:
-    image: localstack/localstack:4.4.0
+  unraveldocs-api:
+    build: .
+    container_name: unraveldocs-api
     ports:
-      - "4566:4566"
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
     environment:
-      - SERVICES=s3
-      - GATEWAY_LISTEN=0.0.0.0:4566
-      - LOCALSTACK_HOST=localstack
-      - DOCKER_HOST=unix:///var/run/docker.sock
-      - DEBUG=1
-      - MAIN_CONTAINER_NAME=localstack
-      - PERSISTENCE=0
-      - LS_LOG=trace
-      - SKIP_SSL_CERT_DOWNLOAD=1
-      - START_WEB=0
-    healthcheck:
-      test: ["CMD", "curl", "-s", "http://localhost:4566/_localstack/health", "|", "grep", "'\"s3\": \"running\"'"]
-      interval: 15s
-      timeout: 15s
-      retries: 20
+      # Database
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/unraveldocs
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # Redis
+      - SPRING_DATA_REDIS_URL=redis://redis:6379
+      # RabbitMQ
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      # AWS S3
+      - SPRING_CLOUD_AWS_S3_ENDPOINT=http://localstack:4566
+      - SPRING_CLOUD_AWS_S3_PATH_STYLE_ACCESS_ENABLED=true
+      - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY=test
+      - SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY=test
+      - SPRING_CLOUD_AWS_REGION_STATIC=eu-north-1
+    networks:
+      - unraveldocs-net
+
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: unraveldocs
     volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d unraveldocs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - unraveldocs-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - unraveldocs-net
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - unraveldocs-net
+
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    ports:
+      - "4566:4566"  # LocalStack Gateway
+      - "4510-4559:4510-4559"  # LocalStack services
+    environment:
+      - SERVICES=s3,sqs,lambda,cloudformation
+      - DEFAULT_REGION=eu-north-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - localstack_data:/var/lib/localstack
       - /var/run/docker.sock:/var/run/docker.sock
-    mem_limit: 4g
-    cpus: '2'
+    healthcheck:
+      test: ["CMD", "awslocal", "s3", "ls"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - unraveldocs-net
+
+# Volumes for persistent data
+volumes:
+  postgres_data:
+    driver: local
+  localstack_data:
+    driver: local
+
+# Network for inter-service communication
+networks:
+  unraveldocs-net:
+    driver: bridge

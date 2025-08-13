@@ -1,8 +1,9 @@
 package com.extractor.unraveldocs.messaging.emailtemplates;
 
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
-import com.extractor.unraveldocs.messaging.service.EmailPublisherService;
+import com.extractor.unraveldocs.messaging.emailservice.EmailOrchestratorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -13,9 +14,24 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class UserEmailTemplateService {
-    private final EmailPublisherService emailPublisherService;
+
+    private final EmailOrchestratorService emailOrchestratorService;
+
+    @Value("${app.base.url}")
+    private String baseUrl;
+
+    @Value("${spring.application.name}")
+    private String appName;
+
+    @Value("${app.support.email}")
+    private String supportEmail;
+
+    @Value("${app.unsubscribe.url}")
+    private String unsubscribeUrl;
 
     public void sendPasswordResetToken(String email, String firstName, String lastName, String token, String expiration) {
+        String resetUrl = baseUrl + "/api/v1/user/reset-password?token=" + token + "&email=" + email;
+
         EmailMessage message = EmailMessage.builder()
                 .to(email)
                 .subject("Password Reset Token")
@@ -23,13 +39,11 @@ public class UserEmailTemplateService {
                 .templateModel(Map.of(
                         "firstName", firstName,
                         "lastName", lastName,
-                        "email", email,
-                        "token", token,
+                        "resetUrl", resetUrl,
                         "expiration", expiration
                 ))
                 .build();
-
-        emailPublisherService.queueEmail(message);
+        emailOrchestratorService.sendEmail(message);
     }
 
     public void sendSuccessfulPasswordReset(String email, String firstName, String lastName) {
@@ -42,22 +56,20 @@ public class UserEmailTemplateService {
                         "lastName", lastName
                 ))
                 .build();
-
-        emailPublisherService.queueEmail(message);
+        emailOrchestratorService.sendEmail(message);
     }
 
     public void sendSuccessfulPasswordChange(String email, String firstName, String lastName) {
         EmailMessage message = EmailMessage.builder()
                 .to(email)
                 .subject("Password Change Successful")
-                .templateName("successfulPasswordChange")
+                .templateName("changePassword")
                 .templateModel(Map.of(
                         "firstName", firstName,
                         "lastName", lastName
                 ))
                 .build();
-
-        emailPublisherService.queueEmail(message);
+        emailOrchestratorService.sendEmail(message);
     }
 
     public void scheduleUserDeletion(String email, String firstName, String lastName, OffsetDateTime deletionDate) {
@@ -72,8 +84,7 @@ public class UserEmailTemplateService {
                         "deletionDate", deletionDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
                 ))
                 .build();
-
-        emailPublisherService.queueEmail(message);
+        emailOrchestratorService.sendEmail(message);
     }
 
     public void sendDeletedAccountEmail(String email) {
@@ -83,7 +94,31 @@ public class UserEmailTemplateService {
                 .templateName("accountDeleted")
                 .templateModel(Map.of())
                 .build();
+        emailOrchestratorService.sendEmail(message);
+    }
 
-        emailPublisherService.queueEmail(message);
+    public void sendWelcomeEmail(String email, String firstName, String lastName) {
+        String appUrl = baseUrl;
+        String dashboardUrl = baseUrl + "/dashboard";
+        String recipientName = ((firstName != null ? firstName : "").trim() + " " + (lastName != null ? lastName : "").trim()).trim();
+        String finalUnsubscribeUrl = (unsubscribeUrl == null || unsubscribeUrl.isBlank())
+                ? baseUrl + "/unsubscribe"
+                : unsubscribeUrl;
+
+        EmailMessage message = EmailMessage.builder()
+                .to(email)
+                .subject("Welcome to " + appName)
+                .templateName("welcome")
+                .templateModel(Map.of(
+                        "recipientName", recipientName.isEmpty() ? "there" : recipientName,
+                        "appName", appName,
+                        "appUrl", appUrl,
+                        "dashboardUrl", dashboardUrl,
+                        "supportEmail", supportEmail,
+                        "unsubscribeUrl", finalUnsubscribeUrl
+                ))
+                .build();
+
+        emailOrchestratorService.sendEmail(message);
     }
 }

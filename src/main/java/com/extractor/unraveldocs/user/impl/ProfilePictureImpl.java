@@ -1,8 +1,8 @@
 package com.extractor.unraveldocs.user.impl;
 
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
-import com.extractor.unraveldocs.global.response.ResponseBuilderService;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.interfaces.userimpl.ProfilePictureService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;

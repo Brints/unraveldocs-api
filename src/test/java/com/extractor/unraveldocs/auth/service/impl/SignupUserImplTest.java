@@ -2,23 +2,28 @@ package com.extractor.unraveldocs.auth.service.impl;
 
 import com.extractor.unraveldocs.auth.dto.SignupData;
 import com.extractor.unraveldocs.auth.dto.request.SignUpRequestDto;
-import com.extractor.unraveldocs.auth.enums.Role;
-import com.extractor.unraveldocs.auth.enums.VerifiedStatus;
+import com.extractor.unraveldocs.auth.datamodel.Role;
+import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.auth.impl.SignupUserImpl;
+import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
+import com.extractor.unraveldocs.auth.mappers.UserMapper;
+import com.extractor.unraveldocs.auth.mappers.UserVerificationMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
+import com.extractor.unraveldocs.config.RabbitMQConfig;
+import com.extractor.unraveldocs.events.BaseEvent;
+import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
-import com.extractor.unraveldocs.global.response.ResponseBuilderService;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;
-import com.extractor.unraveldocs.messaging.emailtemplates.AuthEmailTemplateService;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import com.extractor.unraveldocs.utils.generatetoken.GenerateVerificationToken;
 import com.extractor.unraveldocs.utils.userlib.DateHelper;
-import com.extractor.unraveldocs.utils.userlib.UserLibrary;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,10 +31,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -39,37 +45,37 @@ import static org.mockito.Mockito.*;
 class SignupUserImplTest {
 
     @Mock
-    private AuthEmailTemplateService templatesService;
-
-    @Mock
     private ResponseBuilderService responseBuilder;
-
     @Mock
     private DateHelper dateHelper;
-
     @Mock
     private GenerateVerificationToken verificationToken;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private UserLibrary userLibrary;
-
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private AssignSubscriptionService assignSubscriptionService;
+    @Mock
+    private UserMapper userMapper;
+    @Mock
+    private UserVerificationMapper userVerificationMapper;
+    @Mock
+    private EventPublisherService eventPublisherService;
+    @Mock
+    private UserEventMapper userEventMapper;
 
     @InjectMocks
     private SignupUserImpl signupUserService;
 
     private SignUpRequestDto request;
+    private User user;
+    private UserVerification userVerification;
     private OffsetDateTime expiryDate;
 
     @BeforeEach
     void setUp() {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.initSynchronization();
+        }
         OffsetDateTime now = OffsetDateTime.now();
         expiryDate = now.plusHours(3);
 
@@ -80,117 +86,73 @@ class SignupUserImplTest {
                 "P@ssw0rd123",
                 "P@ssw0rd123"
         );
+
+        user = new User();
+        user.setId("1");
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setEmail("john.doe@example.com");
+        user.setVerified(false);
+        user.setActive(false);
+
+        userVerification = new UserVerification();
+        userVerification.setUser(user);
+    }
+
+    @AfterEach
+    void tearDown() {
+        TransactionSynchronizationManager.clear();
+    }
+
+    private void setupCommonMocks() {
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
+        when(userMapper.toUser(request)).thenReturn(user);
+        when(verificationToken.generateVerificationToken()).thenReturn("verificationToken");
+        when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(3))).thenReturn(expiryDate);
+        when(userVerificationMapper.toUserVerification(any(User.class), anyString(), any(OffsetDateTime.class))).thenReturn(userVerification);
+        when(assignSubscriptionService.assignDefaultSubscription(any(User.class))).thenReturn(new UserSubscription());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(responseBuilder.buildUserResponse(any(SignupData.class), eq(HttpStatus.CREATED), eq("User registered successfully")))
+                .thenAnswer(invocation -> {
+                    SignupData data = invocation.getArgument(0);
+                    return new UnravelDocsDataResponse<>(HttpStatus.CREATED.value(), "success", "User registered successfully", data);
+                });
     }
 
     @Test
     void registerUser_SuccessfulRegistration_ReturnsSignupResponse() {
         // Arrange
-        SignupData data = SignupData.builder()
-                .id(String.valueOf(1L))
-                .firstName("John")
-                .lastName("Doe")
-                .email("john.doe@example.com")
-                .profilePicture(null)
-                .isVerified(false)
-                .isActive(false)
-                .role(Role.USER)
-                .lastLogin(null)
-                .build();
-
-        UnravelDocsDataResponse<SignupData> expectedResponse = new UnravelDocsDataResponse<>();
-        expectedResponse.setStatusCode(HttpStatus.CREATED.value());
-        expectedResponse.setStatus("success");
-        expectedResponse.setMessage("User registered successfully");
-        expectedResponse.setData(data);
-
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(userLibrary.capitalizeFirstLetterOfName("john")).thenReturn("John");
-        when(userLibrary.capitalizeFirstLetterOfName("doe")).thenReturn("Doe");
-        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        when(verificationToken.generateVerificationToken()).thenReturn("verificationToken");
-        when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(3))).thenReturn(expiryDate);
+        setupCommonMocks();
+        when(userRepository.superAdminExists()).thenReturn(false); // A super admin exists, so this user should be a regular USER
         when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), any(OffsetDateTime.class), eq("hour"))).thenReturn("3");
-        when(userRepository.superAdminExists()).thenReturn(false);
-        when(assignSubscriptionService.assignDefaultSubscription(any(User.class))).thenReturn(new UserSubscription());
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User savedUser = invocation.getArgument(0);
-            savedUser.setId(String.valueOf(1L));
-            return savedUser;
-        });
-        when(responseBuilder.buildUserResponse(
-                any(SignupData.class), eq(HttpStatus.CREATED), eq("User registered successfully")
-        )).thenReturn(expectedResponse);
+        when(userEventMapper.toUserRegisteredEvent(any(User.class), anyString(), anyString())).thenReturn(mock(UserRegisteredEvent.class));
+
 
         // Act
         UnravelDocsDataResponse<SignupData> response = signupUserService.registerUser(request);
+        List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
+        assertFalse(synchronizations.isEmpty());
+        synchronizations.getFirst().afterCommit();
 
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.CREATED.value(), response.getStatusCode());
-        assertEquals("success", response.getStatus());
         assertEquals("User registered successfully", response.getMessage());
         assertNotNull(response.getData());
         assertEquals("John", response.getData().firstName());
-        assertEquals("Doe", response.getData().lastName());
-        assertEquals("john.doe@example.com", response.getData().email());
         assertEquals(Role.USER, response.getData().role());
-        assertFalse(response.getData().isVerified());
-        assertFalse(response.getData().isActive());
-        assertNull(response.getData().lastLogin());
-        assertNull(response.getData().profilePicture());
 
         verify(userRepository).existsByEmail("john.doe@example.com");
-        verify(userLibrary).capitalizeFirstLetterOfName("john");
-        verify(userLibrary).capitalizeFirstLetterOfName("doe");
-        verify(passwordEncoder).encode("P@ssw0rd123");
-        verify(verificationToken).generateVerificationToken();
-        verify(dateHelper).setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(3));
-        verify(assignSubscriptionService).assignDefaultSubscription(any(User.class));
-        verify(templatesService).sendVerificationEmail(
-                eq("john.doe@example.com"), eq("John"), eq("Doe"), eq("verificationToken"), eq("3"));
-        verify(userRepository).save(any(User.class));
-        verify(responseBuilder).buildUserResponse(
-                any(SignupData.class), eq(HttpStatus.CREATED), eq("User registered successfully")
-        );
+        verify(userRepository).save(argThat(savedUser -> savedUser.getRole() == Role.USER));
+        verify(eventPublisherService).publishEvent(eq(RabbitMQConfig.USER_EVENTS_EXCHANGE), eq(RabbitMQConfig.USER_REGISTERED_ROUTING_KEY), any(BaseEvent.class));
     }
 
     @Test
     void registerUser_FirstUser_SetsSuperAdminRole() {
         // Arrange
-        SignupData data = SignupData.builder()
-                .id(String.valueOf(1L))
-                .firstName("John")
-                .lastName("Doe")
-                .email("john.doe@example.com")
-                .profilePicture(null)
-                .isVerified(false)
-                .isActive(false)
-                .role(Role.SUPER_ADMIN)
-                .lastLogin(null)
-                .build();
-
-        UnravelDocsDataResponse<SignupData> expectedResponse = new UnravelDocsDataResponse<>();
-        expectedResponse.setStatusCode(HttpStatus.CREATED.value());
-        expectedResponse.setStatus("success");
-        expectedResponse.setMessage("User registered successfully");
-        expectedResponse.setData(data);
-
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(userLibrary.capitalizeFirstLetterOfName(anyString())).thenReturn("John");
-        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        when(verificationToken.generateVerificationToken()).thenReturn("verificationToken");
-        when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(3))).thenReturn(expiryDate);
-        when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), any(OffsetDateTime.class), eq("hour"))).thenReturn("3");
-        when(userRepository.superAdminExists()).thenReturn(true);
-        when(assignSubscriptionService.assignDefaultSubscription(any(User.class))).thenReturn(new UserSubscription());
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User savedUser = invocation.getArgument(0);
-            savedUser.setId(String.valueOf(1L));
-            return savedUser;
-        });
-        when(responseBuilder.buildUserResponse(
-                any(SignupData.class), eq(HttpStatus.CREATED), eq("User registered successfully")
-        )).thenReturn(expectedResponse);
+        setupCommonMocks();
+        when(userRepository.superAdminExists()).thenReturn(true); // No super admin exists, so this user should be SUPER_ADMIN
 
         // Act
         UnravelDocsDataResponse<SignupData> response = signupUserService.registerUser(request);
@@ -200,6 +162,7 @@ class SignupUserImplTest {
         assertEquals(HttpStatus.CREATED.value(), response.getStatusCode());
         assertEquals(Role.SUPER_ADMIN, response.getData().role());
         verify(userRepository).superAdminExists();
+        verify(userRepository).save(argThat(savedUser -> savedUser.getRole() == Role.SUPER_ADMIN));
     }
 
     @Test
@@ -208,54 +171,30 @@ class SignupUserImplTest {
         when(userRepository.existsByEmail("john.doe@example.com")).thenReturn(true);
 
         // Act & Assert
-        assertThrows(ConflictException.class, () -> signupUserService.registerUser(request),
-                "Email already exists");
+        assertThrows(ConflictException.class, () -> signupUserService.registerUser(request), "Email already exists");
         verify(userRepository).existsByEmail("john.doe@example.com");
         verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(userLibrary, passwordEncoder, verificationToken, dateHelper,
-                templatesService, responseBuilder, assignSubscriptionService);
+        verifyNoInteractions(userMapper, verificationToken, dateHelper, responseBuilder, assignSubscriptionService);
     }
 
     @Test
     void registerUser_PasswordSameAsEmail_ThrowsBadRequestException() {
         // Arrange
-        SignUpRequestDto invalidRequest = new SignUpRequestDto(
-                "john",
-                "doe",
-                "john.doe@example.com",
-                "john.doe@example.com",
-                "john.doe@example.com"
-        );
+        SignUpRequestDto invalidRequest = new SignUpRequestDto("john", "doe", "john.doe@example.com", "john.doe@example.com", "john.doe@example.com");
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
 
         // Act & Assert
-        assertThrows(BadRequestException.class, () -> signupUserService.registerUser(invalidRequest),
-                "Password cannot be same as email.");
+        assertThrows(BadRequestException.class, () -> signupUserService.registerUser(invalidRequest), "Password cannot be same as email.");
         verify(userRepository).existsByEmail("john.doe@example.com");
         verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(userLibrary, passwordEncoder, verificationToken, dateHelper,
-                templatesService, responseBuilder, assignSubscriptionService);
+        verifyNoInteractions(userMapper, verificationToken, dateHelper, responseBuilder, assignSubscriptionService);
     }
 
     @Test
     void registerUser_VerificationDetailsAndLoginAttemptsSetCorrectly() {
         // Arrange
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
-        when(userLibrary.capitalizeFirstLetterOfName(anyString())).thenReturn("John");
-        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        when(verificationToken.generateVerificationToken()).thenReturn("verificationToken");
-        when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(3))).thenReturn(expiryDate);
-        when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), any(OffsetDateTime.class), eq("hour"))).thenReturn("3");
+        setupCommonMocks();
         when(userRepository.superAdminExists()).thenReturn(false);
-        when(assignSubscriptionService.assignDefaultSubscription(any(User.class))).thenReturn(new UserSubscription());
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User savedUser = invocation.getArgument(0);
-            savedUser.setId(String.valueOf(1L));
-            return savedUser;
-        });
-        when(responseBuilder.buildUserResponse(
-                any(SignupData.class), eq(HttpStatus.CREATED), eq("User registered successfully")
-        )).thenReturn(any());
 
         // Act
         signupUserService.registerUser(request);
@@ -263,18 +202,17 @@ class SignupUserImplTest {
         // Assert
         verify(userRepository).save(argThat(u -> {
             UserVerification verification = u.getUserVerification();
-            boolean verificationCorrect = verification.getEmailVerificationToken().equals("verificationToken") &&
-                    verification.getStatus() == VerifiedStatus.PENDING &&
-                    verification.getEmailVerificationTokenExpiry().equals(expiryDate) &&
-                    !verification.isEmailVerified() &&
-                    verification.getPasswordResetToken() == null &&
-                    verification.getPasswordResetTokenExpiry() == null;
+            boolean verificationCorrect = verification != null &&
+                    verification.getUser() == u;
 
             LoginAttempts loginAttempts = u.getLoginAttempts();
             boolean loginAttemptsCorrect = loginAttempts != null &&
-                    loginAttempts.getUser() == u;
+                    loginAttempts.getUser() == u &&
+                    loginAttempts.getLoginAttempts() == 0 &&
+                    !loginAttempts.isBlocked();
 
             return verificationCorrect && loginAttemptsCorrect;
         }));
+        verify(userVerificationMapper).toUserVerification(user, "verificationToken", expiryDate);
     }
 }

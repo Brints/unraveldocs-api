@@ -1,8 +1,9 @@
 package com.extractor.unraveldocs.messaging.emailtemplates;
 
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
-import com.extractor.unraveldocs.messaging.service.EmailPublisherService;
+import com.extractor.unraveldocs.messaging.emailservice.EmailOrchestratorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -10,9 +11,15 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class AuthEmailTemplateService {
-    private final EmailPublisherService emailPublisherService;
+
+    private final EmailOrchestratorService emailOrchestratorService;
+
+    @Value("${app.base.url}")
+    private String baseUrl;
 
     public void sendVerificationEmail(String email, String firstName, String lastName, String token, String expiration) {
+        String verificationUrl = baseUrl + "/api/v1/auth/verify-email?token=" + token;
+
         EmailMessage message = EmailMessage.builder()
                 .to(email)
                 .subject("Email Verification Token")
@@ -20,11 +27,11 @@ public class AuthEmailTemplateService {
                 .templateModel(Map.of(
                         "firstName", firstName,
                         "lastName", lastName,
-                        "email", email,
-                        "token", token,
+                        "verificationUrl", verificationUrl,
                         "expiration", expiration
                 ))
                 .build();
-        emailPublisherService.queueEmail(message);
+
+        emailOrchestratorService.sendEmail(message);
     }
 }

@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.auth.dto;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import lombok.Builder;
 
 import java.time.OffsetDateTime;

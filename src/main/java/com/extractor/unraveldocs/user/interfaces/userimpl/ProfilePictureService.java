@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.user.interfaces.userimpl;
 
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.model.User;
 import org.springframework.web.multipart.MultipartFile;
 

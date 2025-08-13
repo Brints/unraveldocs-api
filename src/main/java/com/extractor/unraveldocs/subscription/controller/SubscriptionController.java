@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.subscription.controller;
 
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.subscription.dto.request.CreateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.request.UpdateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.response.AllSubscriptionPlans;
@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin/subscriptions")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated() and (hasRole('ROLE_ADMIN') or hasRole('ROLE_SUPER_ADMIN'))")
+@Tag(name = "Subscription Management", description = "APIs for managing subscription plans and assigning them to users.")
 public class SubscriptionController {
     private final SubscriptionPlansService subscriptionPlansService;
 

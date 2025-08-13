@@ -1,18 +1,22 @@
 package com.extractor.unraveldocs.auth.service.impl;
 
+import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.dto.request.ResendEmailVerificationDto;
-import com.extractor.unraveldocs.auth.enums.VerifiedStatus;
+import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.auth.impl.EmailVerificationImpl;
+import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
+import com.extractor.unraveldocs.events.BaseEvent;
+import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.messaging.emailtemplates.AuthEmailTemplateService;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
-import com.extractor.unraveldocs.global.response.ResponseBuilderService;
 import com.extractor.unraveldocs.utils.generatetoken.GenerateVerificationToken;
 import com.extractor.unraveldocs.utils.userlib.DateHelper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -41,10 +46,13 @@ class EmailVerificationImplTest {
     private DateHelper dateHelper;
 
     @Mock
-    private AuthEmailTemplateService templatesService;
+    private ResponseBuilderService responseBuilder;
 
     @Mock
-    private ResponseBuilderService responseBuilder;
+    private EventPublisherService eventPublisherService;
+
+    @Mock
+    private UserEventMapper userEventMapper;
 
     @InjectMocks
     private EmailVerificationImpl emailVerificationService;
@@ -72,6 +80,13 @@ class EmailVerificationImplTest {
 
         userVerification = new UserVerification();
         user.setUserVerification(userVerification);
+
+        TransactionSynchronizationManager.initSynchronization();
+    }
+
+    @AfterEach
+    void tearDown() {
+        TransactionSynchronizationManager.clear();
     }
 
     // Tests for resendEmailVerification
@@ -85,7 +100,7 @@ class EmailVerificationImplTest {
                 "User does not exist.");
         verify(userRepository).findByEmail("john.doe@example.com");
         verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(verificationToken, dateHelper, templatesService, responseBuilder);
+        verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
     }
 
     @Test
@@ -99,7 +114,7 @@ class EmailVerificationImplTest {
                 "User is already verified. Please login.");
         verify(userRepository).findByEmail("john.doe@example.com");
         verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(verificationToken, dateHelper, templatesService, responseBuilder);
+        verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
     }
 
     @Test
@@ -108,39 +123,42 @@ class EmailVerificationImplTest {
         userVerification.setEmailVerificationToken("existingToken");
         userVerification.setEmailVerificationTokenExpiry(expiryDate);
         when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
-        when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), eq(expiryDate), eq("hour"))).thenReturn("2");
+        when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), eq(expiryDate), eq("hour"))).thenReturn("2 hours");
 
         // Act & Assert
         BadRequestException exception = assertThrows(BadRequestException.class,
-                () -> emailVerificationService.resendEmailVerification(resendRequest),
-                "A verification email has already been sent. Token expires in: 2");
-        assertEquals("A verification email has already been sent. Token expires in: 2", exception.getMessage());
+                () -> emailVerificationService.resendEmailVerification(resendRequest));
+        assertEquals("A verification email has already been sent. Please check your inbox or try again in 2 hours", exception.getMessage());
         verify(userRepository).findByEmail("john.doe@example.com");
         verify(dateHelper).getTimeLeftToExpiry(any(OffsetDateTime.class), eq(expiryDate), eq("hour"));
         verifyNoMoreInteractions(userRepository, dateHelper);
-        verifyNoInteractions(verificationToken, templatesService, responseBuilder);
+        verifyNoInteractions(verificationToken, responseBuilder);
     }
 
     @Test
     void resendEmailVerification_SuccessfulResend_ReturnsUserResponse() {
         // Arrange
+        UnravelDocsDataResponse<Void> expectedResponse = new UnravelDocsDataResponse<>(HttpStatus.OK.value(), "success", "A new verification email has been sent successfully.", null);
         when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
         when(verificationToken.generateVerificationToken()).thenReturn("newToken");
         when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(3))).thenReturn(expiryDate);
-        when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), eq(expiryDate), eq("hour"))).thenReturn("3");
+        when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), eq(expiryDate), eq("hour"))).thenReturn("3 hours");
         when(userRepository.save(any(User.class))).thenReturn(user);
-        when(responseBuilder.buildUserResponse(
-                isNull(), eq(HttpStatus.OK), eq("Verification email sent successfully.")
-        )).thenReturn(new UnravelDocsDataResponse<>(HttpStatus.OK.value(), "success", "Verification email sent successfully.", null));
+        when(userEventMapper.toUserRegisteredEvent(any(User.class), anyString(), anyString())).thenReturn(new UserRegisteredEvent());
+        when(responseBuilder.<Void>buildUserResponse(
+                null, HttpStatus.OK, "A new verification email has been sent successfully."
+        )).thenReturn(expectedResponse);
 
         // Act
         UnravelDocsDataResponse<Void> response = emailVerificationService.resendEmailVerification(resendRequest);
+        TransactionSynchronizationManager.getSynchronizations().get(0).afterCommit();
+
 
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.OK.value(), response.getStatusCode());
         assertEquals("success", response.getStatus());
-        assertEquals("Verification email sent successfully.", response.getMessage());
+        assertEquals("A new verification email has been sent successfully.", response.getMessage());
         assertNull(response.getData());
         verify(userRepository).findByEmail("john.doe@example.com");
         verify(verificationToken).generateVerificationToken();
@@ -148,15 +166,13 @@ class EmailVerificationImplTest {
         verify(dateHelper).getTimeLeftToExpiry(any(OffsetDateTime.class), eq(expiryDate), eq("hour"));
         verify(userRepository).save(argThat(u -> {
             UserVerification uv = u.getUserVerification();
-            return uv.getEmailVerificationToken().equals("newToken") &&
-                    uv.getEmailVerificationTokenExpiry().equals(expiryDate) &&
-                    uv.getStatus() == VerifiedStatus.PENDING &&
-                    !uv.isEmailVerified();
+            return "newToken".equals(uv.getEmailVerificationToken()) &&
+                    expiryDate.equals(uv.getEmailVerificationTokenExpiry()) &&
+                    uv.getStatus() == VerifiedStatus.PENDING;
         }));
-        verify(templatesService).sendVerificationEmail(
-                eq("john.doe@example.com"), eq("John"), eq("Doe"), eq("newToken"), eq("3"));
+        verify(eventPublisherService).publishEvent(anyString(), anyString(), any(BaseEvent.class));
         verify(responseBuilder).buildUserResponse(
-                isNull(), eq(HttpStatus.OK), eq("Verification email sent successfully.")
+                null, HttpStatus.OK, "A new verification email has been sent successfully."
         );
         verifyNoMoreInteractions(responseBuilder);
     }
@@ -172,7 +188,7 @@ class EmailVerificationImplTest {
                 "User does not exist.");
         verify(userRepository).findByEmail("john.doe@example.com");
         verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(verificationToken, dateHelper, templatesService, responseBuilder);
+        verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
     }
 
     @Test
@@ -186,7 +202,7 @@ class EmailVerificationImplTest {
                 "User is already verified. Please login.");
         verify(userRepository).findByEmail("john.doe@example.com");
         verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(verificationToken, dateHelper, templatesService, responseBuilder);
+        verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
     }
 
     @Test
@@ -201,7 +217,7 @@ class EmailVerificationImplTest {
                 "Invalid email verification token.");
         verify(userRepository).findByEmail("john.doe@example.com");
         verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(verificationToken, dateHelper, templatesService, responseBuilder);
+        verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
     }
 
     @Test
@@ -219,7 +235,7 @@ class EmailVerificationImplTest {
         verify(userRepository).findByEmail("john.doe@example.com");
         verify(userRepository).save(argThat(u -> u.getUserVerification().getStatus() == VerifiedStatus.EXPIRED));
         verifyNoMoreInteractions(userRepository);
-        verifyNoInteractions(verificationToken, dateHelper, templatesService, responseBuilder);
+        verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
     }
 
     @Test
@@ -230,8 +246,8 @@ class EmailVerificationImplTest {
         when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        var expectedResponse = new UnravelDocsDataResponse<>(HttpStatus.OK.value(), "success", "Email verified successfully", null);
-        when(responseBuilder.buildUserResponse(
+        UnravelDocsDataResponse<Void> expectedResponse = new UnravelDocsDataResponse<>(HttpStatus.OK.value(), "success", "Email verified successfully", null);
+        when(responseBuilder.<Void>buildUserResponse(
                 null, HttpStatus.OK, "Email verified successfully"
         )).thenReturn(expectedResponse);
 
@@ -258,6 +274,6 @@ class EmailVerificationImplTest {
                 null, HttpStatus.OK, "Email verified successfully"
         );
         verifyNoMoreInteractions(userRepository, responseBuilder);
-        verifyNoInteractions(verificationToken, dateHelper, templatesService);
+        verifyNoInteractions(verificationToken, dateHelper);
     }
 }

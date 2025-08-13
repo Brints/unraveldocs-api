@@ -1,8 +1,8 @@
 package com.extractor.unraveldocs.subscription.impl;
 
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
-import com.extractor.unraveldocs.global.response.ResponseBuilderService;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.subscription.dto.request.CreateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.response.SubscriptionPlansData;
 import com.extractor.unraveldocs.subscription.interfaces.AddSubscriptionPlansService;
@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,20 @@ public class AddSubscriptionPlansImpl implements AddSubscriptionPlansService {
             throw new BadRequestException("Subscription plan with this name already exists.");
         }
 
+        OffsetDateTime now = OffsetDateTime.now();
+
+        SubscriptionPlan newPlan = getSubscriptionPlan(request, now);
+
+
+        SubscriptionPlan savedPlan = planRepository.save(newPlan);
+
+        SubscriptionPlansData plansData = getSubscriptionPlansData(savedPlan);
+
+        return responseBuilderService
+                .buildUserResponse(plansData, HttpStatus.CREATED, "Subscription plan created successfully.");
+    }
+
+    private static SubscriptionPlan getSubscriptionPlan(CreateSubscriptionPlanRequest request, OffsetDateTime now) {
         SubscriptionPlan newPlan = new SubscriptionPlan();
         newPlan.setName(request.name());
         newPlan.setPrice(request.price());
@@ -35,13 +51,9 @@ public class AddSubscriptionPlansImpl implements AddSubscriptionPlansService {
         newPlan.setDocumentUploadLimit(request.documentUploadLimit());
         newPlan.setOcrPageLimit(request.ocrPageLimit());
         newPlan.setActive(true);
-
-        SubscriptionPlan savedPlan = planRepository.save(newPlan);
-
-        SubscriptionPlansData plansData = getSubscriptionPlansData(savedPlan);
-
-        return responseBuilderService
-                .buildUserResponse(plansData, HttpStatus.CREATED, "Subscription plan created successfully.");
+        newPlan.setCreatedAt(now);
+        newPlan.setUpdatedAt(now);
+        return newPlan;
     }
 
     public static SubscriptionPlansData getSubscriptionPlansData(SubscriptionPlan savedPlan) {

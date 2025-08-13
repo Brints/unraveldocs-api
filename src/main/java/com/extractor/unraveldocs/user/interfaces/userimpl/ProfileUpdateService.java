@@ -2,7 +2,7 @@ package com.extractor.unraveldocs.user.interfaces.userimpl;
 
 import com.extractor.unraveldocs.user.dto.UserData;
 import com.extractor.unraveldocs.user.dto.request.ProfileUpdateRequestDto;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 
 public interface ProfileUpdateService {
     /**

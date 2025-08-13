@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title th:text="'Welcome to ' + ${appName}">Welcome</title>
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no" />
+    <style>
+        /* Reset */
+        html, body { margin:0 !important; padding:0 !important; height:100% !important; width:100% !important; }
+        * { -ms-text-size-adjust:100%; -webkit-text-size-adjust:100%; }
+        table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+        img { -ms-interpolation-mode:bicubic; border:0; line-height:100%; outline:none; text-decoration:none; }
+        a { text-decoration:none; }
+        /* iOS blue links */
+        a[x-apple-data-detectors] { color:inherit !important; text-decoration:none !important; }
+        /* Gmail fix */
+        u + #body a { text-decoration:none; color:inherit; }
+        /* Responsive */
+        @media screen and (max-width:600px) {
+            .container { width:100% !important; }
+            .p-sm { padding:24px !important; }
+            .h1 { font-size:22px !important; line-height:28px !important; }
+            .btn { display:block !important; width:100% !important; }
+        }
+        /* Dark mode hint (limited client support) */
+        @media (prefers-color-scheme: dark) {
+            body, .wrapper { background:#0b0f1a !important; }
+            .card { background:#111827 !important; color:#e5e7eb !important; }
+            .muted { color:#9ca3af !important; }
+            .btn-prim { background:#3b82f6 !important; }
+            .divider { border-color:#374151 !important; }
+        }
+    </style>
+</head>
+<body id="body" style="background:#f4f4f7; margin:0; padding:0;" th:inline="text">
+<!-- Preheader (hidden) -->
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+    Your email was verified. Welcome to [[${appName}]]!
+</div>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="wrapper" style="background:#f4f4f7;">
+    <tr>
+        <td align="center" style="padding:24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px; max-width:600px;">
+                <!-- Header -->
+                <tr>
+                    <td align="left" style="padding:12px 8px;">
+                        <a th:href="${appUrl}" style="font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; font-size:16px; color:#111827; font-weight:700;">
+                            [[${appName}]]
+                        </a>
+                    </td>
+                </tr>
+
+                <!-- Card -->
+                <tr>
+                    <td>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="card" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                            <tr>
+                                <td class="p-sm" style="padding:32px; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#111827;">
+                                    <!-- Icon -->
+                                    <div style="text-align:center; padding-bottom:16px;">
+                                        <div style="display:inline-block; width:56px; height:56px; border-radius:50%; background:#22c55e; line-height:56px; text-align:center; color:#ffffff; font-size:28px;">
+                                            ✓
+                                        </div>
+                                    </div>
+
+                                    <!-- Title -->
+                                    <h1 class="h1" style="margin:16px 0 8px; font-size:24px; line-height:32px; font-weight:700; text-align:center;">
+                                        Welcome, [[${recipientName}]]!
+                                    </h1>
+
+                                    <!-- Subtitle -->
+                                    <p style="margin:0; text-align:center; color:#4b5563; font-size:15px; line-height:22px;">
+                                        Your email has been successfully verified. Your [[${appName}]] account is ready.
+                                    </p>
+
+                                    <!-- CTA -->
+                                    <div style="text-align:center; padding:24px 0 8px;">
+                                        <a th:href="${dashboardUrl}"
+                                           class="btn btn-prim"
+                                           style="display:inline-block; background:#2563eb; color:#ffffff; padding:12px 20px; border-radius:8px; font-size:15px; line-height:22px; font-weight:600;">
+                                            Open your account
+                                        </a>
+                                    </div>
+
+                                    <!-- Secondary text -->
+                                    <p style="margin:8px 0 0; text-align:center; color:#6b7280; font-size:13px; line-height:20px;">
+                                        Trouble with the button? Paste this link in your browser:
+                                    </p>
+                                    <p style="margin:6px 0 0; text-align:center; word-break:break-all;">
+                                        <a th:href="${dashboardUrl}" th:text="${dashboardUrl}"
+                                           style="color:#2563eb; font-size:12px; line-height:18px;">https://example.com/app</a>
+                                    </p>
+
+                                    <!-- Divider -->
+                                    <hr class="divider" style="border:none; border-top:1px solid #e5e7eb; margin:28px 0;" />
+
+                                    <!-- Tips -->
+                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                        <tr>
+                                            <td style="vertical-align:top; width:32px; padding-right:8px; color:#2563eb; font-size:18px;">1.</td>
+                                            <td style="color:#374151; font-size:14px; line-height:20px;">Complete your profile to personalize your experience.</td>
+                                        </tr>
+                                        <tr><td colspan="2" style="height:8px;"></td></tr>
+                                        <tr>
+                                            <td style="vertical-align:top; width:32px; padding-right:8px; color:#2563eb; font-size:18px;">2.</td>
+                                            <td style="color:#374151; font-size:14px; line-height:20px;">Explore the dashboard and set your preferences.</td>
+                                        </tr>
+                                        <tr><td colspan="2" style="height:8px;"></td></tr>
+                                        <tr>
+                                            <td style="vertical-align:top; width:32px; padding-right:8px; color:#2563eb; font-size:18px;">3.</td>
+                                            <td style="color:#374151; font-size:14px; line-height:20px;">Reach out if you need help. We are here for you.</td>
+                                        </tr>
+                                    </table>
+
+                                    <!-- Support -->
+                                    <p class="muted" style="margin:24px 0 0; color:#6b7280; font-size:13px; line-height:20px; text-align:center;">
+                                        Need assistance? Contact us at
+                                        <a th:href="${'mailto:' + supportEmail}" style="color:#2563eb;">[[${supportEmail}]]</a>.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td align="center" style="padding:16px 8px 8px;">
+                        <p class="muted" style="margin:0; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#9ca3af; font-size:12px; line-height:18px;">
+                            © [[${#dates.format(#dates.createNow(), 'yyyy')}]] [[${appName}]]. All rights reserved.
+                        </p>
+                        <p class="muted" style="margin:4px 0 0; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#9ca3af; font-size:12px; line-height:18px;">
+                            You received this email because your address was used to create an account on [[${appName}]].
+                        </p>
+                        <p style="margin:8px 0 0;">
+                            <a th:href="${unsubscribeUrl}" style="font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#6b7280; font-size:12px;">Unsubscribe</a>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -7,7 +7,7 @@ import com.extractor.unraveldocs.documents.repository.DocumentCollectionReposito
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.ocrprocessing.dto.response.CollectionResultResponse;
 import com.extractor.unraveldocs.ocrprocessing.dto.response.FileResultData;
-import com.extractor.unraveldocs.ocrprocessing.enums.OcrStatus;
+import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
 import com.extractor.unraveldocs.ocrprocessing.interfaces.GetCollectionResultService;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;

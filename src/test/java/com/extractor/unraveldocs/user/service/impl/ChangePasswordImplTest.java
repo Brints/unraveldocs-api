@@ -1,17 +1,19 @@
 package com.extractor.unraveldocs.user.service.impl;
 
+import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
+import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.security.JwtTokenProvider;
 import com.extractor.unraveldocs.security.TokenBlacklistService;
 import com.extractor.unraveldocs.user.dto.request.ChangePasswordDto;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.impl.ChangePasswordImpl;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
-import com.extractor.unraveldocs.global.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Optional;
 
@@ -29,36 +32,49 @@ class ChangePasswordImplTest {
 
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
-    private UserEmailTemplateService emailService;
     private ResponseBuilderService responseBuilder;
     private ChangePasswordImpl changePasswordService;
     private TokenBlacklistService tokenBlacklistService;
     private JwtTokenProvider tokenProvider;
     private Authentication authentication;
+    private EventPublisherService eventPublisherService;
+
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
-        emailService = mock(UserEmailTemplateService.class);
         responseBuilder = mock(ResponseBuilderService.class);
         tokenBlacklistService = mock(TokenBlacklistService.class);
         tokenProvider = mock(JwtTokenProvider.class);
         authentication = mock(Authentication.class);
+        eventPublisherService = mock(EventPublisherService.class);
+        UserEventMapper userEventMapper = mock(UserEventMapper.class);
         SecurityContext securityContext = mock(SecurityContext.class);
 
         // Setup security context
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.initSynchronization();
+        }
+
 
         changePasswordService = new ChangePasswordImpl(
                 passwordEncoder,
                 responseBuilder,
                 tokenBlacklistService,
                 tokenProvider,
-                emailService,
-                userRepository
+                userRepository,
+                eventPublisherService,
+                userEventMapper
         );
+    }
+
+    @AfterEach
+    void tearDown() {
+        TransactionSynchronizationManager.clear();
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -154,17 +170,19 @@ class ChangePasswordImplTest {
         when(passwordEncoder.encode("newPass")).thenReturn("hashedNewPass");
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        var expectedResponse = new UnravelDocsDataResponse<>();
+        var expectedResponse = new UnravelDocsDataResponse<Void>();
         expectedResponse.setStatusCode(HttpStatus.OK.value());
         expectedResponse.setStatus("success");
         expectedResponse.setMessage("Password changed successfully.");
         expectedResponse.setData(null);
 
-        when(responseBuilder.buildUserResponse(null, HttpStatus.OK, "Password changed successfully."))
+        when(responseBuilder.<Void>buildUserResponse(null, HttpStatus.OK, "Password changed successfully."))
                 .thenReturn(expectedResponse);
 
         // Execute
         UnravelDocsDataResponse<Void> response = changePasswordService.changePassword(request);
+        TransactionSynchronizationManager.getSynchronizations().getFirst().afterCommit();
+
 
         // Assert
         assertNotNull(response);
@@ -180,10 +198,6 @@ class ChangePasswordImplTest {
         verify(passwordEncoder).matches("newPass", "hashedOldPass");
         verify(passwordEncoder).encode("newPass");
         verify(tokenBlacklistService).blacklistToken(jti, expirationMs);
-        verify(emailService).sendSuccessfulPasswordChange(
-                "john.doe@example.com",
-                "John",
-                "Doe"
-        );
+        verify(eventPublisherService).publishEvent(anyString(), anyString(), any());
     }
 }

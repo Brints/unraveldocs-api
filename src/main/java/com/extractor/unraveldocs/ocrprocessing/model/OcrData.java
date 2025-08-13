@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.ocrprocessing.model;
 
-import com.extractor.unraveldocs.ocrprocessing.enums.OcrStatus;
+import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.subscription.service.impl;
 
-import com.extractor.unraveldocs.global.response.ResponseBuilderService;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.subscription.dto.response.AllSubscriptionPlans;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionToUsersImpl;

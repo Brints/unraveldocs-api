@@ -1,16 +1,23 @@
 package com.extractor.unraveldocs.user.service.impl;
 
+import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
 import com.extractor.unraveldocs.auth.repository.UserVerificationRepository;
+import com.extractor.unraveldocs.events.BaseEvent;
+import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
+import com.extractor.unraveldocs.user.events.UserDeletedEvent;
+import com.extractor.unraveldocs.user.events.UserDeletionScheduledEvent;
 import com.extractor.unraveldocs.user.impl.DeleteUserImpl;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
-import com.extractor.unraveldocs.utils.imageupload.aws.AwsS3Service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -23,42 +30,43 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class DeleteUserImplTest {
 
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private UserVerificationRepository userVerificationRepository;
-
     @Mock
-    private AwsS3Service awsS3Service;
-
+    private EventPublisherService eventPublisherService;
     @Mock
-    private UserEmailTemplateService userEmailTemplateService;
+    private UserEventMapper userEventMapper;
 
     @InjectMocks
     private DeleteUserImpl deleteUserImpl;
 
+    private User user;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
-    @Test
-    void scheduleUserDeletion_shouldSetDeletedAtAndSendEmail() {
-        // Arrange
-        User user = new User();
+        user = new User();
         user.setId("1");
         user.setEmail("test@example.com");
         user.setFirstName("Test");
         user.setLastName("User");
         UserVerification verification = new UserVerification();
         user.setUserVerification(verification);
+    }
 
+    @Test
+    void scheduleUserDeletion_shouldSetDeletedAtAndPublishEvent() {
+        // Arrange
         when(userRepository.findById("1")).thenReturn(Optional.of(user));
+        when(userEventMapper.toUserDeletionScheduledEvent(any(User.class), any(OffsetDateTime.class)))
+                .thenReturn(new UserDeletionScheduledEvent());
 
         // Act
         deleteUserImpl.scheduleUserDeletion("1");
@@ -72,12 +80,7 @@ class DeleteUserImplTest {
         assertNotNull(savedUser.getUserVerification().getDeletedAt());
         assertEquals(savedUser.getDeletedAt(), savedUser.getUserVerification().getDeletedAt());
 
-        verify(userEmailTemplateService).scheduleUserDeletion(
-                eq("test@example.com"),
-                eq("Test"),
-                eq("User"),
-                any(OffsetDateTime.class)
-        );
+        verify(eventPublisherService).publishEvent(anyString(), eq("user.deletion.scheduled"), any(BaseEvent.class));
     }
 
     @Test
@@ -92,21 +95,15 @@ class DeleteUserImplTest {
     @Test
     void checkAndScheduleInactiveUsers_shouldScheduleForInactiveUsers() {
         // Arrange
-        User user = new User();
-        user.setId("3");
-        user.setEmail("inactive@example.com");
-        user.setFirstName("Inactive");
-        user.setLastName("User");
         user.setActive(true);
-        UserVerification verification = new UserVerification();
-        user.setUserVerification(verification);
-
         List<User> inactiveUsers = Collections.singletonList(user);
         Page<User> inactiveUsersPage = new PageImpl<>(inactiveUsers, PageRequest.of(0, 100), 1);
 
         when(userRepository.findAllByLastLoginDateBefore(any(OffsetDateTime.class), any(Pageable.class)))
                 .thenReturn(inactiveUsersPage)
-                .thenReturn(Page.empty()); // Return empty page for subsequent calls to terminate loop
+                .thenReturn(new PageImpl<>(Collections.emptyList())); // Stop the loop
+        when(userEventMapper.toUserDeletionScheduledEvent(any(User.class), any(OffsetDateTime.class)))
+                .thenReturn(new UserDeletionScheduledEvent());
 
         // Act
         deleteUserImpl.checkAndScheduleInactiveUsers();
@@ -115,63 +112,43 @@ class DeleteUserImplTest {
         assertFalse(user.isActive());
         assertNotNull(user.getDeletedAt());
         assertNotNull(user.getUserVerification().getDeletedAt());
-        verify(userEmailTemplateService).scheduleUserDeletion(
-                eq("inactive@example.com"),
-                eq("Inactive"),
-                eq("User"),
-                any(OffsetDateTime.class)
-        );
+        verify(eventPublisherService).publishEvent(anyString(), eq("user.deletion.scheduled"), any(BaseEvent.class));
         verify(userRepository).saveAll(inactiveUsers);
     }
 
     @Test
-    void processScheduledDeletions_shouldDeleteUsersAndRelatedData() {
+    void processScheduledDeletions_shouldDeleteUsersAndPublishEvent() {
         // Arrange
-        User user = new User();
-        user.setId("4");
-        user.setProfilePicture("pic.jpg");
-        UserVerification verification = new UserVerification();
-        user.setUserVerification(verification);
-
         List<User> usersToDelete = Collections.singletonList(user);
         Page<User> usersToDeletePage = new PageImpl<>(usersToDelete, PageRequest.of(0, 100), 1);
 
         when(userRepository.findAllByDeletedAtBefore(any(OffsetDateTime.class), any(Pageable.class)))
                 .thenReturn(usersToDeletePage)
-                .thenReturn(Page.empty());
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+        when(userEventMapper.toUserDeletedEvent(user)).thenReturn(new UserDeletedEvent());
 
         // Act
         deleteUserImpl.processScheduledDeletions();
 
         // Assert
-        verify(awsS3Service).deleteFile("pic.jpg");
-        verify(userVerificationRepository).delete(verification);
+        verify(eventPublisherService).publishEvent(anyString(), eq("user.deleted"), any(BaseEvent.class));
+        verify(userVerificationRepository).delete(user.getUserVerification());
         verify(userRepository).deleteAll(usersToDelete);
     }
 
     @Test
-    void deleteUser_shouldSendEmailThenDeleteUserAndRelatedData() {
+    void deleteUser_shouldPublishEventThenDeleteUserAndRelatedData() {
         // Arrange
-        User user = new User();
-        user.setId("5");
-        user.setEmail("deleted@example.com");
-        user.setFirstName("Deleted");
-        user.setProfilePicture("pic2.jpg");
-        UserVerification verification = new UserVerification();
-        user.setUserVerification(verification);
-
-        when(userRepository.findById("5")).thenReturn(Optional.of(user));
+        when(userRepository.findById("1")).thenReturn(Optional.of(user));
+        when(userEventMapper.toUserDeletedEvent(user)).thenReturn(new UserDeletedEvent());
 
         // Act
-        deleteUserImpl.deleteUser("5");
+        deleteUserImpl.deleteUser("1");
 
         // Assert
-        InOrder inOrder = inOrder(userEmailTemplateService, awsS3Service, userVerificationRepository, userRepository);
-
-        inOrder.verify(userEmailTemplateService).sendDeletedAccountEmail("deleted@example.com");
-        inOrder.verify(awsS3Service).deleteFile("pic2.jpg");
-        inOrder.verify(userVerificationRepository).delete(verification);
-        inOrder.verify(userRepository).delete(user);
+        verify(eventPublisherService).publishEvent(anyString(), eq("user.deleted"), any(BaseEvent.class));
+        verify(userVerificationRepository).delete(user.getUserVerification());
+        verify(userRepository).delete(user);
     }
 
     @Test

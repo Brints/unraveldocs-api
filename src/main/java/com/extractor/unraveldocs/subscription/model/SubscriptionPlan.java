@@ -1,8 +1,8 @@
 package com.extractor.unraveldocs.subscription.model;
 
-import com.extractor.unraveldocs.subscription.enums.BillingIntervalUnit;
-import com.extractor.unraveldocs.subscription.enums.SubscriptionCurrency;
-import com.extractor.unraveldocs.subscription.enums.SubscriptionPlans;
+import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionCurrency;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

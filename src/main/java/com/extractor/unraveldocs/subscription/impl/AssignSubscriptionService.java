@@ -1,8 +1,8 @@
 package com.extractor.unraveldocs.subscription.impl;
 
-import com.extractor.unraveldocs.auth.enums.Role;
-import com.extractor.unraveldocs.subscription.enums.SubscriptionPlans;
-import com.extractor.unraveldocs.subscription.enums.SubscriptionStatus;
+import com.extractor.unraveldocs.auth.datamodel.Role;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionStatus;
 import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import com.extractor.unraveldocs.subscription.repository.SubscriptionPlanRepository;

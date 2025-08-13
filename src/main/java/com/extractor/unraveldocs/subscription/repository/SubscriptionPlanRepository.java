@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.subscription.repository;
 
-import com.extractor.unraveldocs.subscription.enums.SubscriptionPlans;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans;
 import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

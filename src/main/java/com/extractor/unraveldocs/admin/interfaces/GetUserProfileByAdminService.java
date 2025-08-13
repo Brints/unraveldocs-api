@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.admin.interfaces;
 
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.dto.UserData;
 
 public interface GetUserProfileByAdminService {

@@ -6,8 +6,8 @@ import com.extractor.unraveldocs.admin.interfaces.ChangeUserRoleService;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.exceptions.custom.UnauthorizedException;
-import com.extractor.unraveldocs.global.response.ResponseBuilderService;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import com.extractor.unraveldocs.user.model.User;
@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import static com.extractor.unraveldocs.global.response.ResponseData.getResponseData;
+import static com.extractor.unraveldocs.shared.response.ResponseData.getResponseData;
 
 @Service
 @RequiredArgsConstructor

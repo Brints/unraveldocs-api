@@ -1,8 +1,8 @@
 package com.extractor.unraveldocs.subscription.dto.request;
 
-import com.extractor.unraveldocs.subscription.enums.BillingIntervalUnit;
-import com.extractor.unraveldocs.subscription.enums.SubscriptionCurrency;
-import com.extractor.unraveldocs.subscription.enums.SubscriptionPlans;
+import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionCurrency;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;

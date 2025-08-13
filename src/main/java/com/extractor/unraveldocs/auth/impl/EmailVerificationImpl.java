@@ -1,24 +1,33 @@
 package com.extractor.unraveldocs.auth.impl;
 
 import com.extractor.unraveldocs.auth.dto.request.ResendEmailVerificationDto;
-import com.extractor.unraveldocs.auth.enums.VerifiedStatus;
+import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
+import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
+import com.extractor.unraveldocs.auth.events.WelcomeEvent;
 import com.extractor.unraveldocs.auth.interfaces.EmailVerificationService;
+import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
+import com.extractor.unraveldocs.config.RabbitMQConfig;
+import com.extractor.unraveldocs.events.BaseEvent;
+import com.extractor.unraveldocs.events.EventMetadata;
+import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.messaging.emailtemplates.AuthEmailTemplateService;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
-import com.extractor.unraveldocs.global.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.utils.generatetoken.GenerateVerificationToken;
 import com.extractor.unraveldocs.utils.userlib.DateHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +35,12 @@ public class EmailVerificationImpl implements EmailVerificationService {
     private final UserRepository userRepository;
     private final GenerateVerificationToken verificationToken;
     private final DateHelper dateHelper;
-    private final AuthEmailTemplateService templatesService;
     private final ResponseBuilderService responseBuilder;
+    private final EventPublisherService eventPublisherService;
+    private final UserEventMapper userEventMapper;
 
     @Override
+    @Transactional
     public UnravelDocsDataResponse<Void> resendEmailVerification(ResendEmailVerificationDto request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new NotFoundException("User does not exist."));
@@ -38,14 +49,15 @@ public class EmailVerificationImpl implements EmailVerificationService {
             throw new BadRequestException("User is already verified. Please login.");
         }
 
-        // Check if the user already has an active verification token
         UserVerification userVerification = user.getUserVerification();
         OffsetDateTime now = OffsetDateTime.now();
-        if (userVerification.getEmailVerificationToken() != null) {
-            String timeLeft = dateHelper.getTimeLeftToExpiry(now, userVerification.getEmailVerificationTokenExpiry(),
-                    "hour");
+
+        // Allow resend only if the token is expired or doesn't exist
+        if (userVerification.getEmailVerificationToken() != null &&
+                userVerification.getEmailVerificationTokenExpiry().isAfter(now)) {
+            String timeLeft = dateHelper.getTimeLeftToExpiry(now, userVerification.getEmailVerificationTokenExpiry(), "hour");
             throw new BadRequestException(
-                    "A verification email has already been sent. Token expires in: " + timeLeft);
+                    "A verification email has already been sent. Please check your inbox or try again in " + timeLeft);
         }
 
         String emailVerificationToken = verificationToken.generateVerificationToken();
@@ -54,19 +66,36 @@ public class EmailVerificationImpl implements EmailVerificationService {
         userVerification.setEmailVerificationToken(emailVerificationToken);
         userVerification.setEmailVerificationTokenExpiry(emailVerificationTokenExpiry);
         userVerification.setStatus(VerifiedStatus.PENDING);
-        userVerification.setEmailVerified(false);
 
         userRepository.save(user);
 
-        // TODO: Send email with the verification token (implementation not shown)
-        templatesService.sendVerificationEmail(user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                emailVerificationToken,
-                dateHelper.getTimeLeftToExpiry(now, emailVerificationTokenExpiry, "hour"));
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                String expirationText = dateHelper.getTimeLeftToExpiry(now, emailVerificationTokenExpiry, "hour");
+                publishVerificationEmailEvent(user, emailVerificationToken, expirationText);
+            }
+        });
 
         return responseBuilder.buildUserResponse(
-                null, HttpStatus.OK, "Verification email sent successfully.");
+                null, HttpStatus.OK, "A new verification email has been sent successfully.");
+    }
+
+    private void publishVerificationEmailEvent(User user, String token, String expiration) {
+        UserRegisteredEvent payload = userEventMapper.toUserRegisteredEvent(user, token, expiration);
+        EventMetadata metadata = EventMetadata.builder()
+                .eventType("UserRegisteredEvent") // Reusing event type as the handler is the same
+                .eventSource("EmailVerificationImpl")
+                .eventTimestamp(System.currentTimeMillis())
+                .correlationId(UUID.randomUUID().toString())
+                .build();
+        BaseEvent<UserRegisteredEvent> event = new BaseEvent<>(metadata, payload);
+
+        eventPublisherService.publishEvent(
+                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                "user.verification.resent",
+                event
+        );
     }
 
     @Override
@@ -80,7 +109,7 @@ public class EmailVerificationImpl implements EmailVerificationService {
         }
 
         UserVerification userVerification = user.getUserVerification();
-        if (!userVerification.getEmailVerificationToken().equals(token)) {
+        if (userVerification.getEmailVerificationToken() == null || !userVerification.getEmailVerificationToken().equals(token)) {
             throw new BadRequestException("Invalid email verification token.");
         }
 
@@ -95,10 +124,34 @@ public class EmailVerificationImpl implements EmailVerificationService {
         userVerification.setEmailVerificationTokenExpiry(null);
         userVerification.setStatus(VerifiedStatus.VERIFIED);
 
-        user.setVerified(userVerification.getStatus().equals(VerifiedStatus.VERIFIED));
+        user.setVerified(true);
         user.setActive(true);
 
-        userRepository.save(user);
+        User updatedUser = userRepository.save(user);
+
+        // Registering a synchronization to publish the event after commit
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                WelcomeEvent welcomeEvent = new WelcomeEvent(
+                        updatedUser.getEmail(),
+                        updatedUser.getFirstName(),
+                        updatedUser.getLastName()
+                );
+                EventMetadata metadata = EventMetadata.builder()
+                        .eventType("WelcomeEvent")
+                        .eventSource("EmailVerificationImpl")
+                        .eventTimestamp(System.currentTimeMillis())
+                        .correlationId(UUID.randomUUID().toString())
+                        .build();
+                BaseEvent<WelcomeEvent> event = new BaseEvent<>(metadata, welcomeEvent);
+                eventPublisherService.publishEvent(
+                        RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                        "user.welcome",
+                        event
+                );
+            }
+        });
 
         return responseBuilder.buildUserResponse(
                 null, HttpStatus.OK, "Email verified successfully");

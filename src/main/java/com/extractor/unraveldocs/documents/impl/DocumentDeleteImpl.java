@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.documents.impl;
 
-import com.extractor.unraveldocs.documents.enums.DocumentStatus;
-import com.extractor.unraveldocs.documents.enums.DocumentUploadState;
+import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
+import com.extractor.unraveldocs.documents.datamodel.DocumentUploadState;
 import com.extractor.unraveldocs.documents.interfaces.DocumentDeleteService;
 import com.extractor.unraveldocs.documents.model.DocumentCollection;
 import com.extractor.unraveldocs.documents.model.FileEntry;

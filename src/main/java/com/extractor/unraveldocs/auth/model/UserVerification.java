@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.auth.model;
 
-import com.extractor.unraveldocs.auth.enums.VerifiedStatus;
+import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.user.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

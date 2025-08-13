@@ -7,7 +7,7 @@ import com.extractor.unraveldocs.admin.dto.response.UserListData;
 import com.extractor.unraveldocs.admin.interfaces.ChangeUserRoleService;
 import com.extractor.unraveldocs.admin.interfaces.GetAllUsersService;
 import com.extractor.unraveldocs.admin.interfaces.GetUserProfileByAdminService;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.user.dto.UserData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

@@ -1,11 +1,11 @@
 package com.extractor.unraveldocs.documents.service.impl;
 
-import com.extractor.unraveldocs.auth.enums.Role;
+import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionResponse;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionUploadData;
 import com.extractor.unraveldocs.documents.dto.response.FileEntryData;
-import com.extractor.unraveldocs.documents.enums.DocumentStatus;
-import com.extractor.unraveldocs.documents.enums.DocumentUploadState;
+import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
+import com.extractor.unraveldocs.documents.datamodel.DocumentUploadState;
 import com.extractor.unraveldocs.documents.impl.DocumentUploadImpl;
 import com.extractor.unraveldocs.documents.model.DocumentCollection;
 import com.extractor.unraveldocs.documents.model.FileEntry;

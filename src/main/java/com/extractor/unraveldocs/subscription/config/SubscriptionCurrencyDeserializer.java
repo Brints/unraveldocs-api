@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.subscription.config;
 
-import com.extractor.unraveldocs.subscription.enums.SubscriptionCurrency;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionCurrency;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;

@@ -1,8 +1,8 @@
 package com.extractor.unraveldocs.subscription.dto.request;
 
 import com.extractor.unraveldocs.subscription.config.SubscriptionCurrencyDeserializer;
-import com.extractor.unraveldocs.subscription.enums.BillingIntervalUnit;
-import com.extractor.unraveldocs.subscription.enums.SubscriptionCurrency;
+import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionCurrency;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Builder;
 

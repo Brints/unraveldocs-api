@@ -1,13 +1,13 @@
 package com.extractor.unraveldocs.subscription.service.impl;
 
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
-import com.extractor.unraveldocs.global.response.ResponseBuilderService;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import com.extractor.unraveldocs.subscription.dto.request.CreateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.response.SubscriptionPlansData;
-import com.extractor.unraveldocs.subscription.enums.BillingIntervalUnit;
-import com.extractor.unraveldocs.subscription.enums.SubscriptionCurrency;
-import com.extractor.unraveldocs.subscription.enums.SubscriptionPlans;
+import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionCurrency;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans;
 import com.extractor.unraveldocs.subscription.impl.AddSubscriptionPlansImpl;
 import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.subscription.repository.SubscriptionPlanRepository;

@@ -6,7 +6,7 @@ import com.extractor.unraveldocs.auth.dto.SignupData;
 import com.extractor.unraveldocs.auth.dto.request.*;
 import com.extractor.unraveldocs.auth.interfaces.*;
 import com.extractor.unraveldocs.user.dto.response.GeneratePasswordResponse;
-import com.extractor.unraveldocs.global.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
