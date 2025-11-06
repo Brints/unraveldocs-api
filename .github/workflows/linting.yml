@@ -8,16 +8,16 @@ on:
     branches:
       - main
       - develop
-    workflow_dispatch:
-      inputs:
-        lint_type:
-        description: 'Type of linting to run (basic, full)'
-        required: false
-        default: 'basic'
-        type: choice
-        options:
-          - basic
-          - full
+  workflow_dispatch:
+    inputs:
+      lint_type:
+       description: 'Type of linting to run (basic, full)'
+       required: false
+       default: 'basic'
+       type: choice
+       options:
+         - basic
+         - full
 concurrency:
   group: ${{ github.workflow }}-linting
   cancel-in-progress: false
