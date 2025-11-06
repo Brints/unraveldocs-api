@@ -47,7 +47,7 @@ UnravelDocs is a comprehensive document processing and management platform desig
 ### 1. Clone the Repository
 
 ```bash
-git clone git@github.com:Brints/UnravelDocs.git
+git clone <repository_url>
 cd UnravelDocs
 ```
 ### 2. Configure Database
@@ -98,7 +98,19 @@ You can run the unit and integration tests using:
 ```bash
 mvn test
 ```
-### 9. Documentation
+### 9. Test Single File
+```bash
+mvn test -Dtest=FileProcessingServiceTest#testProcessSingleFile
+```
+### 10. Test Multiple Files
+```bash
+mvn test -Dtest=FileProcessingServiceTest#testProcessMultipleFiles
+```
+### 11. Test with Coverage Report
+```bash
+mvn clean test jacoco:report
+```
+### 12. Documentation
 The API documentation is available in the `src/main/resources/static/docs` directory. You can view it by opening the `index.html` file in a web browser.
 
 ## Configure the Application

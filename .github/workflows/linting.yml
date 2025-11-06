@@ -1,4 +1,4 @@
-name: Linting Workflow
+name: UnravelDocs Linting
 on:
   push:
     branches:
@@ -8,50 +8,51 @@ on:
     branches:
       - main
       - develop
-    workflow_dispatch:
-        inputs:
-            lint_type:
-            description: 'Type of linting to run (basic, full)'
-            required: false
-            default: 'basic'
-            type: choice
-            options:
-                - basic
-                - full
+  workflow_dispatch:
+    inputs:
+      lint_type:
+       description: 'Type of linting to run (basic, full)'
+       required: false
+       default: 'basic'
+       type: choice
+       options:
+         - basic
+         - full
 concurrency:
-    group: ${{ github.workflow }}-linting
-    cancel-in-progress: false
+  group: ${{ github.workflow }}-linting
+  cancel-in-progress: false
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
-            - name: Set up Java
-              uses: actions/setup-java@v4
-              with:
-                  distribution: 'temurin'
-                  java-version: '21'
-            - name: Set up Maven
-              uses: stCarolas/setup-maven@v5
-            - name: Run Linting
-              env:
-                  LINT_TYPE: ${{ github.event.inputs.lint_type || 'basic' }}
-              run: |
-                  if [ "$LINT_TYPE" = "full" ]; then
-                      echo "Running full linting..."
-                      mvn clean verify
-                  else
-                      echo "Running basic linting..."
-                      mvn clean compile
-                  fi
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+      - name: Set up Maven
+        uses: stCarolas/setup-maven@v5
+      - name: Run Linting
+        env:
+          LINT_TYPE: ${{ github.event.inputs.lint_type || 'basic' }}
+        run: |
+          if [ "$LINT_TYPE" = "full" ]; then
+              echo "Running full linting..."
+              mvn clean verify
+          else
+              echo "Running basic linting..."
+              mvn clean compile
+          fi
 
-            - name: Upload Linting Reports
-              if: always()
-              uses: actions/upload-artifact@v3
-              with:
-                    name: linting-reports
+      - name: Upload Linting Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linting-reports
+          path: target/

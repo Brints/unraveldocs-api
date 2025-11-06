@@ -107,7 +107,7 @@ class BulkDocumentUploadExtractionImplTest {
         savedCollection.setId(UUID.randomUUID().toString());
         savedCollection.setFiles(List.of(fileEntry1, fileEntry2));
         savedCollection.setCollectionStatus(DocumentStatus.PROCESSING);
-        when(documentCollectionRepository.save(any(DocumentCollection.class))).thenReturn(savedCollection);
+        when(documentCollectionRepository.saveAndFlush(any(DocumentCollection.class))).thenReturn(savedCollection);
         when(ocrEventMapper.toOcrRequestedEvent(any(FileEntry.class), anyString())).thenReturn(new OcrRequestedEvent());
 
         // Act
@@ -123,7 +123,7 @@ class BulkDocumentUploadExtractionImplTest {
         assertTrue(response.getData().getFiles().stream().allMatch(f -> f.getStatus().equals(DocumentUploadState.SUCCESS.toString())));
 
         ArgumentCaptor<DocumentCollection> collectionCaptor = ArgumentCaptor.forClass(DocumentCollection.class);
-        verify(documentCollectionRepository).save(collectionCaptor.capture());
+        verify(documentCollectionRepository).saveAndFlush(collectionCaptor.capture());
 
         // Manually trigger afterCommit to simulate transaction completion
         List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
@@ -154,7 +154,7 @@ class BulkDocumentUploadExtractionImplTest {
         savedCollection.setId(UUID.randomUUID().toString());
         savedCollection.setFiles(List.of(successFileEntry));
         savedCollection.setCollectionStatus(DocumentStatus.PROCESSING);
-        when(documentCollectionRepository.save(any(DocumentCollection.class))).thenReturn(savedCollection);
+        when(documentCollectionRepository.saveAndFlush(any(DocumentCollection.class))).thenReturn(savedCollection);
         when(ocrEventMapper.toOcrRequestedEvent(any(FileEntry.class), anyString())).thenReturn(new OcrRequestedEvent());
 
         // Act
@@ -170,11 +170,11 @@ class BulkDocumentUploadExtractionImplTest {
         assertTrue(response.getData().getFiles().stream().anyMatch(f -> DocumentUploadState.FAILED_VALIDATION.toString().equals(f.getStatus()) && f.getOriginalFileName().equals(invalidFileTypeFile.getOriginalFilename())));
         assertTrue(response.getData().getFiles().stream().anyMatch(f -> DocumentUploadState.FAILED_STORAGE_UPLOAD.toString().equals(f.getStatus()) && f.getOriginalFileName().equals(storageFailFile.getOriginalFilename())));
 
-        verify(documentCollectionRepository, times(1)).save(any(DocumentCollection.class));
+        verify(documentCollectionRepository, times(1)).saveAndFlush(any(DocumentCollection.class));
 
         List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
         assertFalse(synchronizations.isEmpty());
-        synchronizations.get(0).afterCommit();
+        synchronizations.getFirst().afterCommit();
 
         verify(ocrDataRepository, times(1)).saveAll(anyList());
         verify(eventPublisherService, times(1)).publishEvent(anyString(), anyString(), any(BaseEvent.class));
