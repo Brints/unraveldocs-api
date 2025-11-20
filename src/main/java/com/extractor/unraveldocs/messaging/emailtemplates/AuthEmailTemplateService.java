@@ -17,8 +17,11 @@ public class AuthEmailTemplateService {
     @Value("${app.base.url}")
     private String baseUrl;
 
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+
     public EmailMessage prepareVerificationEmail(String email, String firstName, String lastName, String token, String expiration) {
-        String verificationUrl = baseUrl + "/api/v1/auth/verify-email?token=" + token;
+        String verificationUrl = frontendUrl + "/auth/verify-email?email=" + email + "&token=" + token;
 
         return EmailMessage.builder()
                 .to(email)

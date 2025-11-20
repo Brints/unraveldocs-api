@@ -10,5 +10,4 @@ import java.util.Optional;
 @Repository
 public interface LoginAttemptsRepository extends JpaRepository<LoginAttempts, String> {
     Optional<LoginAttempts> findByUser(User user);
-    Optional<LoginAttempts> findByUserId(String userId);
 }

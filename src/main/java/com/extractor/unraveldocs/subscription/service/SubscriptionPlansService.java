@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.subscription.service;
 
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.dto.request.CreateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.request.UpdateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.response.AllSubscriptionPlans;
@@ -18,17 +18,17 @@ public class SubscriptionPlansService {
     private final AddSubscriptionPlansService addSubscriptionPlansService;
     private final UpdateSubscriptionPlanService updateSubscriptionPlanService;
 
-    public UnravelDocsDataResponse<SubscriptionPlansData> createSubscriptionPlan(
+    public UnravelDocsResponse<SubscriptionPlansData> createSubscriptionPlan(
             CreateSubscriptionPlanRequest request) {
         return addSubscriptionPlansService.createSubscriptionPlan(request);
     }
 
-    public UnravelDocsDataResponse<SubscriptionPlansData> updateSubscriptionPlan(
+    public UnravelDocsResponse<SubscriptionPlansData> updateSubscriptionPlan(
             String planId, UpdateSubscriptionPlanRequest request) {
         return updateSubscriptionPlanService.updateSubscriptionPlan(request, planId);
     }
 
-    public UnravelDocsDataResponse<AllSubscriptionPlans> assignSubscriptionsToExistingUsers() {
+    public UnravelDocsResponse<AllSubscriptionPlans> assignSubscriptionsToExistingUsers() {
         return assignSubscriptionToUsersService.assignSubscriptionsToExistingUsers();
     }
 }

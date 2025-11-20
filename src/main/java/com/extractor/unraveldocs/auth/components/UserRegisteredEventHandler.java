@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.config.EmailRabbitMQConfig;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.events.EventHandler;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
 import com.extractor.unraveldocs.messaging.emailtemplates.AuthEmailTemplateService;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,6 @@ public class UserRegisteredEventHandler implements EventHandler<UserRegisteredEv
 
     @Override
     public String getEventType() {
-        return "UserRegistered";
+        return EventTypes.USER_REGISTERED;
     }
 }

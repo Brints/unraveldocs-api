@@ -1,6 +1,7 @@
 package com.extractor.unraveldocs;
 
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,13 +11,14 @@ import java.time.Instant;
 @RestController
 public class RootController {
     @GetMapping("/")
-    public ResponseEntity<UnravelDocsDataResponse<Void>> rootEndpoint() {
-        UnravelDocsDataResponse<Void> response = new UnravelDocsDataResponse<>(
-                200,
-                "success",
-                "UnravelDocs API is running." + " Current Server: " + Instant.now().toString(),
-                null
-        );
+    public ResponseEntity<UnravelDocsResponse<String>> rootEndpoint() {
+
+        UnravelDocsResponse<String> response = new UnravelDocsResponse<>();
+        response.setStatusCode(HttpStatus.OK.value());
+        response.setStatus("success");
+        response.setMessage("UnravelDocs API is running");
+        response.setData("Current server time: " + Instant.now().toString());
+
         return ResponseEntity.ok(response);
     }
 }

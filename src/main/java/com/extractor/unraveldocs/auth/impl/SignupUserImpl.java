@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.auth.impl;
 
 import com.extractor.unraveldocs.auth.dto.SignupData;
-import com.extractor.unraveldocs.auth.dto.request.SignUpRequestDto;
+import com.extractor.unraveldocs.auth.dto.request.SignupRequestDto;
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.interfaces.SignupUserService;
 import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
@@ -16,7 +16,7 @@ import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
@@ -26,7 +26,6 @@ import com.extractor.unraveldocs.utils.generatetoken.GenerateVerificationToken;
 import com.extractor.unraveldocs.utils.userlib.DateHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,8 +51,7 @@ public class SignupUserImpl implements SignupUserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "superAdminExists", allEntries = true)
-    public UnravelDocsDataResponse<SignupData> registerUser(SignUpRequestDto request) {
+    public UnravelDocsResponse<SignupData> registerUser(SignupRequestDto request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already exists");
         }
@@ -68,13 +66,13 @@ public class SignupUserImpl implements SignupUserService {
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
 
-        boolean noSuperAdmin = userRepository.superAdminExists();
-        user.setRole(noSuperAdmin ? Role.SUPER_ADMIN : Role.USER);
+        user.setRole(Role.USER);
 
         String emailVerificationToken = verificationToken.generateVerificationToken();
         OffsetDateTime emailVerificationTokenExpiry = dateHelper.setExpiryDate(now,"hour", 3);
 
-        UserVerification userVerification = userVerificationMapper.toUserVerification(user, emailVerificationToken, emailVerificationTokenExpiry);
+        UserVerification userVerification = userVerificationMapper
+                .toUserVerification(user, emailVerificationToken, emailVerificationTokenExpiry);
         user.setUserVerification(userVerification);
 
         LoginAttempts loginAttempts = new LoginAttempts();
@@ -91,8 +89,10 @@ public class SignupUserImpl implements SignupUserService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                String expiration = dateHelper.getTimeLeftToExpiry(now, emailVerificationTokenExpiry, "hour");
-                UserRegisteredEvent payload = userEventMapper.toUserRegisteredEvent(savedUser, emailVerificationToken, expiration);
+                String expiration = dateHelper
+                        .getTimeLeftToExpiry(now, emailVerificationTokenExpiry, "hour");
+                UserRegisteredEvent payload = userEventMapper
+                        .toUserRegisteredEvent(savedUser, emailVerificationToken, expiration);
 
                 EventMetadata metadata = EventMetadata.builder()
                         .eventType("UserRegistered")
@@ -121,10 +121,20 @@ public class SignupUserImpl implements SignupUserService {
                 .lastLogin(savedUser.getLastLogin())
                 .isActive(savedUser.isActive())
                 .isVerified(savedUser.isVerified())
+                .termsAccepted(savedUser.isTermsAccepted())
+                .marketingOptIn(savedUser.isMarketingOptIn())
+                .country(savedUser.getCountry())
+                .profession(savedUser.getProfession())
+                .organization(savedUser.getOrganization())
                 .createdAt(savedUser.getCreatedAt())
                 .updatedAt(savedUser.getUpdatedAt())
                 .build();
 
-        return responseBuilder.buildUserResponse(signupData, HttpStatus.CREATED, "User registered successfully");
+        return responseBuilder
+                .buildUserResponse(
+                        signupData,
+                        HttpStatus.CREATED,
+                        "User registered successfully"
+                );
     }
 }

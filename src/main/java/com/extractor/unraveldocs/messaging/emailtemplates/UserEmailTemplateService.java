@@ -29,8 +29,11 @@ public class UserEmailTemplateService {
     @Value("${app.unsubscribe.url}")
     private String unsubscribeUrl;
 
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+
     public void sendPasswordResetToken(String email, String firstName, String lastName, String token, String expiration) {
-        String resetUrl = baseUrl + "/api/v1/user/reset-password?token=" + token + "&email=" + email;
+        String resetUrl = frontendUrl + "/auth/reset-password?token=" + token + "&email=" + email;
 
         EmailMessage message = EmailMessage.builder()
                 .to(email)

@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.subscription.service.impl;
 
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.dto.response.AllSubscriptionPlans;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionToUsersImpl;
@@ -55,12 +55,12 @@ public class AssignSubscriptionToUsersImplTest {
         when(assignSubscriptionService.assignDefaultSubscription(any(User.class))).thenReturn(subscription);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UnravelDocsDataResponse<AllSubscriptionPlans> expectedResponse = new UnravelDocsDataResponse<>();
+        UnravelDocsResponse<AllSubscriptionPlans> expectedResponse = new UnravelDocsResponse<>();
         when(responseBuilderService.buildUserResponse(any(AllSubscriptionPlans.class), eq(HttpStatus.OK), anyString()))
                 .thenReturn(expectedResponse);
 
         // Act
-        UnravelDocsDataResponse<AllSubscriptionPlans> actualResponse = assignSubscriptionToUsersService.assignSubscriptionsToExistingUsers();
+        UnravelDocsResponse<AllSubscriptionPlans> actualResponse = assignSubscriptionToUsersService.assignSubscriptionsToExistingUsers();
 
         // Assert
         assertNotNull(actualResponse);
@@ -83,12 +83,12 @@ public class AssignSubscriptionToUsersImplTest {
         // Arrange
         when(userRepository.findBySubscriptionIsNull()).thenReturn(Collections.emptyList());
 
-        UnravelDocsDataResponse<AllSubscriptionPlans> expectedResponse = new UnravelDocsDataResponse<>();
+        UnravelDocsResponse<AllSubscriptionPlans> expectedResponse = new UnravelDocsResponse<>();
         when(responseBuilderService.buildUserResponse(any(AllSubscriptionPlans.class), eq(HttpStatus.OK), anyString()))
                 .thenReturn(expectedResponse);
 
         // Act
-        UnravelDocsDataResponse<AllSubscriptionPlans> actualResponse = assignSubscriptionToUsersService.assignSubscriptionsToExistingUsers();
+        UnravelDocsResponse<AllSubscriptionPlans> actualResponse = assignSubscriptionToUsersService.assignSubscriptionsToExistingUsers();
 
         // Assert
         assertNotNull(actualResponse);
@@ -122,7 +122,7 @@ public class AssignSubscriptionToUsersImplTest {
         when(assignSubscriptionService.assignDefaultSubscription(user2)).thenReturn(null); // Simulate failure
         when(userRepository.save(user1)).thenReturn(user1);
 
-        UnravelDocsDataResponse<AllSubscriptionPlans> expectedResponse = new UnravelDocsDataResponse<>();
+        UnravelDocsResponse<AllSubscriptionPlans> expectedResponse = new UnravelDocsResponse<>();
         when(responseBuilderService.buildUserResponse(any(AllSubscriptionPlans.class), eq(HttpStatus.OK), anyString()))
                 .thenReturn(expectedResponse);
 

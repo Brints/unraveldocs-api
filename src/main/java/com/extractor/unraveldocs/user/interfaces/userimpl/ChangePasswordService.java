@@ -1,8 +1,8 @@
 package com.extractor.unraveldocs.user.interfaces.userimpl;
 
 import com.extractor.unraveldocs.user.dto.request.ChangePasswordDto;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 
 public interface ChangePasswordService {
-    UnravelDocsDataResponse<Void> changePassword(ChangePasswordDto request);
+    UnravelDocsResponse<Void> changePassword(ChangePasswordDto request);
 }

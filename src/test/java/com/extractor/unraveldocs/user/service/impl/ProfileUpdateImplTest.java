@@ -3,7 +3,7 @@ package com.extractor.unraveldocs.user.service.impl;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.user.dto.UserData;
 import com.extractor.unraveldocs.user.dto.request.ProfileUpdateRequestDto;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.impl.ProfileUpdateImpl;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
@@ -60,9 +60,9 @@ class ProfileUpdateImplTest {
         when(userLibrary.capitalizeFirstLetterOfName("Smith")).thenReturn("Smith");
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         when(responseBuilder.buildUserResponse(any(UserData.class), eq(HttpStatus.OK), anyString()))
-                .thenReturn(new UnravelDocsDataResponse<>());
+                .thenReturn(new UnravelDocsResponse<>());
 
-        UnravelDocsDataResponse<UserData> response = profileUpdateImpl.updateProfile(request, userId);
+        UnravelDocsResponse<UserData> response = profileUpdateImpl.updateProfile(request, userId);
 
         assertNotNull(response);
         assertEquals("Jane", user.getFirstName());
@@ -111,9 +111,9 @@ class ProfileUpdateImplTest {
         when(userLibrary.capitalizeFirstLetterOfName("Doe")).thenReturn("Doe");
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         when(responseBuilder.buildUserResponse(any(UserData.class), eq(HttpStatus.OK), anyString()))
-                .thenReturn(new UnravelDocsDataResponse<>());
+                .thenReturn(new UnravelDocsResponse<>());
 
-        UnravelDocsDataResponse<UserData> response = profileUpdateImpl.updateProfile(request, userId);
+        UnravelDocsResponse<UserData> response = profileUpdateImpl.updateProfile(request, userId);
 
         assertNotNull(response);
         assertEquals("new-url", user.getProfilePicture());
@@ -142,9 +142,9 @@ class ProfileUpdateImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         when(responseBuilder.buildUserResponse(any(UserData.class), eq(HttpStatus.OK), anyString()))
-                .thenReturn(new UnravelDocsDataResponse<>());
+                .thenReturn(new UnravelDocsResponse<>());
 
-        UnravelDocsDataResponse<UserData> response = profileUpdateImpl.updateProfile(request, userId);
+        UnravelDocsResponse<UserData> response = profileUpdateImpl.updateProfile(request, userId);
 
         assertNotNull(response);
         assertEquals("John", user.getFirstName());

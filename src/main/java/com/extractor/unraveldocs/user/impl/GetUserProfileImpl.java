@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.user.impl;
 
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.dto.UserData;
 import com.extractor.unraveldocs.user.interfaces.userimpl.GetUserProfileService;
 import com.extractor.unraveldocs.user.model.User;
@@ -22,7 +22,7 @@ public class GetUserProfileImpl implements GetUserProfileService {
 
     @Override
     @Cacheable(value = "getProfileByUser", key = "#userId")
-    public UnravelDocsDataResponse<UserData> getUserProfileByOwner(String userId) {
+    public UnravelDocsResponse<UserData> getUserProfileByOwner(String userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));

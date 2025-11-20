@@ -38,30 +38,4 @@ public class OcrMessageListener {
             throw e;
         }
     }
-
-    /*
-    @RabbitListener(queues = RabbitMQConfig.OCR_EVENTS_QUEUE)
-    public void receiveOcrRequestedEvent(BaseEvent<OcrRequestedEvent> event) {
-        OcrRequestedEvent payload = event.getPayload();
-        String correlationId = event.getMetadata().getCorrelationId();
-
-        log.info("Received OCR request for collection ID: {}, document ID: {}. CorrelationId: {}",
-                s.sanitizeLogging(payload.getCollectionId()),
-                s.sanitizeLogging(payload.getDocumentId()),
-                s.sanitizeLogging(correlationId));
-
-
-        try {
-            ocrService.processOcrRequest(payload.getCollectionId(), payload.getDocumentId());
-        } catch (Exception e) {
-            log.error("Error processing OCR request for collection ID: {}, document ID: {}. CorrelationId: {}. Error: {}",
-                    s.sanitizeLogging(payload.getCollectionId()),
-                    s.sanitizeLogging(payload.getDocumentId()),
-                    s.sanitizeLogging(correlationId),
-                    e.getMessage(), e);
-            // Re-throw the exception to trigger the retry/DLQ mechanism
-            throw e;
-        }
-    }
-    */
 }

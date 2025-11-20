@@ -2,6 +2,7 @@ package com.extractor.unraveldocs.config;
 
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.auth.events.WelcomeEvent;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.ocrprocessing.events.OcrRequestedEvent;
 import com.extractor.unraveldocs.user.events.*;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -150,15 +151,14 @@ public class RabbitMQConfig {
         Map<String, Class<?>> idClassMapping = new HashMap<>();
 
         // Map event types to their specific payload classes, not BaseEvent
-        idClassMapping.put("UserRegistered", UserRegisteredEvent.class);
-        idClassMapping.put("UserRegisteredEvent", UserRegisteredEvent.class);
-        idClassMapping.put("UserDeletionScheduled", UserDeletionScheduledEvent.class);
-        idClassMapping.put("UserDeleted", UserDeletedEvent.class);
-        idClassMapping.put("PasswordChanged", PasswordChangedEvent.class);
-        idClassMapping.put("PasswordResetRequested", PasswordResetEvent.class);
-        idClassMapping.put("PasswordResetSuccessful", PasswordResetSuccessfulEvent.class);
-        idClassMapping.put("WelcomeEvent", WelcomeEvent.class);
-        idClassMapping.put("OcrRequested", OcrRequestedEvent.class);
+        idClassMapping.put(EventTypes.USER_REGISTERED, UserRegisteredEvent.class);
+        idClassMapping.put(EventTypes.USER_DELETION_SCHEDULED, UserDeletionScheduledEvent.class);
+        idClassMapping.put(EventTypes.USER_DELETED, UserDeletedEvent.class);
+        idClassMapping.put(EventTypes.PASSWORD_CHANGED, PasswordChangedEvent.class);
+        idClassMapping.put(EventTypes.PASSWORD_RESET_REQUESTED, PasswordResetEvent.class);
+        idClassMapping.put(EventTypes.PASSWORD_RESET_SUCCESSFUL, PasswordResetSuccessfulEvent.class);
+        idClassMapping.put(EventTypes.WELCOME_EVENT, WelcomeEvent.class);
+        idClassMapping.put(EventTypes.OCR_REQUESTED, OcrRequestedEvent.class);
 
         classMapper.setIdClassMapping(idClassMapping);
         classMapper.setTrustedPackages("*");

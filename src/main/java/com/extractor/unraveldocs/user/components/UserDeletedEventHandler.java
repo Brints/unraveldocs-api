@@ -2,6 +2,7 @@ package com.extractor.unraveldocs.user.components;
 
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.events.EventHandler;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.user.events.UserDeletedEvent;
 import com.extractor.unraveldocs.utils.imageupload.aws.AwsS3Service;
@@ -41,6 +42,6 @@ public class UserDeletedEventHandler implements EventHandler<UserDeletedEvent> {
 
     @Override
     public String getEventType() {
-        return "UserDeleted";
+        return EventTypes.USER_DELETED;
     }
 }

@@ -111,7 +111,7 @@ public class DeleteUserImpl implements DeleteUserService {
         }
 
         UserDeletionScheduledEvent payload = userEventMapper.toUserDeletionScheduledEvent(user, deletionDate);
-        EventMetadata metadata = createEventMetadata("UserDeletionScheduled");
+        EventMetadata metadata = createEventMetadata(EventTypes.USER_DELETION_SCHEDULED);
         BaseEvent<UserDeletionScheduledEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
@@ -123,7 +123,7 @@ public class DeleteUserImpl implements DeleteUserService {
 
     private void publishUserDeletedEvent(User user) {
         UserDeletedEvent payload = userEventMapper.toUserDeletedEvent(user);
-        EventMetadata metadata = createEventMetadata("UserDeleted");
+        EventMetadata metadata = createEventMetadata(EventTypes.USER_DELETED);
         BaseEvent<UserDeletedEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(

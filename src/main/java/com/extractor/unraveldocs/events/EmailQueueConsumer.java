@@ -1,6 +1,7 @@
 package com.extractor.unraveldocs.events;
 
 import com.extractor.unraveldocs.config.EmailRabbitMQConfig;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
 import com.extractor.unraveldocs.messaging.emailservice.EmailOrchestratorService;
 import lombok.RequiredArgsConstructor;
@@ -13,15 +14,18 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EmailQueueConsumer {
     private final EmailOrchestratorService emailOrchestratorService;
+    private final SanitizeLogging sanitizer;
 
     @RabbitListener(queues = EmailRabbitMQConfig.QUEUE_NAME)
     public void handleEmailRequest(EmailMessage emailMessage) {
-        log.info("Received email request for: {}", emailMessage.getTo());
+        log.info("Received email request for: {}", sanitizer.sanitizeLogging(emailMessage.getTo()));
         try {
             emailOrchestratorService.sendEmail(emailMessage);
-            log.info("Email sent to: {}", emailMessage.getTo());
+            log.info("Email sent to: {}", sanitizer.sanitizeLogging(emailMessage.getTo()));
         } catch (Exception e) {
-            log.error("Failed to send email to {}: {}", emailMessage.getTo(), e.getMessage(), e);
+            log.error(
+                    "Failed to send email to {}: {}",
+                    sanitizer.sanitizeLogging(emailMessage.getTo()), e.getMessage(), e);
             throw e; // Rethrow to trigger retry or dead-lettering
         }
     }

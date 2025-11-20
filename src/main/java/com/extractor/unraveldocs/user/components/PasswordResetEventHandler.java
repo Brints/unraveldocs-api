@@ -1,6 +1,7 @@
 package com.extractor.unraveldocs.user.components;
 
 import com.extractor.unraveldocs.events.EventHandler;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.user.events.PasswordResetEvent;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,6 @@ public class PasswordResetEventHandler implements EventHandler<PasswordResetEven
 
     @Override
     public String getEventType() {
-        //return PasswordResetEvent.class.getSimpleName();
-        return "PasswordReset";
+        return EventTypes.PASSWORD_RESET_REQUESTED;
     }
 }

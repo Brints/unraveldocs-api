@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.auth.datamodel.Role;
 import lombok.Builder;
 
 import java.time.OffsetDateTime;
+import java.util.Date;
 
 @Builder
 public record SignupData(
@@ -16,6 +17,11 @@ public record SignupData(
         OffsetDateTime lastLogin,
         boolean isActive,
         boolean isVerified,
+        boolean termsAccepted,
+        boolean marketingOptIn,
+        String country,
+        String profession,
+        String organization,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {

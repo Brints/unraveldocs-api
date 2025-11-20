@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.auth.mappers;
 
-import com.extractor.unraveldocs.auth.dto.request.SignUpRequestDto;
+import com.extractor.unraveldocs.auth.dto.request.SignupRequestDto;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.utils.userlib.UserLibrary;
 import org.mapstruct.Mapper;
@@ -32,5 +32,10 @@ public abstract class UserMapper {
     @Mapping(target = "userVerification", ignore = true)
     @Mapping(target = "loginAttempts", ignore = true)
     @Mapping(target = "subscription", ignore = true)
-    public abstract User toUser(SignUpRequestDto request);
+    @Mapping(target = "termsAccepted", expression = "java(request.acceptTerms() != null ? request.acceptTerms() : false)")
+    @Mapping(target = "profession", expression = "java(request.profession())")
+    @Mapping(target = "marketingOptIn", expression = "java(request.subscribeToMarketing() != null ? request.subscribeToMarketing() : false)")
+    @Mapping(target = "country", expression = "java(request.country())")
+    @Mapping(target = "organization", expression = "java(request.organization())")
+    public abstract User toUser(SignupRequestDto request);
 }

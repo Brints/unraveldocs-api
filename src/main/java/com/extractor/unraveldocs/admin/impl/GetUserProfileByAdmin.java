@@ -3,7 +3,7 @@ package com.extractor.unraveldocs.admin.impl;
 import com.extractor.unraveldocs.admin.interfaces.GetUserProfileByAdminService;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.dto.UserData;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
@@ -22,7 +22,7 @@ public class GetUserProfileByAdmin implements GetUserProfileByAdminService {
 
     @Override
     @Cacheable(value = "getProfileByAdmin", key = "#userId")
-    public UnravelDocsDataResponse<UserData> getUserProfileByAdmin(String userId) {
+    public UnravelDocsResponse<UserData> getUserProfileByAdmin(String userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));

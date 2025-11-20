@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.subscription.impl;
 
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.dto.response.AllSubscriptionPlans;
 import com.extractor.unraveldocs.subscription.interfaces.AssignSubscriptionToUsersService;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
@@ -26,7 +26,7 @@ public class AssignSubscriptionToUsersImpl implements AssignSubscriptionToUsersS
 
     @Override
     @Transactional
-    public UnravelDocsDataResponse<AllSubscriptionPlans> assignSubscriptionsToExistingUsers() {
+    public UnravelDocsResponse<AllSubscriptionPlans> assignSubscriptionsToExistingUsers() {
         List<User> usersWithoutSubscription = userRepository.findBySubscriptionIsNull();
         AtomicInteger assignedCount = new AtomicInteger(0);
 

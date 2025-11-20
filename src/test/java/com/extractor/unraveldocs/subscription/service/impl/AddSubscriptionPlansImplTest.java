@@ -2,7 +2,7 @@ package com.extractor.unraveldocs.subscription.service.impl;
 
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.dto.request.CreateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.response.SubscriptionPlansData;
 import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
@@ -78,14 +78,14 @@ public class AddSubscriptionPlansImplTest {
         when(planRepository.findByName(request.name())).thenReturn(Optional.empty());
         when(planRepository.save(any(SubscriptionPlan.class))).thenReturn(savedPlan);
 
-        UnravelDocsDataResponse<SubscriptionPlansData> expectedResponse = new UnravelDocsDataResponse<>();
+        UnravelDocsResponse<SubscriptionPlansData> expectedResponse = new UnravelDocsResponse<>();
         expectedResponse.setData(plansData);
         expectedResponse.setStatusCode(HttpStatus.CREATED.value());
         when(responseBuilderService.buildUserResponse(any(SubscriptionPlansData.class), eq(HttpStatus.CREATED), anyString()))
                 .thenReturn(expectedResponse);
 
         // Act
-        UnravelDocsDataResponse<SubscriptionPlansData> actualResponse = addSubscriptionPlansService.createSubscriptionPlan(request);
+        UnravelDocsResponse<SubscriptionPlansData> actualResponse = addSubscriptionPlansService.createSubscriptionPlan(request);
 
         // Assert
         assertNotNull(actualResponse);

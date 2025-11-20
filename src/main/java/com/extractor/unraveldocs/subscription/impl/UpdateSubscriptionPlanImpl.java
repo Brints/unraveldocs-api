@@ -3,7 +3,7 @@ package com.extractor.unraveldocs.subscription.impl;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.dto.request.UpdateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.response.SubscriptionPlansData;
 import com.extractor.unraveldocs.subscription.datamodel.SubscriptionCurrency;
@@ -27,7 +27,7 @@ public class UpdateSubscriptionPlanImpl implements UpdateSubscriptionPlanService
 
     @Override
     @Transactional
-    public UnravelDocsDataResponse<SubscriptionPlansData> updateSubscriptionPlan(
+    public UnravelDocsResponse<SubscriptionPlansData> updateSubscriptionPlan(
             UpdateSubscriptionPlanRequest request, String planId) {
         SubscriptionPlan plan = planRepository.findPlanById(planId)
                 .orElseThrow(() -> new NotFoundException("Subscription plan not found with ID: " + planId));

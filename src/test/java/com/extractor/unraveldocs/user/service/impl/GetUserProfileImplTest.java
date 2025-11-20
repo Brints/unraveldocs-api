@@ -2,7 +2,7 @@ package com.extractor.unraveldocs.user.service.impl;
 
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.dto.UserData;
 import com.extractor.unraveldocs.user.impl.GetUserProfileImpl;
 import com.extractor.unraveldocs.user.model.User;
@@ -62,18 +62,18 @@ class GetUserProfileImplTest {
 
     @Test
     void getAuthenticatedUserProfile_UserExists_ReturnsUserResponse() {
-        UnravelDocsDataResponse<UserData> unravelDocsDataResponse = new UnravelDocsDataResponse<>();
-        unravelDocsDataResponse.setStatusCode(HttpStatus.OK.value());
-        unravelDocsDataResponse.setStatus("success");
-        unravelDocsDataResponse.setMessage("User profile retrieved successfully");
+        UnravelDocsResponse<UserData> unravelDocsResponse = new UnravelDocsResponse<>();
+        unravelDocsResponse.setStatusCode(HttpStatus.OK.value());
+        unravelDocsResponse.setStatus("success");
+        unravelDocsResponse.setMessage("User profile retrieved successfully");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(responseBuilder.buildUserResponse(any(UserData.class), eq(HttpStatus.OK), eq("User profile retrieved successfully")))
-                .thenReturn(unravelDocsDataResponse);
+                .thenReturn(unravelDocsResponse);
 
-        UnravelDocsDataResponse<UserData> result = userProfile.getUserProfileByOwner(userId);
+        UnravelDocsResponse<UserData> result = userProfile.getUserProfileByOwner(userId);
 
-        assertEquals(unravelDocsDataResponse, result);
+        assertEquals(unravelDocsResponse, result);
         verify(userRepository).findById(userId);
     }
 

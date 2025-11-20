@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.security;
 
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,7 +26,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpStatus.FORBIDDEN.value());
 
-        UnravelDocsDataResponse<Void> errorResponse = new UnravelDocsDataResponse<>();
+        UnravelDocsResponse<Void> errorResponse = new UnravelDocsResponse<>();
         errorResponse.setStatusCode(HttpStatus.FORBIDDEN.value());
         errorResponse.setStatus("FORBIDDEN");
         errorResponse.setMessage("Access denied. Only admin or super admin can access this resource.");

@@ -5,13 +5,14 @@ import com.extractor.unraveldocs.config.RabbitMQConfig;
 import com.extractor.unraveldocs.events.BaseEvent;
 import com.extractor.unraveldocs.events.EventMetadata;
 import com.extractor.unraveldocs.events.EventPublisherService;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.security.JwtTokenProvider;
 import com.extractor.unraveldocs.security.TokenBlacklistService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.dto.request.ChangePasswordDto;
 import com.extractor.unraveldocs.user.events.PasswordChangedEvent;
 import com.extractor.unraveldocs.user.interfaces.userimpl.ChangePasswordService;
@@ -45,7 +46,7 @@ public class ChangePasswordImpl implements ChangePasswordService {
 
     @Override
     @Transactional
-    public UnravelDocsDataResponse<Void> changePassword(ChangePasswordDto request) {
+    public UnravelDocsResponse<Void> changePassword(ChangePasswordDto request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
 
@@ -89,7 +90,7 @@ public class ChangePasswordImpl implements ChangePasswordService {
     private void publishPasswordChangedEvent(User user) {
         PasswordChangedEvent payload = userEventMapper.toPasswordChangedEvent(user);
         EventMetadata metadata = EventMetadata.builder()
-                .eventType("PasswordChanged")
+                .eventType(EventTypes.PASSWORD_CHANGED)
                 .eventSource("ChangePasswordImpl")
                 .eventTimestamp(System.currentTimeMillis())
                 .correlationId(UUID.randomUUID().toString())

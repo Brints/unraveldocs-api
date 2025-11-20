@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.auth.service.impl;
 
 import com.extractor.unraveldocs.auth.dto.SignupData;
-import com.extractor.unraveldocs.auth.dto.request.SignUpRequestDto;
+import com.extractor.unraveldocs.auth.dto.request.SignupRequestDto;
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.auth.impl.SignupUserImpl;
@@ -15,7 +15,7 @@ import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
@@ -66,7 +66,7 @@ class SignupUserImplTest {
     @InjectMocks
     private SignupUserImpl signupUserService;
 
-    private SignUpRequestDto request;
+    private SignupRequestDto request;
     private User user;
     private UserVerification userVerification;
     private OffsetDateTime expiryDate;
@@ -79,12 +79,17 @@ class SignupUserImplTest {
         OffsetDateTime now = OffsetDateTime.now();
         expiryDate = now.plusHours(3);
 
-        request = new SignUpRequestDto(
+        request = new SignupRequestDto(
                 "john",
                 "doe",
                 "john.doe@example.com",
                 "P@ssw0rd123",
-                "P@ssw0rd123"
+                "P@ssw0rd123",
+                true,
+                true,
+                "Engineer",
+                "Tech Company",
+                "USA"
         );
 
         user = new User();
@@ -116,7 +121,7 @@ class SignupUserImplTest {
         when(responseBuilder.buildUserResponse(any(SignupData.class), eq(HttpStatus.CREATED), eq("User registered successfully")))
                 .thenAnswer(invocation -> {
                     SignupData data = invocation.getArgument(0);
-                    return new UnravelDocsDataResponse<>(HttpStatus.CREATED.value(), "success", "User registered successfully", data);
+                    return new UnravelDocsResponse<>(HttpStatus.CREATED.value(), "success", "User registered successfully", data);
                 });
     }
 
@@ -124,13 +129,12 @@ class SignupUserImplTest {
     void registerUser_SuccessfulRegistration_ReturnsSignupResponse() {
         // Arrange
         setupCommonMocks();
-        when(userRepository.superAdminExists()).thenReturn(false); // A super admin exists, so this user should be a regular USER
         when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), any(OffsetDateTime.class), eq("hour"))).thenReturn("3");
         when(userEventMapper.toUserRegisteredEvent(any(User.class), anyString(), anyString())).thenReturn(mock(UserRegisteredEvent.class));
 
 
         // Act
-        UnravelDocsDataResponse<SignupData> response = signupUserService.registerUser(request);
+        UnravelDocsResponse<SignupData> response = signupUserService.registerUser(request);
         List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
         assertFalse(synchronizations.isEmpty());
         synchronizations.getFirst().afterCommit();
@@ -145,23 +149,27 @@ class SignupUserImplTest {
 
         verify(userRepository).existsByEmail("john.doe@example.com");
         verify(userRepository).save(argThat(savedUser -> savedUser.getRole() == Role.USER));
-        verify(eventPublisherService).publishEvent(eq(RabbitMQConfig.USER_EVENTS_EXCHANGE), eq(RabbitMQConfig.USER_REGISTERED_ROUTING_KEY), any(BaseEvent.class));
+        verify(eventPublisherService)
+                .publishEvent(eq(RabbitMQConfig.USER_EVENTS_EXCHANGE),
+                        eq(RabbitMQConfig.USER_REGISTERED_ROUTING_KEY),
+                        any(BaseEvent.class)
+                );
     }
 
     @Test
     void registerUser_FirstUser_SetsSuperAdminRole() {
         // Arrange
         setupCommonMocks();
-        when(userRepository.superAdminExists()).thenReturn(true); // No super admin exists, so this user should be SUPER_ADMIN
+        when(userRepository.count()).thenReturn(0L);
+
 
         // Act
-        UnravelDocsDataResponse<SignupData> response = signupUserService.registerUser(request);
+        UnravelDocsResponse<SignupData> response = signupUserService.registerUser(request);
 
         // Assert
         assertNotNull(response);
         assertEquals(HttpStatus.CREATED.value(), response.getStatusCode());
         assertEquals(Role.SUPER_ADMIN, response.getData().role());
-        verify(userRepository).superAdminExists();
         verify(userRepository).save(argThat(savedUser -> savedUser.getRole() == Role.SUPER_ADMIN));
     }
 
@@ -180,7 +188,7 @@ class SignupUserImplTest {
     @Test
     void registerUser_PasswordSameAsEmail_ThrowsBadRequestException() {
         // Arrange
-        SignUpRequestDto invalidRequest = new SignUpRequestDto("john", "doe", "john.doe@example.com", "john.doe@example.com", "john.doe@example.com");
+        SignupRequestDto invalidRequest = new SignupRequestDto("john", "doe", "john.doe@example.com", "john.doe@example.com", "john.doe@example.com", true, false, "Engineer", "Tech", "USA");
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
 
         // Act & Assert
@@ -194,7 +202,6 @@ class SignupUserImplTest {
     void registerUser_VerificationDetailsAndLoginAttemptsSetCorrectly() {
         // Arrange
         setupCommonMocks();
-        when(userRepository.superAdminExists()).thenReturn(false);
 
         // Act
         signupUserService.registerUser(request);

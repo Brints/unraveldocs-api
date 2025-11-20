@@ -1,6 +1,7 @@
 package com.extractor.unraveldocs.user.components;
 
 import com.extractor.unraveldocs.events.EventHandler;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.auth.events.WelcomeEvent;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,6 @@ public class WelcomeEmailHandler implements EventHandler<WelcomeEvent> {
 
     @Override
     public String getEventType() {
-        return "WelcomeEvent";
+        return EventTypes.WELCOME_EVENT;
     }
 }

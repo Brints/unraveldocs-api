@@ -5,7 +5,7 @@ import com.extractor.unraveldocs.admin.dto.response.UserListData;
 import com.extractor.unraveldocs.admin.dto.response.UserSummary;
 import com.extractor.unraveldocs.admin.interfaces.GetAllUsersService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ public class GetAllUsersImpl implements GetAllUsersService {
             value = "getAllUsers",
             allEntries = true
     )
-    public UnravelDocsDataResponse<UserListData> getAllUsers(UserFilterDto request) {
+    public UnravelDocsResponse<UserListData> getAllUsers(UserFilterDto request) {
         // Create Pageable object with sorting
         Sort sort = Sort.by(Sort.Direction.fromString(request.getSortOrder()), request.getSortBy());
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);

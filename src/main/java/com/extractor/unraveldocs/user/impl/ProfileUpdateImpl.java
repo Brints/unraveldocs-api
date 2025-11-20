@@ -3,7 +3,7 @@ package com.extractor.unraveldocs.user.impl;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.user.dto.UserData;
 import com.extractor.unraveldocs.user.dto.request.ProfileUpdateRequestDto;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.interfaces.userimpl.ProfileUpdateService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
@@ -31,7 +31,7 @@ public class ProfileUpdateImpl implements ProfileUpdateService {
     @Override
     @Transactional
     @CachePut(value = {"getProfileByUser", "getProfileByAdmin"}, key = "#userId")
-    public UnravelDocsDataResponse<UserData> updateProfile(ProfileUpdateRequestDto request, String userId) {
+    public UnravelDocsResponse<UserData> updateProfile(ProfileUpdateRequestDto request, String userId) {
         Optional<User> optionalUser = userRepository.findById(userId);
 
         if (optionalUser.isEmpty()) {

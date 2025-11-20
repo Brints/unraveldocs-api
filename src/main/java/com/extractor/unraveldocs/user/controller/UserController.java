@@ -5,7 +5,7 @@ import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.TooManyRequestsException;
 import com.extractor.unraveldocs.user.dto.UserData;
 import com.extractor.unraveldocs.user.dto.request.*;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.interfaces.passwordreset.PasswordResetParams;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
@@ -14,7 +14,6 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -79,37 +78,45 @@ public class UserController {
 
     @Operation(summary = "Forgot password")
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(
-            @Valid @RequestBody ForgotPasswordDto forgotPasswordDto
+    public ResponseEntity<UnravelDocsResponse<Void>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordDto request
     ) {
         Bucket bucket = forgotPasswordBuckets.computeIfAbsent(
-                forgotPasswordDto.email(), this::createForgotPasswordBucket);
+                request.email(),
+                this::createForgotPasswordBucket
+        );
 
         if (!bucket.tryConsume(1)) {
             throw new TooManyRequestsException(
                     "You have made too many password reset requests. Please try again later."
             );
         }
-        return ResponseEntity.ok(userService.forgotPassword(forgotPasswordDto));
+        return ResponseEntity.ok(userService.forgotPassword(request));
     }
 
     @Operation(summary = "Reset password")
-    @PostMapping("/reset-password/{token}/{email}")
-    public ResponseEntity<?> resetPassword(
-            @Parameter(description = "Password reset token") @PathVariable String token,
-            @Parameter(description = "Email address of the user") @PathVariable String email,
-            @Parameter(description = "New password and confirmation") @Valid @RequestBody ResetPasswordDto resetPasswordDto
+    @PostMapping("/reset-password")
+    public ResponseEntity<UnravelDocsResponse<Void>> resetPassword(
+            @Valid @RequestBody ResetPasswordDto request
     ) {
-        Bucket bucket = resetPasswordBuckets.computeIfAbsent(email, this::createResetPasswordBucket);
+        Bucket bucket = resetPasswordBuckets.
+                computeIfAbsent(request.email(), this::createResetPasswordBucket);
         if (!bucket.tryConsume(1)) {
-            throw new TooManyRequestsException("You have made too many password reset attempts. Please try again later.");
+            throw new TooManyRequestsException(
+                    "You have made too many password reset attempts. Please try again later."
+            );
         }
-        return ResponseEntity.ok(userService.resetPassword(new PasswordResetParams(email, token), resetPasswordDto));
+
+        PasswordResetParams params = new PasswordResetParams(
+                request.email(),
+                request.token()
+        );
+        return ResponseEntity.ok(userService.resetPassword(params, request));
     }
 
     @Operation(summary = "Change password")
     @PostMapping("/change-password")
-    public ResponseEntity<UnravelDocsDataResponse<Void>> changePassword(
+    public ResponseEntity<UnravelDocsResponse<Void>> changePassword(
             @AuthenticationPrincipal UserDetails authenticatedUser,
             @Valid @RequestBody ChangePasswordDto changePasswordDto
     ) {
@@ -128,7 +135,7 @@ public class UserController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "User profile retrieved successfully",
-                            content = @Content(schema = @Schema(implementation = UnravelDocsDataResponse.class))
+                            content = @Content(schema = @Schema(implementation = UnravelDocsResponse.class))
                     )
             }
     )
@@ -138,7 +145,7 @@ public class UserController {
                     MediaType.APPLICATION_JSON_VALUE
             }
     )
-    public ResponseEntity<UnravelDocsDataResponse<UserData>> updateProfile(
+    public ResponseEntity<UnravelDocsResponse<UserData>> updateProfile(
             @AuthenticationPrincipal UserDetails authenticatedUser,
             @Valid @ModelAttribute ProfileUpdateRequestDto request,
             @PathVariable("userId") String userId
@@ -181,17 +188,17 @@ public class UserController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Profile picture uploaded successfully",
-                            content = @Content(schema = @Schema(implementation = UnravelDocsDataResponse.class))
+                            content = @Content(schema = @Schema(implementation = UnravelDocsResponse.class))
                     ),
                     @ApiResponse(
                             responseCode = "400",
                             description = "Invalid file type or empty file",
-                            content = @Content(schema = @Schema(implementation = UnravelDocsDataResponse.class))
+                            content = @Content(schema = @Schema(implementation = UnravelDocsResponse.class))
                     )
             }
     )
     @PostMapping(value = "/profile/{userId}/upload", consumes = "multipart/form-data")
-    public ResponseEntity<UnravelDocsDataResponse<String>> uploadProfilePicture(
+    public ResponseEntity<UnravelDocsResponse<String>> uploadProfilePicture(
             @AuthenticationPrincipal UserDetails authenticatedUser,
             @RequestParam("file") @NotNull MultipartFile file,
             @PathVariable("userId") String userId
@@ -220,17 +227,17 @@ public class UserController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Profile picture deleted successfully",
-                            content = @Content(schema = @Schema(implementation = UnravelDocsDataResponse.class))
+                            content = @Content(schema = @Schema(implementation = UnravelDocsResponse.class))
                     ),
                     @ApiResponse(
                             responseCode = "400",
                             description = "Profile picture not found or already deleted",
-                            content = @Content(schema = @Schema(implementation = UnravelDocsDataResponse.class))
+                            content = @Content(schema = @Schema(implementation = UnravelDocsResponse.class))
                     )
             }
     )
     @DeleteMapping("/profile/{userId}/delete")
-    public ResponseEntity<UnravelDocsDataResponse<Void>> deleteProfilePicture(
+    public ResponseEntity<UnravelDocsResponse<Void>> deleteProfilePicture(
             @AuthenticationPrincipal UserDetails authenticatedUser,
             @PathVariable("userId") String userId
     ) {

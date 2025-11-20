@@ -7,11 +7,12 @@ import com.extractor.unraveldocs.config.RabbitMQConfig;
 import com.extractor.unraveldocs.events.BaseEvent;
 import com.extractor.unraveldocs.events.EventMetadata;
 import com.extractor.unraveldocs.events.EventPublisherService;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.dto.request.ForgotPasswordDto;
 import com.extractor.unraveldocs.user.dto.request.ResetPasswordDto;
 import com.extractor.unraveldocs.user.events.PasswordResetEvent;
@@ -46,7 +47,7 @@ public class PasswordResetImpl implements PasswordResetService {
 
     @Override
     @Transactional
-    public UnravelDocsDataResponse<Void> forgotPassword(ForgotPasswordDto forgotPasswordDto) {
+    public UnravelDocsResponse<Void> forgotPassword(ForgotPasswordDto forgotPasswordDto) {
         String email = forgotPasswordDto.email();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User does not exist."));
@@ -54,7 +55,9 @@ public class PasswordResetImpl implements PasswordResetService {
         UserVerification userVerification = user.getUserVerification();
 
         if (!user.isVerified() || !userVerification.isEmailVerified()) {
-            throw new BadRequestException("This account is not verified. Please verify your account before resetting the password.");
+            throw new BadRequestException(
+                    "This account is not verified. Please verify your account before resetting the password."
+            );
         }
 
         OffsetDateTime currentTime = OffsetDateTime.now();
@@ -64,7 +67,8 @@ public class PasswordResetImpl implements PasswordResetService {
                 userVerification.getPasswordResetTokenExpiry().isAfter(currentTime)) {
             String timeLeft = dateHelper.getTimeLeftToExpiry(currentTime, userVerification.getPasswordResetTokenExpiry(), "hours");
             throw new BadRequestException(
-                    "A password reset request has already been sent. Please check your email. Token expires in: " + timeLeft);
+                    "A password reset request has already been sent. Please check your email. Token expires in: " + timeLeft
+            );
         }
 
         String token = generateVerificationToken.generateVerificationToken();
@@ -91,7 +95,7 @@ public class PasswordResetImpl implements PasswordResetService {
 
     @Override
     @Transactional
-    public UnravelDocsDataResponse<Void> resetPassword(IPasswordReset params, ResetPasswordDto request) {
+    public UnravelDocsResponse<Void> resetPassword(IPasswordReset params, ResetPasswordDto request) {
         String email = params.getEmail();
         String token = params.getToken();
 
@@ -141,7 +145,7 @@ public class PasswordResetImpl implements PasswordResetService {
     private void publishPasswordResetRequestedEvent(User user, String token, String expiration) {
         PasswordResetEvent payload = userEventMapper.toPasswordResetRequestedEvent(user, token, expiration);
         EventMetadata metadata = EventMetadata.builder()
-                .eventType("PasswordReset")
+                .eventType(EventTypes.PASSWORD_RESET_REQUESTED)
                 .eventSource("PasswordResetImpl")
                 .eventTimestamp(System.currentTimeMillis())
                 .correlationId(UUID.randomUUID().toString())
@@ -158,7 +162,7 @@ public class PasswordResetImpl implements PasswordResetService {
     private void publishPasswordResetSuccessfulEvent(User user) {
         PasswordResetSuccessfulEvent payload = userEventMapper.toPasswordResetSuccessfulEvent(user);
         EventMetadata metadata = EventMetadata.builder()
-                .eventType("PasswordResetSuccessful")
+                .eventType(EventTypes.PASSWORD_RESET_SUCCESSFUL)
                 .eventSource("PasswordResetImpl")
                 .eventTimestamp(System.currentTimeMillis())
                 .correlationId(UUID.randomUUID().toString())

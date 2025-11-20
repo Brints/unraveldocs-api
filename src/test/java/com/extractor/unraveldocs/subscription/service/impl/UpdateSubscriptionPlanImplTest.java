@@ -2,7 +2,7 @@ package com.extractor.unraveldocs.subscription.service.impl;
 
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.dto.request.UpdateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.response.SubscriptionPlansData;
 import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
@@ -75,12 +75,12 @@ public class UpdateSubscriptionPlanImplTest {
         when(planRepository.findPlanById(planId)).thenReturn(Optional.of(existingPlan));
         when(planRepository.save(any(SubscriptionPlan.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UnravelDocsDataResponse<SubscriptionPlansData> expectedResponse = new UnravelDocsDataResponse<>();
+        UnravelDocsResponse<SubscriptionPlansData> expectedResponse = new UnravelDocsResponse<>();
         when(responseBuilderService.buildUserResponse(any(SubscriptionPlansData.class), eq(HttpStatus.OK), anyString()))
                 .thenReturn(expectedResponse);
 
         // Act
-        UnravelDocsDataResponse<SubscriptionPlansData> actualResponse = updateSubscriptionPlanService.updateSubscriptionPlan(updateRequest, planId);
+        UnravelDocsResponse<SubscriptionPlansData> actualResponse = updateSubscriptionPlanService.updateSubscriptionPlan(updateRequest, planId);
 
         // Assert
         assertNotNull(actualResponse);

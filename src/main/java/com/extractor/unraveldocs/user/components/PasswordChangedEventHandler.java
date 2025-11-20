@@ -2,6 +2,7 @@ package com.extractor.unraveldocs.user.components;
 
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.events.EventHandler;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.user.events.PasswordChangedEvent;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,6 @@ public class PasswordChangedEventHandler implements EventHandler<PasswordChanged
 
     @Override
     public String getEventType() {
-        return "PasswordChanged";
+        return EventTypes.PASSWORD_CHANGED;
     }
 }

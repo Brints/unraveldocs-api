@@ -16,9 +16,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 @Data
 @Entity
@@ -61,16 +59,31 @@ public class User implements UserDetails {
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Column(name = "terms_accepted", nullable = false)
+    private boolean termsAccepted = false;
+
+    @Column(name = "marketing_opt_in", nullable = false)
+    private boolean marketingOptIn = false;
+
+    @Column(name = "country", nullable = false)
+    private String country;
+
+    @Column(name = "profession")
+    private String profession;
+
+    @Column(name = "organization")
+    private String organization;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private LoginAttempts loginAttempts;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserVerification userVerification;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<DocumentCollection> documents;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserSubscription subscription;
 
     @CreationTimestamp
@@ -114,6 +127,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return isVerified;
+        return this.isActive && this.isVerified;
     }
 }

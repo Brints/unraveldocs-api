@@ -1,6 +1,8 @@
 package com.extractor.unraveldocs.user.components;
 
 import com.extractor.unraveldocs.events.EventHandler;
+import com.extractor.unraveldocs.events.EventPublisherService;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.user.events.UserDeletionScheduledEvent;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,6 @@ public class UserDeletionScheduledEventHandler implements EventHandler<UserDelet
 
     @Override
     public String getEventType() {
-        return "UserDeletionScheduled";
+        return EventTypes.USER_DELETION_SCHEDULED;
     }
 }

@@ -6,7 +6,7 @@ import com.extractor.unraveldocs.auth.interfaces.RefreshTokenService;
 import com.extractor.unraveldocs.auth.service.CustomUserDetailsService;
 import com.extractor.unraveldocs.exceptions.custom.UnauthorizedException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.security.JwtTokenProvider;
 import com.extractor.unraveldocs.security.TokenBlacklistService;
 import com.extractor.unraveldocs.user.model.User;
@@ -30,7 +30,7 @@ public class RefreshTokenImpl implements RefreshTokenService {
     private final ResponseBuilderService responseBuilder;
 
     @Override
-    public UnravelDocsDataResponse<RefreshLoginData> refreshToken(RefreshTokenRequest request) {
+    public UnravelDocsResponse<RefreshLoginData> refreshToken(RefreshTokenRequest request) {
         String requestRefreshToken = request.getRefreshToken();
 
         String refreshTokenJti = jwtTokenProvider.getJtiFromToken(requestRefreshToken);
@@ -81,7 +81,7 @@ public class RefreshTokenImpl implements RefreshTokenService {
     }
 
     @Override
-    public UnravelDocsDataResponse<Void> logout(HttpServletRequest request) {
+    public UnravelDocsResponse<Void> logout(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             String accessToken = bearerToken.substring(7);

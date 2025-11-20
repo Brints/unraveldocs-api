@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.subscription.controller;
 
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.dto.request.CreateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.request.UpdateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.response.AllSubscriptionPlans;
@@ -40,9 +40,11 @@ public class SubscriptionController {
                    @ApiResponse(responseCode = "500", description = "Internal Server Error - Failed to create subscription plan")
             }
     )
-    @PostMapping("plans")
-    public ResponseEntity<UnravelDocsDataResponse<SubscriptionPlansData>> createSubscriptionPlan(CreateSubscriptionPlanRequest request) {
-        UnravelDocsDataResponse<SubscriptionPlansData> createdPlan = subscriptionPlansService.createSubscriptionPlan(request);
+    @PostMapping("/plans")
+    public ResponseEntity<UnravelDocsResponse<SubscriptionPlansData>> createSubscriptionPlan(
+            CreateSubscriptionPlanRequest request) {
+        UnravelDocsResponse<SubscriptionPlansData> createdPlan = subscriptionPlansService
+                .createSubscriptionPlan(request);
 
         return new ResponseEntity<>(createdPlan, HttpStatus.CREATED);
     }
@@ -60,11 +62,11 @@ public class SubscriptionController {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error - Failed to update subscription plan")
             }
     )
-    @PutMapping(value = "plans/{planId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UnravelDocsDataResponse<SubscriptionPlansData>> updateSubscriptionPlan(
+    @PutMapping(value = "/plans/{planId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UnravelDocsResponse<SubscriptionPlansData>> updateSubscriptionPlan(
             @RequestBody UpdateSubscriptionPlanRequest request, @PathVariable String planId) {
 
-        UnravelDocsDataResponse<SubscriptionPlansData> updatedPlan =
+        UnravelDocsResponse<SubscriptionPlansData> updatedPlan =
                 subscriptionPlansService.updateSubscriptionPlan(planId, request);
 
         return new ResponseEntity<>(updatedPlan, HttpStatus.OK);
@@ -79,9 +81,9 @@ public class SubscriptionController {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error - Failed to assign subscriptions")
             }
     )
-    @PostMapping("assign-subscriptions-to-existing-users")
-    public ResponseEntity<UnravelDocsDataResponse<AllSubscriptionPlans>> assignToExistingUsers() {
-        UnravelDocsDataResponse<AllSubscriptionPlans> response =
+    @PostMapping("/assign-subscriptions-to-existing-users")
+    public ResponseEntity<UnravelDocsResponse<AllSubscriptionPlans>> assignToExistingUsers() {
+        UnravelDocsResponse<AllSubscriptionPlans> response =
                 subscriptionPlansService.assignSubscriptionsToExistingUsers();
 
         return new ResponseEntity<>(response, HttpStatus.OK);

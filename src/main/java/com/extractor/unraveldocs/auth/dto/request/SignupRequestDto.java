@@ -5,10 +5,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
 
+import java.util.Date;
+
 @Builder
 @Schema(description = "New User Sign Up Request DTO")
 @PasswordMatches
-public record SignUpRequestDto(
+public record SignupRequestDto(
         @Schema(description = "First name of the user", example = "John")
         @NotNull(message = "First name is required")
         @Size(min = 2, max = 80, message = "First name must be between 2 and 80 characters")
@@ -42,7 +44,26 @@ public record SignUpRequestDto(
 
         @Schema(description = "Confirm password of the user", example = "P@ssw0rd123")
         @NotNull(message = "Confirm password is required")
-        String confirmPassword
+        String confirmPassword,
+
+        @Schema(description = "Terms and Conditions acceptance", example = "true")
+        @NotNull(message = "You must accept the terms and conditions")
+        Boolean acceptTerms,
+
+        @Schema(description = "Marketing emails subscription", example = "false")
+        Boolean subscribeToMarketing,
+
+        @Schema(description = "Profession of the user", example = "Software Engineer")
+        @Size(max = 100, message = "Profession must be less than 100 characters")
+        String profession,
+
+        @Schema(description = "Organization or industry of the user", example = "Tech Company")
+        @Size(max = 100, message = "Organization/Industry must be less than 100 characters")
+        String organization,
+
+        @Schema(description = "Country of the user", example = "USA")
+        @NotNull(message = "Country is required")
+        String country
 ) {
         @Override
         @SuppressWarnings("NullableProblems")

@@ -9,7 +9,7 @@ import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.user.dto.request.ForgotPasswordDto;
 import com.extractor.unraveldocs.user.dto.request.ResetPasswordDto;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.events.PasswordResetEvent;
 import com.extractor.unraveldocs.user.events.PasswordResetSuccessfulEvent;
 import com.extractor.unraveldocs.user.impl.PasswordResetImpl;
@@ -97,7 +97,12 @@ class PasswordResetImplTest {
             }
         };
 
-        resetPasswordDto = new ResetPasswordDto("newPassword123", "newPassword123");
+        resetPasswordDto = new ResetPasswordDto(
+                "newPassword123",
+                "newPassword123",
+                "valid-token",
+                "test@email.com"
+        );
     }
 
     @AfterEach
@@ -114,7 +119,7 @@ class PasswordResetImplTest {
         when(generateVerificationToken.generateVerificationToken()).thenReturn("reset-token");
         when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(1))).thenReturn(OffsetDateTime.now().plusHours(1));
         when(responseBuilder.buildUserResponse(isNull(), eq(HttpStatus.OK), anyString()))
-                .thenReturn(new UnravelDocsDataResponse<>());
+                .thenReturn(new UnravelDocsResponse<>());
         when(userEventMapper.toPasswordResetRequestedEvent(any(), any(), any())).thenReturn(mock(PasswordResetEvent.class));
 
         // Act
@@ -167,7 +172,7 @@ class PasswordResetImplTest {
         when(passwordEncoder.matches(resetPasswordDto.newPassword(), user.getPassword())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
         when(responseBuilder.buildUserResponse(isNull(), eq(HttpStatus.OK), anyString()))
-                .thenReturn(new UnravelDocsDataResponse<>());
+                .thenReturn(new UnravelDocsResponse<>());
         when(userEventMapper.toPasswordResetSuccessfulEvent(any())).thenReturn(mock(PasswordResetSuccessfulEvent.class));
 
         // Act

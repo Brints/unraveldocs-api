@@ -45,19 +45,9 @@ public interface UserRepository extends JpaRepository<User, String> {
             Pageable pageable
     );
 
-    @Cacheable("superAdminExists")
-    @Query("SELECT COUNT(u) = 0 FROM User u WHERE u.role = com.extractor.unraveldocs.auth.datamodel.Role.SUPER_ADMIN")
-    boolean superAdminExists();
-
     @Query("SELECT u FROM User u WHERE u.lastLogin < :threshold AND u.deletedAt IS NULL")
     Page<User> findAllByLastLoginDateBefore(@Param("threshold") OffsetDateTime threshold, Pageable pageable);
 
     @Query("SELECT u FROM User u WHERE u.deletedAt < :threshold")
     Page<User> findAllByDeletedAtBefore(@Param("threshold") OffsetDateTime threshold, Pageable pageable);
 }
-
-
-
-
-//    @Query("SELECT u FROM User u WHERE u.lastLogin < :threshold AND u.deletedAt IS NULL")
-//    List<User> findAllByDeletedAtBefore(@Param("threshold") OffsetDateTime threshold);

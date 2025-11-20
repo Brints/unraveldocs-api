@@ -7,7 +7,7 @@ import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.exceptions.custom.UnauthorizedException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import com.extractor.unraveldocs.user.model.User;
@@ -27,7 +27,7 @@ public class ChangeUserRoleImpl implements ChangeUserRoleService {
     private final ResponseBuilderService responseBuilder;
 
     @Override
-    public UnravelDocsDataResponse<AdminData> changeUserRole(ChangeRoleDto request, Authentication authentication) {
+    public UnravelDocsResponse<AdminData> changeUserRole(ChangeRoleDto request, Authentication authentication) {
         String userId = request.getUserId();
 
         // Admin or Super Admin check

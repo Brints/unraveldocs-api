@@ -5,13 +5,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ResponseBuilderService {
-    public <T> UnravelDocsDataResponse<T> buildUserResponse(T data, HttpStatus statusCode, String message) {
-        UnravelDocsDataResponse<T> unravelDocsDataResponse = new UnravelDocsDataResponse<>();
-        unravelDocsDataResponse.setStatusCode(statusCode.value());
-        unravelDocsDataResponse.setStatus("success");
-        unravelDocsDataResponse.setMessage(message);
-        unravelDocsDataResponse.setData(data);
+    public <T> UnravelDocsResponse<T> buildUserResponse(T data, HttpStatus statusCode, String message) {
+        UnravelDocsResponse<T> unravelDocsResponse = new UnravelDocsResponse<>();
+        unravelDocsResponse.setStatusCode(statusCode.value());
+        unravelDocsResponse.setStatus("success");
+        unravelDocsResponse.setMessage(message);
+        unravelDocsResponse.setData(data);
 
-        return unravelDocsDataResponse;
+        return unravelDocsResponse;
     }
 }

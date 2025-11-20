@@ -6,7 +6,7 @@ import com.extractor.unraveldocs.auth.dto.SignupData;
 import com.extractor.unraveldocs.auth.dto.request.*;
 import com.extractor.unraveldocs.auth.service.AuthService;
 import com.extractor.unraveldocs.user.dto.response.GeneratePasswordResponse;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -69,12 +69,12 @@ public class AuthController {
                     @ApiResponse(
                             responseCode = "201",
                             description = "User registered successfully",
-                            content = @Content(schema = @Schema(implementation = UnravelDocsDataResponse.class))
+                            content = @Content(schema = @Schema(implementation = UnravelDocsResponse.class))
                     )
             }
     )
-    public ResponseEntity<UnravelDocsDataResponse<SignupData>> register(
-            @Valid @RequestBody SignUpRequestDto request
+    public ResponseEntity<UnravelDocsResponse<SignupData>> register(
+            @Valid @RequestBody SignupRequestDto request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.registerUser(request));
     }
@@ -97,27 +97,24 @@ public class AuthController {
                     )
             }
     )
-    public ResponseEntity<UnravelDocsDataResponse<LoginData>> login(@Valid @RequestBody LoginRequestDto request) {
+    public ResponseEntity<UnravelDocsResponse<LoginData>> login(@Valid @RequestBody LoginRequestDto request) {
         return ResponseEntity.status(HttpStatus.OK).body(authService.loginUser(request));
     }
 
     /**
      * Verify the user's email address using a token.
      *
-     * @param email The email address of the user to verify.
-     * @param token The verification token sent to the user's email.
+     * @param request The email verification request containing email and token.
      * @return ResponseEntity indicating the result of the operation.
      */
-    @GetMapping(value = "/verify-email", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/verify-email", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Verify user email")
-    public ResponseEntity<UnravelDocsDataResponse<Void>> verifyEmail(
-            @Schema(description = "Email address of the user to verify", example = "john-doe@test.com")
-           @RequestParam String email,
+    public ResponseEntity<UnravelDocsResponse<Void>> verifyEmail(
+            @Valid @RequestBody EmailVerificationRequestDto request
+    ) {
 
-            @Schema(description = "Verification token sent to the user's email", example = "1234567890abcdef")
-           @RequestParam String token) {
-
-        UnravelDocsDataResponse<Void> response = authService.verifyEmail(email, token);
+        UnravelDocsResponse<Void> response = authService.
+                verifyEmail(request.email(), request.token());
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -129,11 +126,11 @@ public class AuthController {
      */
     @PostMapping("/resend-verification-email")
     @Operation(summary = "Resend verification email")
-    public ResponseEntity<UnravelDocsDataResponse<Void>> resendVerificationEmail(
+    public ResponseEntity<UnravelDocsResponse<Void>> resendVerificationEmail(
             @Valid @RequestBody ResendEmailVerificationDto request
             ) {
 
-        UnravelDocsDataResponse<Void> response = authService.resendEmailVerification(request);
+        UnravelDocsResponse<Void> response = authService.resendEmailVerification(request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -151,7 +148,7 @@ public class AuthController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Access token refreshed successfully",
-                            content = @Content(schema = @Schema(implementation = UnravelDocsDataResponse.class))
+                            content = @Content(schema = @Schema(implementation = UnravelDocsResponse.class))
                     ),
                     @ApiResponse(
                             responseCode = "401",
@@ -159,7 +156,7 @@ public class AuthController {
                     )
             }
     )
-    public ResponseEntity<UnravelDocsDataResponse<RefreshLoginData>> refreshToken(
+    public ResponseEntity<UnravelDocsResponse<RefreshLoginData>> refreshToken(
             @Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.status(HttpStatus.OK).body(authService.refreshToken(request));
     }
@@ -179,12 +176,12 @@ public class AuthController {
                     @ApiResponse(
                             responseCode = "200",
                             description = "Logged out successfully",
-                            content = @Content(schema = @Schema(implementation = UnravelDocsDataResponse.class))
+                            content = @Content(schema = @Schema(implementation = UnravelDocsResponse.class))
                     )
             }
     )
-    public ResponseEntity<UnravelDocsDataResponse<Void>> logout(HttpServletRequest request) {
-        UnravelDocsDataResponse<Void> response = authService.logout(request);
+    public ResponseEntity<UnravelDocsResponse<Void>> logout(HttpServletRequest request) {
+        UnravelDocsResponse<Void> response = authService.logout(request);
         return ResponseEntity.status(HttpStatus.valueOf(response.getStatusCode())).body(response);
     }
 }

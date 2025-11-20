@@ -2,7 +2,7 @@ package com.extractor.unraveldocs.subscription.impl;
 
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.dto.request.CreateSubscriptionPlanRequest;
 import com.extractor.unraveldocs.subscription.dto.response.SubscriptionPlansData;
 import com.extractor.unraveldocs.subscription.interfaces.AddSubscriptionPlansService;
@@ -23,7 +23,7 @@ public class AddSubscriptionPlansImpl implements AddSubscriptionPlansService {
 
     @Override
     @Transactional
-    public UnravelDocsDataResponse<SubscriptionPlansData> createSubscriptionPlan(CreateSubscriptionPlanRequest request) {
+    public UnravelDocsResponse<SubscriptionPlansData> createSubscriptionPlan(CreateSubscriptionPlanRequest request) {
         if (planRepository.findByName(request.name()).isPresent()) {
             throw new BadRequestException("Subscription plan with this name already exists.");
         }

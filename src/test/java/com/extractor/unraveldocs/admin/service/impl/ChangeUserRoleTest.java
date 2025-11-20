@@ -8,7 +8,7 @@ import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.exceptions.custom.UnauthorizedException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import com.extractor.unraveldocs.user.model.User;
@@ -88,11 +88,11 @@ public class ChangeUserRoleTest {
         when(assignSubscriptionService.assignDefaultSubscription(any(User.class))).thenReturn(new UserSubscription());
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        UnravelDocsDataResponse<AdminData> expectedResponse = new UnravelDocsDataResponse<>();
+        UnravelDocsResponse<AdminData> expectedResponse = new UnravelDocsResponse<>();
         when(responseBuilder.buildUserResponse(any(AdminData.class), eq(HttpStatus.OK), eq("User role changed successfully.")))
                 .thenReturn(expectedResponse);
 
-        UnravelDocsDataResponse<AdminData> actualResponse = changeUserRoleService.changeUserRole(changeRoleDto, authentication);
+        UnravelDocsResponse<AdminData> actualResponse = changeUserRoleService.changeUserRole(changeRoleDto, authentication);
 
         assertNotNull(actualResponse);
         assertEquals(expectedResponse, actualResponse);
@@ -110,11 +110,11 @@ public class ChangeUserRoleTest {
         when(assignSubscriptionService.assignDefaultSubscription(any(User.class))).thenReturn(new UserSubscription());
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        UnravelDocsDataResponse<AdminData> expectedResponse = new UnravelDocsDataResponse<>();
+        UnravelDocsResponse<AdminData> expectedResponse = new UnravelDocsResponse<>();
         when(responseBuilder.buildUserResponse(any(AdminData.class), eq(HttpStatus.OK), eq("User role changed successfully.")))
                 .thenReturn(expectedResponse);
 
-        UnravelDocsDataResponse<AdminData> actualResponse = changeUserRoleService.changeUserRole(changeRoleDto, authentication);
+        UnravelDocsResponse<AdminData> actualResponse = changeUserRoleService.changeUserRole(changeRoleDto, authentication);
 
         assertNotNull(actualResponse);
         assertEquals(expectedResponse, actualResponse);

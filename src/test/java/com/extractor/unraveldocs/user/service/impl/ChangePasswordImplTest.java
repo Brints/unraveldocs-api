@@ -8,7 +8,7 @@ import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.security.JwtTokenProvider;
 import com.extractor.unraveldocs.security.TokenBlacklistService;
 import com.extractor.unraveldocs.user.dto.request.ChangePasswordDto;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.impl.ChangePasswordImpl;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
@@ -170,7 +170,7 @@ class ChangePasswordImplTest {
         when(passwordEncoder.encode("newPass")).thenReturn("hashedNewPass");
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        var expectedResponse = new UnravelDocsDataResponse<Void>();
+        var expectedResponse = new UnravelDocsResponse<Void>();
         expectedResponse.setStatusCode(HttpStatus.OK.value());
         expectedResponse.setStatus("success");
         expectedResponse.setMessage("Password changed successfully.");
@@ -180,7 +180,7 @@ class ChangePasswordImplTest {
                 .thenReturn(expectedResponse);
 
         // Execute
-        UnravelDocsDataResponse<Void> response = changePasswordService.changePassword(request);
+        UnravelDocsResponse<Void> response = changePasswordService.changePassword(request);
         TransactionSynchronizationManager.getSynchronizations().getFirst().afterCommit();
 
 

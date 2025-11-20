@@ -11,9 +11,10 @@ import com.extractor.unraveldocs.config.RabbitMQConfig;
 import com.extractor.unraveldocs.events.BaseEvent;
 import com.extractor.unraveldocs.events.EventMetadata;
 import com.extractor.unraveldocs.events.EventPublisherService;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.shared.response.UnravelDocsDataResponse;
+import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
@@ -41,7 +42,7 @@ public class EmailVerificationImpl implements EmailVerificationService {
 
     @Override
     @Transactional
-    public UnravelDocsDataResponse<Void> resendEmailVerification(ResendEmailVerificationDto request) {
+    public UnravelDocsResponse<Void> resendEmailVerification(ResendEmailVerificationDto request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new NotFoundException("User does not exist."));
 
@@ -53,12 +54,12 @@ public class EmailVerificationImpl implements EmailVerificationService {
         OffsetDateTime now = OffsetDateTime.now();
 
         // Allow resend only if the token is expired or doesn't exist
-        if (userVerification.getEmailVerificationToken() != null &&
-                userVerification.getEmailVerificationTokenExpiry().isAfter(now)) {
-            String timeLeft = dateHelper.getTimeLeftToExpiry(now, userVerification.getEmailVerificationTokenExpiry(), "hour");
-            throw new BadRequestException(
-                    "A verification email has already been sent. Please check your inbox or try again in " + timeLeft);
-        }
+//        if (userVerification.getEmailVerificationToken() != null &&
+//                userVerification.getEmailVerificationTokenExpiry().isAfter(now)) {
+//            String timeLeft = dateHelper.getTimeLeftToExpiry(now, userVerification.getEmailVerificationTokenExpiry(), "hour");
+//            throw new BadRequestException(
+//                    "A verification email has already been sent. Please check your inbox or try again in " + timeLeft);
+//        }
 
         String emailVerificationToken = verificationToken.generateVerificationToken();
         OffsetDateTime emailVerificationTokenExpiry = dateHelper.setExpiryDate(now, "hour", 3);
@@ -84,7 +85,7 @@ public class EmailVerificationImpl implements EmailVerificationService {
     private void publishVerificationEmailEvent(User user, String token, String expiration) {
         UserRegisteredEvent payload = userEventMapper.toUserRegisteredEvent(user, token, expiration);
         EventMetadata metadata = EventMetadata.builder()
-                .eventType("UserRegisteredEvent") // Reusing event type as the handler is the same
+                .eventType(EventTypes.USER_REGISTERED)
                 .eventSource("EmailVerificationImpl")
                 .eventTimestamp(System.currentTimeMillis())
                 .correlationId(UUID.randomUUID().toString())
@@ -100,7 +101,7 @@ public class EmailVerificationImpl implements EmailVerificationService {
 
     @Override
     @Transactional
-    public UnravelDocsDataResponse<Void> verifyEmail(String email, String token) {
+    public UnravelDocsResponse<Void> verifyEmail(String email, String token) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User does not exist."));
 
