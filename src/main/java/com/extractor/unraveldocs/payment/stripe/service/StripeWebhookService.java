@@ -316,10 +316,8 @@ public class StripeWebhookService {
             BigDecimal amount = BigDecimal.valueOf(invoice.getAmountPaid()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
             // TODO: Extract payment intent ID and subscription ID
-            // String paymentIntentId = invoice.getPaymentIntent() != null ? invoice.getPaymentIntent().getId() : null;
-            // String subscriptionId = invoice.getSubscription() != null ? invoice.getSubscription().getId() : null;
-            String paymentIntentId = null;
-            String subscriptionId = null;
+             String paymentIntentId = invoice.getPaymentIntent() != null ? invoice.getPaymentIntent().getId() : null;
+             String subscriptionId = invoice.getSubscription() != null ? invoice.getSubscription().getId() : null;
 
             paymentService.recordPayment(
                     user,
@@ -353,8 +351,7 @@ public class StripeWebhookService {
             log.info("Processing invoice.payment_failed for: {}", invoice.getId());
 
             // TODO: Update subscription status if needed
-            //final String subscriptionId = invoice.getSubscription() != null ? invoice.getSubscription().getId() : null;
-            final String subscriptionId = null;
+            final String subscriptionId = invoice.getSubscription() != null ? invoice.getSubscription().getId() : null;
 
             if (subscriptionId != null) {
                 userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscriptionId).ifPresent(userSubscription -> {

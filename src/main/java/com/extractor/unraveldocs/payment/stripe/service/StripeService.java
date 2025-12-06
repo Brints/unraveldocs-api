@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.payment.stripe.service;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.stripe.dto.request.CreatePaymentIntentRequest;
 import com.extractor.unraveldocs.payment.stripe.dto.request.CreateSubscriptionRequest;
 import com.extractor.unraveldocs.payment.stripe.dto.request.RefundRequest;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 public class StripeService {
 
     private final StripeCustomerService customerService;
+    private final SanitizeLogging sanitizer;
 
     @Value("${stripe.checkout.success-url}")
     private String defaultSuccessUrl;
@@ -90,11 +92,18 @@ public class StripeService {
             }
 
             Session session = Session.create(paramsBuilder.build());
-            log.info("Created checkout session {} for user {}", session.getId(), user.getId());
+            log.info(
+                    "Created checkout session {} for user {}",
+                    sanitizer.sanitizeLogging(session.getId()),
+                    sanitizer.sanitizeLogging(user.getId()));
             
             return session;
         } catch (StripeException e) {
-            log.error("Failed to create checkout session for user {}: {}", user.getId(), e.getMessage());
+            log.error(
+                    "Failed to create checkout session for user {}: {}",
+                    sanitizer.sanitizeLogging(user.getId()),
+                    e.getMessage()
+            );
             throw e;
         }
     }
@@ -129,7 +138,11 @@ public class StripeService {
             }
 
             PaymentIntent paymentIntent = PaymentIntent.create(paramsBuilder.build());
-            log.info("Created payment intent {} for user {}", paymentIntent.getId(), user.getId());
+            log.info(
+                    "Created payment intent {} for user {}",
+                    sanitizer.sanitizeLogging(paymentIntent.getId()),
+                    sanitizer.sanitizeLogging(user.getId())
+            );
 
             return PaymentIntentResponse.builder()
                     .id(paymentIntent.getId())
@@ -140,7 +153,10 @@ public class StripeService {
                     .createdAt(paymentIntent.getCreated())
                     .build();
         } catch (StripeException e) {
-            log.error("Failed to create payment intent for user {}: {}", user.getId(), e.getMessage());
+            log.error(
+                    "Failed to create payment intent for user {}: {}",
+                    sanitizer.sanitizeLogging(user.getId()),
+                    e.getMessage());
             throw e;
         }
     }
@@ -174,11 +190,19 @@ public class StripeService {
             }
 
             Subscription subscription = Subscription.create(paramsBuilder.build());
-            log.info("Created subscription {} for user {}", subscription.getId(), user.getId());
+            log.info(
+                    "Created subscription {} for user {}",
+                    sanitizer.sanitizeLogging(subscription.getId()),
+                    sanitizer.sanitizeLogging(user.getId())
+            );
 
             return mapToSubscriptionResponse(subscription);
         } catch (StripeException e) {
-            log.error("Failed to create subscription for user {}: {}", user.getId(), e.getMessage());
+            log.error(
+                    "Failed to create subscription for user {}: {}",
+                    sanitizer.sanitizeLogging(user.getId()),
+                    e.getMessage()
+            );
             throw e;
         }
     }
@@ -192,18 +216,28 @@ public class StripeService {
 
             if (immediately) {
                 subscription = subscription.cancel();
-                log.info("Immediately canceled subscription {}", subscriptionId);
+                log.info(
+                        "Immediately canceled subscription {}",
+                        sanitizer.sanitizeLogging(subscriptionId)
+                );
             } else {
                 SubscriptionUpdateParams params = SubscriptionUpdateParams.builder()
                         .setCancelAtPeriodEnd(true)
                         .build();
                 subscription = subscription.update(params);
-                log.info("Scheduled subscription {} to cancel at period end", subscriptionId);
+                log.info(
+                        "Scheduled subscription {} to cancel at period end",
+                        sanitizer.sanitizeLogging(subscriptionId)
+                );
             }
 
             return mapToSubscriptionResponse(subscription);
         } catch (StripeException e) {
-            log.error("Failed to cancel subscription {}: {}", subscriptionId, e.getMessage());
+            log.error(
+                    "Failed to cancel subscription {}: {}",
+                    sanitizer.sanitizeLogging(subscriptionId),
+                    e.getMessage()
+            );
             throw e;
         }
     }
@@ -224,11 +258,14 @@ public class StripeService {
                     .build();
 
             subscription = subscription.update(params);
-            log.info("Paused subscription {}", subscriptionId);
+            log.info("Paused subscription {}", sanitizer.sanitizeLogging(subscriptionId));
 
             return mapToSubscriptionResponse(subscription);
         } catch (StripeException e) {
-            log.error("Failed to pause subscription {}: {}", subscriptionId, e.getMessage());
+            log.error(
+                    "Failed to pause subscription {}: {}",
+                    sanitizer.sanitizeLogging(subscriptionId),
+                    e.getMessage());
             throw e;
         }
     }
@@ -238,6 +275,9 @@ public class StripeService {
      */
     public SubscriptionResponse resumeSubscription(String subscriptionId) throws StripeException {
         try {
+            //Use Stripe's dedicated Resume endpoint instead of unsetting pause_collection
+            // POST /v1/subscriptions/{SUBSCRIPTION_ID}/resume
+            // Replace the current implementation with a call to subscription.resume()
             Subscription subscription = Subscription.retrieve(subscriptionId);
 
             SubscriptionUpdateParams params = SubscriptionUpdateParams.builder()
@@ -245,11 +285,11 @@ public class StripeService {
                     .build();
 
             subscription = subscription.update(params);
-            log.info("Resumed subscription {}", subscriptionId);
+            log.info("Resumed subscription {}", sanitizer.sanitizeLogging(subscriptionId));
 
             return mapToSubscriptionResponse(subscription);
         } catch (StripeException e) {
-            log.error("Failed to resume subscription {}: {}", subscriptionId, e.getMessage());
+            log.error("Failed to resume subscription {}: {}", sanitizer.sanitizeLogging(subscriptionId), e.getMessage());
             throw e;
         }
     }
@@ -271,7 +311,10 @@ public class StripeService {
             }
 
             Refund refund = Refund.create(paramsBuilder.build());
-            log.info("Created refund {} for payment intent {}", refund.getId(), request.getPaymentIntentId());
+            log.info("Created refund {} for payment intent {}",
+                    sanitizer.sanitizeLogging(refund.getId()),
+                    sanitizer.sanitizeLogging(refund.getPaymentIntent())
+            );
 
             return RefundResponse.builder()
                     .id(refund.getId())
@@ -283,7 +326,11 @@ public class StripeService {
                     .createdAt(refund.getCreated())
                     .build();
         } catch (StripeException e) {
-            log.error("Failed to process refund for payment intent {}: {}", request.getPaymentIntentId(), e.getMessage());
+            log.error(
+                    "Failed to process refund for payment intent {}: {}",
+                    sanitizer.sanitizeLogging(request.getPaymentIntentId()),
+                    e.getMessage()
+            );
             throw e;
         }
     }
@@ -305,7 +352,11 @@ public class StripeService {
                     .createdAt(paymentIntent.getCreated())
                     .build();
         } catch (StripeException e) {
-            log.error("Failed to retrieve payment intent {}: {}", paymentIntentId, e.getMessage());
+            log.error(
+                    "Failed to retrieve payment intent {}: {}",
+                    sanitizer.sanitizeLogging(paymentIntentId),
+                    e.getMessage()
+            );
             throw e;
         }
     }
@@ -318,7 +369,11 @@ public class StripeService {
             Subscription subscription = Subscription.retrieve(subscriptionId);
             return mapToSubscriptionResponse(subscription);
         } catch (StripeException e) {
-            log.error("Failed to retrieve subscription {}: {}", subscriptionId, e.getMessage());
+            log.error(
+                    "Failed to retrieve subscription {}: {}",
+                    sanitizer.sanitizeLogging(subscriptionId),
+                    e.getMessage()
+            );
             throw e;
         }
     }

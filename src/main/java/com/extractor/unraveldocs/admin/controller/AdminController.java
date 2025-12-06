@@ -14,9 +14,11 @@ import com.extractor.unraveldocs.user.dto.UserData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,7 +32,6 @@ import java.util.List;
         name = "Admin Management",
         description = "Admin endpoints for user management and other administrative tasks"
 )
-//@PreAuthorize("hasRole('SUPER_ADMIN')")
 public class AdminController {
     private final AdminService adminService;
 
@@ -44,7 +45,7 @@ public class AdminController {
             summary = "Create Admin User",
             description = "Allows users to register as an admin to manage the application.")
     @PostMapping("/signup")
-    public ResponseEntity<UnravelDocsResponse<AdminData>> createAdmin(
+    public ResponseEntity<@NonNull UnravelDocsResponse<AdminData>> createAdmin(
             @Valid @RequestBody AdminSignupRequestDto request
             ) {
         UnravelDocsResponse<AdminData> response = adminService.createAdmin(request);
@@ -60,9 +61,10 @@ public class AdminController {
      */
     @Operation(
             summary = "Change user role to ADMIN or MODERATOR",
-            description = "Allows an admin to change the role of a user to ADMIN or MODERATOR.")
+            description = "Allows an admin or super admin to change the role of a user to ADMIN or MODERATOR.")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     @PutMapping("/change-role")
-    public ResponseEntity<UnravelDocsResponse<AdminData>> changeUserRole(
+    public ResponseEntity<@NonNull UnravelDocsResponse<AdminData>> changeUserRole(
             Authentication authenticatedUser,
             @RequestBody ChangeRoleDto request
     ) {
@@ -85,8 +87,9 @@ public class AdminController {
     @Operation(
             summary = "Get all users",
             description = "Fetches a paginated list of all users with optional filtering and sorting.")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR') or hasRole('SUPER_ADMIN')")
     @GetMapping("/users")
-    public ResponseEntity<UnravelDocsResponse<UserListData>> getAllUsers(
+    public ResponseEntity<@NonNull UnravelDocsResponse<UserListData>> getAllUsers(
             @Valid @ModelAttribute UserFilterDto request,
             Authentication authentication
     ) {
@@ -108,9 +111,10 @@ public class AdminController {
      */
     @Operation(
             summary = "Get user profile by admin",
-            description = "Fetches the profile of a user by admin.")
+            description = "Fetches the profile of a user by admin or super admin.")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     @GetMapping("/{userId}")
-    public ResponseEntity<UnravelDocsResponse<UserData>> getUserProfileByAdmin(@PathVariable String userId) {
+    public ResponseEntity<@NonNull UnravelDocsResponse<UserData>> getUserProfileByAdmin(@PathVariable String userId) {
         UnravelDocsResponse<UserData> response = adminService.getUserProfileByAdmin(userId);
         return ResponseEntity.ok(response);
     }
@@ -124,8 +128,11 @@ public class AdminController {
     @Operation(
             summary = "Generate OTP",
             description = "Generates a One-Time Password (OTP) of specified length.")
+    @PreAuthorize("hasRole('SUPER ADMIN')")
     @PostMapping("/generate-otp")
-    public ResponseEntity<UnravelDocsResponse<List<String>>> generateOtp(@Valid @RequestBody OtpRequestDto request) {
+    public ResponseEntity<@NonNull UnravelDocsResponse<List<String>>> generateOtp(
+            @Valid @RequestBody OtpRequestDto request
+    ) {
         UnravelDocsResponse<List<String>> response = adminService.generateOtp(request);
         return ResponseEntity.ok(response);
     }
@@ -138,8 +145,9 @@ public class AdminController {
     @Operation(
             summary = "Fetch Active OTPs",
             description = "Fetches all active One-Time Passwords (OTPs).")
+    @PreAuthorize("hasRole('SUPER ADMIN') or hasRole('ADMIN')")
     @GetMapping("/active-otps")
-    public ResponseEntity<UnravelDocsResponse<ActiveOtpListData>> fetchActiveOtps(
+    public ResponseEntity<@NonNull UnravelDocsResponse<ActiveOtpListData>> fetchActiveOtps(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {

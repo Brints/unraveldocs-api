@@ -141,8 +141,8 @@ public class CreateAdminUserImpl implements CreateAdminService {
                 BaseEvent<AdminCreatedEvent> event = new BaseEvent<>(metadata, payload);
 
                 eventPublisher.publishEvent(
-                        RabbitMQConfig.USER_EVENTS_EXCHANGE,
-                        RabbitMQConfig.USER_REGISTERED_ROUTING_KEY,
+                        RabbitMQConfig.ADMIN_EVENTS_EXCHANGE,
+                        RabbitMQConfig.ADMIN_CREATED_ROUTING_KEY,
                         event
                 );
             }

@@ -32,6 +32,14 @@ public class RabbitMQConfig {
     public static final String USER_EVENTS_DLX = USER_EVENTS_EXCHANGE + ".dlx";
     public static final String USER_EVENTS_DLQ = USER_EVENTS_QUEUE + ".dlq";
 
+    // Admin Events
+    public static final String ADMIN_EVENTS_EXCHANGE = "admin.events.exchange";
+    public static final String ADMIN_EVENTS_QUEUE = "admin.events.queue";
+    public static final String ADMIN_EVENTS_ROUTING_KEY_PATTERN = "admin.#";
+    public static final String ADMIN_CREATED_ROUTING_KEY = "admin.created";
+    public static final String ADMIN_EVENTS_DLX = ADMIN_EVENTS_EXCHANGE + ".dlx";
+    public static final String ADMIN_EVENTS_DLQ = ADMIN_EVENTS_QUEUE + ".dlq";
+
 
     // OCR Events
     public static final String OCR_EVENTS_EXCHANGE = "ocr.events.exchange";
@@ -75,6 +83,27 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(userEventsQueue())
                 .to(userEventsExchange())
                 .with(USER_EVENTS_ROUTING_KEY_PATTERN);
+    }
+
+    // Admin Exchange/Queue Beans
+    @Bean
+    TopicExchange adminEventsExchange() {
+        return new TopicExchange(ADMIN_EVENTS_EXCHANGE);
+    }
+
+    @Bean
+    DirectExchange adminDeadLetterExchange() {
+        return new DirectExchange(ADMIN_EVENTS_DLX);
+    }
+
+    @Bean
+    Queue adminDeadLetterQueue() {
+        return new Queue(ADMIN_EVENTS_DLQ);
+    }
+
+    @Bean
+    Binding adminDeadLetterBinding() {
+        return BindingBuilder.bind(adminDeadLetterQueue()).to(adminDeadLetterExchange()).with(ADMIN_EVENTS_QUEUE);
     }
 
     // OCR Exchange/Queue Beans
