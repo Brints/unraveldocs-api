@@ -5,18 +5,18 @@ import com.extractor.unraveldocs.auth.events.WelcomeEvent;
 import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.ocrprocessing.events.OcrRequestedEvent;
 import com.extractor.unraveldocs.user.events.*;
+import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.DefaultClassMapper;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
-import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
+import org.springframework.boot.amqp.autoconfigure.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.retry.interceptor.RetryInterceptorBuilder;
-import org.springframework.retry.interceptor.RetryOperationsInterceptor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +31,14 @@ public class RabbitMQConfig {
     public static final String USER_REGISTERED_ROUTING_KEY = "user.registered";
     public static final String USER_EVENTS_DLX = USER_EVENTS_EXCHANGE + ".dlx";
     public static final String USER_EVENTS_DLQ = USER_EVENTS_QUEUE + ".dlq";
+
+    // Admin Events
+    public static final String ADMIN_EVENTS_EXCHANGE = "admin.events.exchange";
+    public static final String ADMIN_EVENTS_QUEUE = "admin.events.queue";
+    public static final String ADMIN_EVENTS_ROUTING_KEY_PATTERN = "admin.#";
+    public static final String ADMIN_CREATED_ROUTING_KEY = "admin.created";
+    public static final String ADMIN_EVENTS_DLX = ADMIN_EVENTS_EXCHANGE + ".dlx";
+    public static final String ADMIN_EVENTS_DLQ = ADMIN_EVENTS_QUEUE + ".dlq";
 
 
     // OCR Events
@@ -75,6 +83,27 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(userEventsQueue())
                 .to(userEventsExchange())
                 .with(USER_EVENTS_ROUTING_KEY_PATTERN);
+    }
+
+    // Admin Exchange/Queue Beans
+    @Bean
+    TopicExchange adminEventsExchange() {
+        return new TopicExchange(ADMIN_EVENTS_EXCHANGE);
+    }
+
+    @Bean
+    DirectExchange adminDeadLetterExchange() {
+        return new DirectExchange(ADMIN_EVENTS_DLX);
+    }
+
+    @Bean
+    Queue adminDeadLetterQueue() {
+        return new Queue(ADMIN_EVENTS_DLQ);
+    }
+
+    @Bean
+    Binding adminDeadLetterBinding() {
+        return BindingBuilder.bind(adminDeadLetterQueue()).to(adminDeadLetterExchange()).with(ADMIN_EVENTS_QUEUE);
     }
 
     // OCR Exchange/Queue Beans
@@ -122,14 +151,14 @@ public class RabbitMQConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         configurer.configure(factory, connectionFactory);
         factory.setAdviceChain(retryInterceptor());
-        factory.setMessageConverter(messageConverter()); // Ensure the converter is used by the factory
+        factory.setMessageConverter(messageConverter());
         return factory;
     }
 
     @Bean
-    public RetryOperationsInterceptor retryInterceptor() {
+    public MethodInterceptor retryInterceptor() {
         return RetryInterceptorBuilder.stateless()
-                .maxAttempts(3)
+                .maxRetries(3)
                 .backOffOptions(1000, 2.0, 10000)
                 .recoverer((args, cause) -> {
                     // This will cause the message to be rejected and sent to the DLQ
@@ -140,7 +169,7 @@ public class RabbitMQConfig {
 
     @Bean
     public MessageConverter messageConverter() {
-        Jackson2JsonMessageConverter jsonConverter = new Jackson2JsonMessageConverter();
+        JacksonJsonMessageConverter jsonConverter = new JacksonJsonMessageConverter();
         jsonConverter.setClassMapper(classMapper());
         return jsonConverter;
     }

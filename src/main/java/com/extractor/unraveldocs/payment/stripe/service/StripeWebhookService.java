@@ -1,0 +1,383 @@
+package com.extractor.unraveldocs.payment.stripe.service;
+
+import com.extractor.unraveldocs.payment.stripe.enums.PaymentStatus;
+import com.extractor.unraveldocs.payment.stripe.enums.PaymentType;
+import com.extractor.unraveldocs.payment.stripe.exception.StripePaymentException;
+import com.extractor.unraveldocs.payment.stripe.model.StripeCustomer;
+import com.extractor.unraveldocs.payment.stripe.model.StripeWebhookEvent;
+import com.extractor.unraveldocs.payment.stripe.repository.StripeCustomerRepository;
+import com.extractor.unraveldocs.payment.stripe.repository.StripeWebhookEventRepository;
+import com.extractor.unraveldocs.subscription.model.UserSubscription;
+import com.extractor.unraveldocs.subscription.repository.UserSubscriptionRepository;
+import com.extractor.unraveldocs.user.model.User;
+import com.stripe.model.*;
+import com.stripe.model.checkout.Session;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Optional;
+
+/**
+ * Service for processing Stripe webhook events
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class StripeWebhookService {
+
+    private final StripeWebhookEventRepository webhookEventRepository;
+    private final StripeCustomerRepository customerRepository;
+    private final StripePaymentService paymentService;
+    private final UserSubscriptionRepository userSubscriptionRepository;
+
+    /**
+     * Check if event has already been processed (idempotency)
+     */
+    public boolean isEventProcessed(String eventId) {
+        return webhookEventRepository.existsByEventId(eventId);
+    }
+
+    /**
+     * Record webhook event for idempotency
+     */
+    @Transactional
+    public StripeWebhookEvent recordWebhookEvent(String eventId, String eventType, String payload) {
+        if (isEventProcessed(eventId)) {
+            log.info("Webhook event {} already processed, skipping", eventId);
+            return webhookEventRepository.findByEventId(eventId).orElseThrow();
+        }
+
+        StripeWebhookEvent event = new StripeWebhookEvent();
+        event.setEventId(eventId);
+        event.setEventType(eventType);
+        event.setPayload(payload);
+        event.setProcessed(false);
+
+        return webhookEventRepository.save(event);
+    }
+
+    /**
+     * Mark event as processed
+     */
+    @Transactional
+    public void markEventAsProcessed(String eventId, String error) {
+        webhookEventRepository.findByEventId(eventId).ifPresent(event -> {
+            event.setProcessed(true);
+            event.setProcessedAt(OffsetDateTime.now());
+            if (error != null) {
+                event.setProcessingError(error);
+            }
+            webhookEventRepository.save(event);
+        });
+    }
+
+    /**
+     * Handle checkout session completed event
+     */
+    @Transactional
+    public void handleCheckoutSessionCompleted(Session session) {
+        try {
+            log.info("Processing checkout.session.completed for session: {}", session.getId());
+
+            String customerId = session.getCustomer();
+            String subscriptionId = session.getSubscription();
+            String paymentIntentId = session.getPaymentIntent();
+
+            StripeCustomer stripeCustomer = customerRepository.findByStripeCustomerId(customerId)
+                    .orElseThrow(() -> new StripePaymentException("Customer not found: " + customerId));
+
+            User user = stripeCustomer.getUser();
+
+            // Determine payment type
+            PaymentType paymentType = subscriptionId != null ? PaymentType.SUBSCRIPTION : PaymentType.ONE_TIME;
+
+            // Record the payment
+            BigDecimal amount = BigDecimal.valueOf(session.getAmountTotal()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            paymentService.recordPayment(
+                    user,
+                    stripeCustomer,
+                    paymentType,
+                    paymentIntentId,
+                    subscriptionId,
+                    null,
+                    session.getId(),
+                    amount,
+                    session.getCurrency(),
+                    PaymentStatus.SUCCEEDED,
+                    null,
+                    "Checkout session completed",
+                    null
+            );
+
+            log.info("Successfully processed checkout session completed for user {}", user.getId());
+        } catch (Exception e) {
+            log.error("Failed to handle checkout session completed: {}", e.getMessage(), e);
+            throw new StripePaymentException("Failed to process checkout session", e);
+        }
+    }
+
+    /**
+     * Handle payment intent succeeded event
+     */
+    @Transactional
+    public void handlePaymentIntentSucceeded(PaymentIntent paymentIntent) {
+        try {
+            log.info("Processing payment_intent.succeeded for: {}", paymentIntent.getId());
+
+            String customerId = paymentIntent.getCustomer();
+            StripeCustomer stripeCustomer = customerRepository.findByStripeCustomerId(customerId)
+                    .orElseThrow(() -> new StripePaymentException("Customer not found: " + customerId));
+
+            User user = stripeCustomer.getUser();
+
+            // Check if payment already exists
+            if (!paymentService.paymentExists(paymentIntent.getId())) {
+                BigDecimal amount = BigDecimal.valueOf(paymentIntent.getAmount()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+                paymentService.recordPayment(
+                        user,
+                        stripeCustomer,
+                        PaymentType.ONE_TIME,
+                        paymentIntent.getId(),
+                        null,
+                        null,
+                        null,
+                        amount,
+                        paymentIntent.getCurrency(),
+                        PaymentStatus.SUCCEEDED,
+                        paymentIntent.getPaymentMethod(),
+                        paymentIntent.getDescription(),
+                        null
+                );
+            } else {
+                // Update existing payment
+                paymentService.updatePaymentStatus(
+                        paymentIntent.getId(),
+                        PaymentStatus.SUCCEEDED,
+                        null,
+                        null
+                );
+            }
+
+            log.info("Successfully processed payment intent succeeded for user {}", user.getId());
+        } catch (Exception e) {
+            log.error("Failed to handle payment intent succeeded: {}", e.getMessage(), e);
+            throw new StripePaymentException("Failed to process payment intent", e);
+        }
+    }
+
+    /**
+     * Handle payment intent payment failed event
+     */
+    @Transactional
+    public void handlePaymentIntentPaymentFailed(PaymentIntent paymentIntent) {
+        try {
+            log.info("Processing payment_intent.payment_failed for: {}", paymentIntent.getId());
+
+            StripeError lastError = paymentIntent.getLastPaymentError();
+            String failureMessage = lastError != null ? lastError.getMessage() : "Payment failed";
+
+            paymentService.updatePaymentStatus(
+                    paymentIntent.getId(),
+                    PaymentStatus.FAILED,
+                    failureMessage,
+                    null
+            );
+
+            log.info("Successfully processed payment intent failed for: {}", paymentIntent.getId());
+        } catch (Exception e) {
+            log.error("Failed to handle payment intent failed: {}", e.getMessage(), e);
+            throw new StripePaymentException("Failed to process payment intent failed", e);
+        }
+    }
+
+    /**
+     * Handle customer subscription created event
+     */
+    @Transactional
+    public void handleCustomerSubscriptionCreated(Subscription subscription) {
+        try {
+            log.info("Processing customer.subscription.created for: {}", subscription.getId());
+
+            String customerId = subscription.getCustomer();
+            StripeCustomer stripeCustomer = customerRepository.findByStripeCustomerId(customerId)
+                    .orElseThrow(() -> new StripePaymentException("Customer not found: " + customerId));
+
+            User user = stripeCustomer.getUser();
+
+            // Update or create user subscription record
+            Optional<UserSubscription> existingSubscription = userSubscriptionRepository.findByUserId(user.getId());
+
+            UserSubscription userSubscription;
+            if (existingSubscription.isPresent()) {
+                userSubscription = existingSubscription.get();
+            } else {
+                userSubscription = new UserSubscription();
+                userSubscription.setUser(user);
+            }
+
+            userSubscription.setPaymentGatewaySubscriptionId(subscription.getId());
+            userSubscription.setStatus(subscription.getStatus());
+
+            // Get period info from subscription items
+            if (subscription.getItems() != null && subscription.getItems().getData() != null && !subscription.getItems().getData().isEmpty()) {
+                SubscriptionItem item = subscription.getItems().getData().getFirst();
+                userSubscription.setCurrentPeriodStart(convertToOffsetDateTime(item.getCurrentPeriodStart()));
+                userSubscription.setCurrentPeriodEnd(convertToOffsetDateTime(item.getCurrentPeriodEnd()));
+            }
+
+            if (subscription.getTrialEnd() != null) {
+                userSubscription.setTrialEndsAt(convertToOffsetDateTime(subscription.getTrialEnd()));
+            }
+
+            userSubscription.setAutoRenew(!subscription.getCancelAtPeriodEnd());
+
+            userSubscriptionRepository.save(userSubscription);
+
+            log.info("Successfully processed subscription created for user {}", user.getId());
+        } catch (Exception e) {
+            log.error("Failed to handle subscription created: {}", e.getMessage(), e);
+            throw new StripePaymentException("Failed to process subscription created", e);
+        }
+    }
+
+    /**
+     * Handle customer subscription updated event
+     */
+    @Transactional
+    public void handleCustomerSubscriptionUpdated(Subscription subscription) {
+        try {
+            log.info("Processing customer.subscription.updated for: {}", subscription.getId());
+
+            userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscription.getId()).ifPresent(userSubscription -> {
+                userSubscription.setStatus(subscription.getStatus());
+
+                // Get period info from subscription items
+                if (subscription.getItems() != null && subscription.getItems().getData() != null && !subscription.getItems().getData().isEmpty()) {
+                    SubscriptionItem item = subscription.getItems().getData().getFirst();
+                    userSubscription.setCurrentPeriodStart(convertToOffsetDateTime(item.getCurrentPeriodStart()));
+                    userSubscription.setCurrentPeriodEnd(convertToOffsetDateTime(item.getCurrentPeriodEnd()));
+                }
+
+                userSubscription.setAutoRenew(!subscription.getCancelAtPeriodEnd());
+
+                userSubscriptionRepository.save(userSubscription);
+                log.info("Updated subscription {} to status {}", subscription.getId(), subscription.getStatus());
+            });
+        } catch (Exception e) {
+            log.error("Failed to handle subscription updated: {}", e.getMessage(), e);
+            throw new StripePaymentException("Failed to process subscription updated", e);
+        }
+    }
+
+    /**
+     * Handle customer subscription deleted event
+     */
+    @Transactional
+    public void handleCustomerSubscriptionDeleted(Subscription subscription) {
+        try {
+            log.info("Processing customer.subscription.deleted for: {}", subscription.getId());
+
+            userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscription.getId()).ifPresent(userSubscription -> {
+                userSubscription.setStatus("CANCELED");
+                userSubscription.setAutoRenew(false);
+
+                userSubscriptionRepository.save(userSubscription);
+                log.info("Canceled subscription {}", subscription.getId());
+            });
+        } catch (Exception e) {
+            log.error("Failed to handle subscription deleted: {}", e.getMessage(), e);
+            throw new StripePaymentException("Failed to process subscription deleted", e);
+        }
+    }
+
+    /**
+     * Handle invoice payment succeeded event
+     */
+    @Transactional
+    public void handleInvoicePaymentSucceeded(Invoice invoice) {
+        try {
+            log.info("Processing invoice.payment_succeeded for: {}", invoice.getId());
+
+            String customerId = invoice.getCustomer();
+            StripeCustomer stripeCustomer = customerRepository.findByStripeCustomerId(customerId)
+                    .orElseThrow(() -> new StripePaymentException("Customer not found: " + customerId));
+
+            User user = stripeCustomer.getUser();
+
+            BigDecimal amount = BigDecimal.valueOf(invoice.getAmountPaid()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            // TODO: Extract payment intent ID and subscription ID
+//             String paymentIntentId = invoice.getPaymentIntent() != null ? invoice.getPaymentIntent().getId() : null;
+//             String subscriptionId = invoice.getSubscription() != null ? invoice.getSubscription().getId() : null;
+            String paymentIntentId = null;
+            String subscriptionId = null;
+
+            paymentService.recordPayment(
+                    user,
+                    stripeCustomer,
+                    PaymentType.SUBSCRIPTION,
+                    paymentIntentId,
+                    subscriptionId,
+                    invoice.getId(),
+                    null,
+                    amount,
+                    invoice.getCurrency(),
+                    PaymentStatus.SUCCEEDED,
+                    invoice.getDefaultPaymentMethod(),
+                    "Invoice payment",
+                    null
+            );
+
+            log.info("Successfully processed invoice payment succeeded for user {}", user.getId());
+        } catch (Exception e) {
+            log.error("Failed to handle invoice payment succeeded: {}", e.getMessage(), e);
+            throw new StripePaymentException("Failed to process invoice payment succeeded", e);
+        }
+    }
+
+    /**
+     * Handle invoice payment failed event
+     */
+    @Transactional
+    public void handleInvoicePaymentFailed(Invoice invoice) {
+        try {
+            log.info("Processing invoice.payment_failed for: {}", invoice.getId());
+
+            // TODO: Update subscription status if needed
+            //final String subscriptionId = invoice.getSubscription() != null ? invoice.getSubscription().getId() : null;
+            final String subscriptionId = null;
+
+            if (subscriptionId != null) {
+                userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscriptionId).ifPresent(userSubscription -> {
+                    userSubscription.setStatus("PAST_DUE");
+                    userSubscriptionRepository.save(userSubscription);
+                    log.info("Updated subscription {} to PAST_DUE status", subscriptionId);
+                });
+            }
+
+            log.info("Successfully processed invoice payment failed for: {}", invoice.getId());
+        } catch (Exception e) {
+            log.error("Failed to handle invoice payment failed: {}", e.getMessage(), e);
+            throw new StripePaymentException("Failed to process invoice payment failed", e);
+        }
+    }
+
+    /**
+     * Convert Unix timestamp to OffsetDateTime
+     */
+    private OffsetDateTime convertToOffsetDateTime(Long timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        return OffsetDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneOffset.UTC);
+    }
+}

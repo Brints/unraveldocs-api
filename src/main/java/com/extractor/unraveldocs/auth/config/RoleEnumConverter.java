@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.config;
+package com.extractor.unraveldocs.auth.config;
 
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;

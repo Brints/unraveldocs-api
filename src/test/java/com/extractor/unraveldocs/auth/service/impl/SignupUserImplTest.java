@@ -157,23 +157,6 @@ class SignupUserImplTest {
     }
 
     @Test
-    void registerUser_FirstUser_SetsSuperAdminRole() {
-        // Arrange
-        setupCommonMocks();
-        when(userRepository.count()).thenReturn(0L);
-
-
-        // Act
-        UnravelDocsResponse<SignupData> response = signupUserService.registerUser(request);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals(HttpStatus.CREATED.value(), response.getStatusCode());
-        assertEquals(Role.SUPER_ADMIN, response.getData().role());
-        verify(userRepository).save(argThat(savedUser -> savedUser.getRole() == Role.SUPER_ADMIN));
-    }
-
-    @Test
     void registerUser_EmailAlreadyExists_ThrowsConflictException() {
         // Arrange
         when(userRepository.existsByEmail("john.doe@example.com")).thenReturn(true);

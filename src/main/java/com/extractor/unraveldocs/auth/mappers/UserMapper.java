@@ -32,10 +32,12 @@ public abstract class UserMapper {
     @Mapping(target = "userVerification", ignore = true)
     @Mapping(target = "loginAttempts", ignore = true)
     @Mapping(target = "subscription", ignore = true)
+    @Mapping(target = "documents", ignore = true)
     @Mapping(target = "termsAccepted", expression = "java(request.acceptTerms() != null ? request.acceptTerms() : false)")
     @Mapping(target = "profession", expression = "java(request.profession())")
     @Mapping(target = "marketingOptIn", expression = "java(request.subscribeToMarketing() != null ? request.subscribeToMarketing() : false)")
     @Mapping(target = "country", expression = "java(request.country())")
     @Mapping(target = "organization", expression = "java(request.organization())")
+    @Mapping(target = "authorities", ignore = true)
     public abstract User toUser(SignupRequestDto request);
 }

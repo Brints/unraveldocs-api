@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -78,7 +79,7 @@ public class UserController {
 
     @Operation(summary = "Forgot password")
     @PostMapping("/forgot-password")
-    public ResponseEntity<UnravelDocsResponse<Void>> forgotPassword(
+    public ResponseEntity<@NonNull UnravelDocsResponse<Void>> forgotPassword(
             @Valid @RequestBody ForgotPasswordDto request
     ) {
         Bucket bucket = forgotPasswordBuckets.computeIfAbsent(
@@ -96,7 +97,7 @@ public class UserController {
 
     @Operation(summary = "Reset password")
     @PostMapping("/reset-password")
-    public ResponseEntity<UnravelDocsResponse<Void>> resetPassword(
+    public ResponseEntity<@NonNull UnravelDocsResponse<Void>> resetPassword(
             @Valid @RequestBody ResetPasswordDto request
     ) {
         Bucket bucket = resetPasswordBuckets.
@@ -116,7 +117,7 @@ public class UserController {
 
     @Operation(summary = "Change password")
     @PostMapping("/change-password")
-    public ResponseEntity<UnravelDocsResponse<Void>> changePassword(
+    public ResponseEntity<@NonNull UnravelDocsResponse<Void>> changePassword(
             @AuthenticationPrincipal UserDetails authenticatedUser,
             @Valid @RequestBody ChangePasswordDto changePasswordDto
     ) {
@@ -145,7 +146,7 @@ public class UserController {
                     MediaType.APPLICATION_JSON_VALUE
             }
     )
-    public ResponseEntity<UnravelDocsResponse<UserData>> updateProfile(
+    public ResponseEntity<@NonNull UnravelDocsResponse<UserData>> updateProfile(
             @AuthenticationPrincipal UserDetails authenticatedUser,
             @Valid @ModelAttribute ProfileUpdateRequestDto request,
             @PathVariable("userId") String userId
@@ -198,7 +199,7 @@ public class UserController {
             }
     )
     @PostMapping(value = "/profile/{userId}/upload", consumes = "multipart/form-data")
-    public ResponseEntity<UnravelDocsResponse<String>> uploadProfilePicture(
+    public ResponseEntity<@NonNull UnravelDocsResponse<String>> uploadProfilePicture(
             @AuthenticationPrincipal UserDetails authenticatedUser,
             @RequestParam("file") @NotNull MultipartFile file,
             @PathVariable("userId") String userId
@@ -237,7 +238,7 @@ public class UserController {
             }
     )
     @DeleteMapping("/profile/{userId}/delete")
-    public ResponseEntity<UnravelDocsResponse<Void>> deleteProfilePicture(
+    public ResponseEntity<@NonNull UnravelDocsResponse<Void>> deleteProfilePicture(
             @AuthenticationPrincipal UserDetails authenticatedUser,
             @PathVariable("userId") String userId
     ) {

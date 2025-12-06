@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.config;
+package com.extractor.unraveldocs.messaging.config;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;

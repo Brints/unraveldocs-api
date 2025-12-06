@@ -64,16 +64,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = jwtTokenProvider.getEmailFromToken(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-            if (userDetails == null) {
-                sendErrorResponse(
-                        request,
-                        response,
-                        HttpStatus.FORBIDDEN,
-                        "User not found",
-                        "USER_NOT_FOUND");
-                return;
-            }
-
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             userDetails,

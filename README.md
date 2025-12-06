@@ -113,6 +113,12 @@ mvn clean test jacoco:report
 ### 12. Documentation
 The API documentation is available in the `src/main/resources/static/docs` directory. You can view it by opening the `index.html` file in a web browser.
 
+### 13. Start Redis Server using Docker
+If your application uses Redis for caching or session management, you can start a Redis server using Docker with the following command:
+```bash
+docker run --name redis-unraveldocs -p 6379:6379 -d redis
+```
+
 ## Configure the Application
 You can configure various aspects of the application in the `application.properties` file located in the `src/main/resources` directory. This includes database settings, payment gateway configurations, and other application-specific properties.
 ```properties

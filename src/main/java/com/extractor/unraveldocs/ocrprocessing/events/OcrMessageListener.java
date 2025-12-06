@@ -2,7 +2,6 @@ package com.extractor.unraveldocs.ocrprocessing.events;
 
 import com.extractor.unraveldocs.config.RabbitMQConfig;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
-import com.extractor.unraveldocs.events.BaseEvent;
 import com.extractor.unraveldocs.ocrprocessing.interfaces.ProcessOcrService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.auth.components;
 
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
-import com.extractor.unraveldocs.config.EmailRabbitMQConfig;
+import com.extractor.unraveldocs.messaging.config.EmailRabbitMQConfig;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.events.EventHandler;
 import com.extractor.unraveldocs.events.EventTypes;
@@ -9,7 +9,6 @@ import com.extractor.unraveldocs.messaging.dto.EmailMessage;
 import com.extractor.unraveldocs.messaging.emailtemplates.AuthEmailTemplateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 

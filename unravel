@@ -1,2 +1,0 @@
-#!/bin/sh
-java -cp target/UnravelDocs-2.1.4.jar com.extractor.unraveldocs.tools.FieldSorter "$1"

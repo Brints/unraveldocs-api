@@ -38,6 +38,7 @@ public class GenerateOtpImpl implements GenerateOtpService {
         var count = request.getCount() > 1 ? request.getCount() : 1;
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assert authentication != null;
         String userEmail = authentication.getName();
 
         User superAdminUser = userRepository.findByEmail(userEmail)

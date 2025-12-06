@@ -30,7 +30,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required for git describe and log to work correctly
+          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -41,19 +41,44 @@ jobs:
       - name: Set up Maven
         uses: stCarolas/setup-maven@v5
 
-      - name: Determine bump type and current version
+      - name: Determine version bump from commits
         id: version_info
         run: |
-          BUMP_TYPE="${{ github.event.inputs.bump_type || 'patch' }}"
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"%s")
+          else
+            COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"%s")
+          fi
+          
+          # Default to patch
+          BUMP_TYPE="patch"
+          
+          # Check for breaking changes (BREAKING CHANGE: or !)
+          if echo "$COMMITS" | grep -qE "(BREAKING CHANGE:|^[a-z]+(\([a-z]+\))?!:)"; then
+            BUMP_TYPE="major"
+          # Check for features (feat:)
+          elif echo "$COMMITS" | grep -qE "^feat(\([a-z]+\))?:"; then
+            BUMP_TYPE="minor"
+          # Check for fixes (fix:, chore:, docs:, etc.)
+          elif echo "$COMMITS" | grep -qE "^(fix|chore|docs|style|refactor|perf|test)(\([a-z]+\))?:"; then
+            BUMP_TYPE="patch"
+          fi
+          
+          # Override with manual input if workflow_dispatch
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            BUMP_TYPE="${{ github.event.inputs.bump_type }}"
+          fi
+          
           echo "BUMP_TYPE=${BUMP_TYPE}" >> $GITHUB_ENV
+          echo "Determined bump type: $BUMP_TYPE"
 
           CURRENT_VERSION_FULL=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           CURRENT_VERSION_CLEAN=$(echo "$CURRENT_VERSION_FULL" | sed 's/-SNAPSHOT//')
           echo "CURRENT_VERSION_CLEAN=${CURRENT_VERSION_CLEAN}" >> $GITHUB_ENV
-
-          echo "Determined bump type: $BUMP_TYPE"
-          echo "Current version from pom.xml: $CURRENT_VERSION_FULL"
-          echo "Cleaned current version for bumping: $CURRENT_VERSION_CLEAN"
+          echo "Current version: $CURRENT_VERSION_FULL"
 
       - name: Bump version and tag
         env:
@@ -66,14 +91,13 @@ jobs:
           MINOR=${VERSION_PARTS[1]}
           PATCH=${VERSION_PARTS[2]}
 
-          # Validate parsed parts are numbers
           if ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]] || ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
-            echo "Error: Parsed version parts are not all numbers: MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH (from $CURRENT_VERSION_CLEAN)"
+            echo "Error: Invalid version parts: MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
             exit 1
           fi
 
-          echo "Current parsed version: MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
-          echo "Performing a '$BUMP_TYPE' bump."
+          echo "Current version: $MAJOR.$MINOR.$PATCH"
+          echo "Bump type: $BUMP_TYPE"
 
           if [ "$BUMP_TYPE" == "major" ]; then
             MAJOR=$((MAJOR + 1))
@@ -82,45 +106,19 @@ jobs:
           elif [ "$BUMP_TYPE" == "minor" ]; then
             MINOR=$((MINOR + 1))
             PATCH=0
-          elif [ "$BUMP_TYPE" == "patch" ]; then
-            PATCH=$((PATCH + 1))
-            # Auto-increment minor when patch reaches 10
-            if [ $PATCH -eq 10 ]; then
-              MINOR=$((MINOR + 1))
-              PATCH=0
-              # Auto-increment major when minor reaches 10
-              if [ $MINOR -eq 10 ]; then
-                MAJOR=$((MAJOR + 1))
-                MINOR=0
-              fi
-            fi
           else
-            echo "Warning: Invalid BUMP_TYPE '$BUMP_TYPE'. Defaulting to patch bump."
             PATCH=$((PATCH + 1))
-            # Auto-increment minor when patch reaches 10
-            if [ $PATCH -eq 10 ]; then
-              MINOR=$((MINOR + 1))
-              PATCH=0
-              # Auto-increment major when minor reaches 10
-              if [ $MINOR -eq 10 ]; then
-                MAJOR=$((MAJOR + 1))
-                MINOR=0
-              fi
-            fi
           fi
 
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "Calculated new version: $NEW_VERSION"
+          echo "New version: $NEW_VERSION"
 
-          # Update pom.xml with the new version. -DgenerateBackupPoms=false prevents pom.xml.versionsBackup files.
           mvn versions:set -DnewVersion="$NEW_VERSION" -DgenerateBackupPoms=false
 
-          # Configure git user
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Commit the version change and tag
           git commit -am "chore(release): $NEW_VERSION"
           git tag "v$NEW_VERSION"
           git push origin main --tags
@@ -130,14 +128,10 @@ jobs:
         run: |
           set -e
           git fetch --tags
-          # Get the tag before the one just created (HEAD~1 refers to the commit before the tag commit)
-          # If it's the very first tag, LATEST_TAG might be the initial commit hash.
           LATEST_TAG=$(git describe --tags --abbrev=0 HEAD~1^) || LATEST_TAG=$(git rev-list --max-parents=0 HEAD)
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-          # Changelog from LATEST_TAG to the commit *before* the release commit (HEAD^)
           CHANGELOG=$(git log $LATEST_TAG..HEAD^ --pretty=format:"* %s")
           echo "$CHANGELOG" > changelog.txt
-          echo "Changelog generated between $LATEST_TAG and HEAD^"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

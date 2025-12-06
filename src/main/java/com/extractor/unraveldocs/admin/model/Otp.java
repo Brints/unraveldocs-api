@@ -43,4 +43,7 @@ public class Otp {
     @UpdateTimestamp
     @Column(nullable = false, name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @Column(name = "used_at", columnDefinition = "TIMESTAMP")
+    private OffsetDateTime usedAt;
 }

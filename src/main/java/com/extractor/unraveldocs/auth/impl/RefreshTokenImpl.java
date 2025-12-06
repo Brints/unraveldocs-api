@@ -49,7 +49,7 @@ public class RefreshTokenImpl implements RefreshTokenService {
         }
 
         String userId = refreshTokenService.getUserIdByTokenJti(refreshTokenJti);
-        User user = customUserDetailsService.loadUserEntityById(userId); // Fetch the full User entity
+        User user = customUserDetailsService.loadUserEntityById(userId);
 
         if (!user.isVerified()) {
             throw new UnauthorizedException("User account is not active or verified.");

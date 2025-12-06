@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.messaging.emailservice.awsses;
 
-import com.extractor.unraveldocs.config.AwsConfig;
+import com.extractor.unraveldocs.messaging.config.AwsConfig;
 import com.extractor.unraveldocs.exceptions.custom.EmailException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -48,13 +48,13 @@ public class AWSEmailService {
             sesClient.sendEmail(sendEmailRequest);
         } catch (SesException e) {
             switch (e) {
-                case InvalidRenderingParameterException invalidRenderingParameterException ->
+                case InvalidRenderingParameterException _ ->
                         throw new EmailException("Invalid rendering parameter: " + e.getMessage(), HttpStatus.BAD_REQUEST, e);
-                case MessageRejectedException messageRejectedException ->
+                case MessageRejectedException _ ->
                         throw new EmailException("Message rejected: " + e.getMessage(), HttpStatus.BAD_REQUEST, e);
-                case AccountSendingPausedException mailFromDomainNotVerifiedException ->
+                case AccountSendingPausedException _ ->
                         throw new EmailException("Account sending paused: " + e.getMessage(), HttpStatus.FORBIDDEN, e);
-                case LimitExceededException limitExceededException ->
+                case LimitExceededException _ ->
                         throw new EmailException("Limit exceeded: " + e.getMessage(), HttpStatus.TOO_MANY_REQUESTS, e);
                 default -> throw new EmailException("Failed to send email: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, e);
             }

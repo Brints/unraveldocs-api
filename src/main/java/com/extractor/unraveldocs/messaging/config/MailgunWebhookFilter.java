@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.config;
+package com.extractor.unraveldocs.messaging.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

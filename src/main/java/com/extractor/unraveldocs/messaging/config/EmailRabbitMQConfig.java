@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.config;
+package com.extractor.unraveldocs.messaging.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;

@@ -2,6 +2,7 @@ package com.extractor.unraveldocs.exceptions.global;
 
 import com.extractor.unraveldocs.exceptions.custom.*;
 import com.extractor.unraveldocs.exceptions.response.ErrorResponse;
+import lombok.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -21,7 +22,7 @@ public class GlobalExceptionHandler {
     private final ErrorResponse errorResponse = new ErrorResponse();
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<@NonNull Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             String fieldName;
@@ -47,7 +48,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleNotFoundException(NotFoundException ex) {
         errorResponse.setStatusCode(HttpStatus.NOT_FOUND.value());
         errorResponse.setError(HttpStatus.NOT_FOUND.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
@@ -56,7 +57,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ResponseEntity<ErrorResponse> handleConflictException(ConflictException ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleConflictException(ConflictException ex) {
         errorResponse.setStatusCode(HttpStatus.CONFLICT.value());
         errorResponse.setError(HttpStatus.CONFLICT.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
@@ -65,7 +66,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleForbiddenException(ForbiddenException ex) {
         errorResponse.setStatusCode(HttpStatus.FORBIDDEN.value());
         errorResponse.setError(HttpStatus.FORBIDDEN.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
@@ -74,7 +75,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleBadRequestException(BadRequestException ex) {
         errorResponse.setStatusCode(HttpStatus.BAD_REQUEST.value());
         errorResponse.setError(HttpStatus.BAD_REQUEST.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
@@ -83,7 +84,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleUnauthorizedException(UnauthorizedException ex) {
         errorResponse.setStatusCode(HttpStatus.UNAUTHORIZED.value());
         errorResponse.setError(HttpStatus.UNAUTHORIZED.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
@@ -92,7 +93,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(JwtAuthenticationException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<ErrorResponse> handleJwtAuthenticationException(JwtAuthenticationException ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleJwtAuthenticationException(JwtAuthenticationException ex) {
         errorResponse.setStatusCode(HttpStatus.UNAUTHORIZED.value());
         errorResponse.setError(HttpStatus.UNAUTHORIZED.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
@@ -101,7 +102,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TokenProcessingException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<ErrorResponse> handleTokenProcessingException(TokenProcessingException ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleTokenProcessingException(TokenProcessingException ex) {
         errorResponse.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
         errorResponse.setError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
@@ -109,22 +110,22 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
-    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+    @ResponseStatus(HttpStatus.CONTENT_TOO_LARGE)
+    public ResponseEntity<@NonNull ErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
         // Create a new ErrorResponse instance for thread safety if errorResponse is a shared field
         ErrorResponse specificErrorResponse = new ErrorResponse();
-        specificErrorResponse.setStatusCode(HttpStatus.PAYLOAD_TOO_LARGE.value());
-        specificErrorResponse.setError(HttpStatus.PAYLOAD_TOO_LARGE.getReasonPhrase());
+        specificErrorResponse.setStatusCode(HttpStatus.CONTENT_TOO_LARGE.value());
+        specificErrorResponse.setError(HttpStatus.CONTENT_TOO_LARGE.getReasonPhrase());
         specificErrorResponse.setMessage(
                 ex.getMessage() != null ? ex.getMessage() + " (Max size: 10MB)" :
                 "Maximum upload size of " + ex.getMaxUploadSize() + " bytes exceeded."
                 );
-        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(specificErrorResponse);
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(specificErrorResponse);
     }
 
     @ExceptionHandler(TooManyRequestsException.class)
     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
-    public ResponseEntity<ErrorResponse> handleTooManyRequestsException(TooManyRequestsException ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleTooManyRequestsException(TooManyRequestsException ex) {
         errorResponse.setStatusCode(HttpStatus.TOO_MANY_REQUESTS.value());
         errorResponse.setError(HttpStatus.TOO_MANY_REQUESTS.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
@@ -133,7 +134,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         String message = "Invalid request payload.";
         Throwable cause = ex.getCause();
         if (cause != null && cause.getMessage() != null) {
@@ -147,7 +148,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+    public ResponseEntity<@NonNull ErrorResponse> handleGenericException(Exception ex) {
         errorResponse.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
         errorResponse.setError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());

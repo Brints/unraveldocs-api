@@ -2,7 +2,7 @@ package com.extractor.unraveldocs.user.repository;
 
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.user.model.User;
-import org.springframework.cache.annotation.Cacheable;
+import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +13,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, String> {
+public interface UserRepository extends JpaRepository<@NonNull User, @NonNull String> {
     Optional<User> findByEmail(String email);
 
     Optional<User> findUserById(String id);

@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.config;
+package com.extractor.unraveldocs.admin.config;
 
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
@@ -12,6 +12,7 @@ import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.subscription.repository.SubscriptionPlanRepository;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -80,6 +81,9 @@ public class AdminUserInitializer implements CommandLineRunner {
         adminUser.setActive(true);
         adminUser.setVerified(true);
         adminUser.setRole(Role.SUPER_ADMIN);
+        adminUser.setCountry("NG");
+        adminUser.setTermsAccepted(true);
+        adminUser.setMarketingOptIn(true);
         adminUser.setCreatedAt(now);
         adminUser.setUpdatedAt(now);
 

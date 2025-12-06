@@ -13,6 +13,7 @@ import com.extractor.unraveldocs.events.BaseEvent;
 import com.extractor.unraveldocs.events.EventMetadata;
 import com.extractor.unraveldocs.events.EventPublisherService;
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
+import com.extractor.unraveldocs.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
@@ -95,7 +96,7 @@ public class SignupUserImpl implements SignupUserService {
                         .toUserRegisteredEvent(savedUser, emailVerificationToken, expiration);
 
                 EventMetadata metadata = EventMetadata.builder()
-                        .eventType("UserRegistered")
+                        .eventType(EventTypes.USER_REGISTERED)
                         .eventSource("SignupUserImpl")
                         .eventTimestamp(System.currentTimeMillis())
                         .correlationId(UUID.randomUUID().toString())

@@ -48,6 +48,7 @@ public record SignupRequestDto(
 
         @Schema(description = "Terms and Conditions acceptance", example = "true")
         @NotNull(message = "You must accept the terms and conditions")
+        @AssertTrue(message = "You must accept the terms and conditions")
         Boolean acceptTerms,
 
         @Schema(description = "Marketing emails subscription", example = "false")

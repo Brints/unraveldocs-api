@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.config;
 
+import com.extractor.unraveldocs.auth.config.RoleEnumConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;

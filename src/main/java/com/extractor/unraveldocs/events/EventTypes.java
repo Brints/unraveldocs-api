@@ -9,6 +9,7 @@ public class EventTypes {
     public static final String PASSWORD_RESET_REQUESTED = "PasswordResetRequested";
     public static final String PASSWORD_RESET_SUCCESSFUL = "PasswordResetSuccessful";
     public static final String WELCOME_EVENT = "WelcomeEvent";
+    public static final String ADMIN_CREATED = "AdminCreated";
 
     // OCR Events
     public static final String OCR_REQUESTED = "OcrRequested";

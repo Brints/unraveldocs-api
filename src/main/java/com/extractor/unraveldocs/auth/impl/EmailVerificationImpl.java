@@ -54,12 +54,12 @@ public class EmailVerificationImpl implements EmailVerificationService {
         OffsetDateTime now = OffsetDateTime.now();
 
         // Allow resend only if the token is expired or doesn't exist
-//        if (userVerification.getEmailVerificationToken() != null &&
-//                userVerification.getEmailVerificationTokenExpiry().isAfter(now)) {
-//            String timeLeft = dateHelper.getTimeLeftToExpiry(now, userVerification.getEmailVerificationTokenExpiry(), "hour");
-//            throw new BadRequestException(
-//                    "A verification email has already been sent. Please check your inbox or try again in " + timeLeft);
-//        }
+        if (userVerification.getEmailVerificationToken() != null &&
+                userVerification.getEmailVerificationTokenExpiry().isAfter(now)) {
+            String timeLeft = dateHelper.getTimeLeftToExpiry(now, userVerification.getEmailVerificationTokenExpiry(), "hour");
+            throw new BadRequestException(
+                    "A verification email has already been sent. Please check your inbox or try again in " + timeLeft);
+        }
 
         String emailVerificationToken = verificationToken.generateVerificationToken();
         OffsetDateTime emailVerificationTokenExpiry = dateHelper.setExpiryDate(now, "hour", 3);
@@ -140,7 +140,7 @@ public class EmailVerificationImpl implements EmailVerificationService {
                         updatedUser.getLastName()
                 );
                 EventMetadata metadata = EventMetadata.builder()
-                        .eventType("WelcomeEvent")
+                        .eventType(EventTypes.WELCOME_EVENT)
                         .eventSource("EmailVerificationImpl")
                         .eventTimestamp(System.currentTimeMillis())
                         .correlationId(UUID.randomUUID().toString())

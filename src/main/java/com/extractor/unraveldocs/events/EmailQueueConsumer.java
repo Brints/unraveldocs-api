@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.events;
 
-import com.extractor.unraveldocs.config.EmailRabbitMQConfig;
+import com.extractor.unraveldocs.messaging.config.EmailRabbitMQConfig;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
 import com.extractor.unraveldocs.messaging.emailservice.EmailOrchestratorService;

@@ -63,6 +63,7 @@ public class LoginUserImpl implements LoginUserService {
 
         loginAttemptsService.resetLoginAttempts(authenticatedUser);
 
+        assert authenticatedUser != null;
         String accessToken = jwtTokenProvider.generateAccessToken(authenticatedUser);
         String refreshToken = jwtTokenProvider.generateRefreshToken(authenticatedUser);
 

@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.messaging.emailservice.mailgun.service;
 
-import com.extractor.unraveldocs.config.MailgunConfig;
+import com.extractor.unraveldocs.messaging.config.MailgunConfig;
 import com.mailgun.api.v3.MailgunMessagesApi;
 import com.mailgun.exception.MailGunException;
 import com.mailgun.model.message.Message;

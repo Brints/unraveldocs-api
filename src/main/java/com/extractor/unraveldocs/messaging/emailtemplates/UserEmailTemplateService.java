@@ -5,6 +5,7 @@ import com.extractor.unraveldocs.messaging.emailservice.EmailOrchestratorService
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,7 +34,11 @@ public class UserEmailTemplateService {
     private String frontendUrl;
 
     public void sendPasswordResetToken(String email, String firstName, String lastName, String token, String expiration) {
-        String resetUrl = frontendUrl + "/auth/reset-password?token=" + token + "&email=" + email;
+        var resetUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                .path("/auth/reset-password")
+                .queryParam("token", token)
+                .queryParam("email", email)
+                .toUriString();
 
         EmailMessage message = EmailMessage.builder()
                 .to(email)
@@ -102,7 +107,11 @@ public class UserEmailTemplateService {
 
     public void sendWelcomeEmail(String email, String firstName, String lastName) {
         String appUrl = baseUrl;
-        String dashboardUrl = baseUrl + "/dashboard";
+
+        var dashboardUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                .path("/dashboard")
+                .toUriString();
+
         String recipientName = ((firstName != null ? firstName : "").trim() + " " + (lastName != null ? lastName : "").trim()).trim();
         String finalUnsubscribeUrl = (unsubscribeUrl == null || unsubscribeUrl.isBlank())
                 ? baseUrl + "/unsubscribe"

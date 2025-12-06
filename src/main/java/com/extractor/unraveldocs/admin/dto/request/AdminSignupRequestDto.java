@@ -2,24 +2,21 @@ package com.extractor.unraveldocs.admin.dto.request;
 
 import com.extractor.unraveldocs.auth.dto.PasswordMatches;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
 @Schema(description = "Create Admin Request DTO")
 @PasswordMatches
-public class CreateAdminRequestDto {
+public class AdminSignupRequestDto {
     @Schema(description = "First name of the admin user", example = "John")
     @NotNull(message = "First name is required")
-    @Size(min = 2, max = 80, message = "First name must be between 2 and 80 characters")
+    @Size(min = 3, max = 80, message = "First name must be between 3 and 80 characters")
     private String firstName;
 
     @Schema(description = "Last name of the admin user", example = "Doe")
     @NotNull(message = "Last name is required")
-    @Size(min = 2, max = 80, message = "Last name must be between 2 and 80 characters")
+    @Size(min = 3, max = 80, message = "Last name must be between 3 and 80 characters")
     private String lastName;
 
     @Schema(description = "Email address of the admin user", example = "johndoe@example.com")
@@ -50,4 +47,16 @@ public class CreateAdminRequestDto {
     @Schema(description = "Admin creation code", example = "ADMIN-CREATE-2024")
     @NotNull(message = "Admin creation code is required")
     private String code;
+
+    @Schema(description = "Country of the user", example = "USA")
+    @NotNull(message = "Country is required")
+    String country;
+
+    @Schema(description = "Terms and Conditions acceptance", example = "true")
+    @NotNull(message = "You must accept the terms and conditions")
+    @AssertTrue(message = "You must accept the terms and conditions")
+    Boolean acceptTerms;
+
+    @Schema(description = "Marketing emails subscription", example = "false")
+    Boolean subscribeToMarketing;
 }

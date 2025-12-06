@@ -1,8 +1,9 @@
 package com.extractor.unraveldocs.admin.service;
 
+import com.extractor.unraveldocs.admin.dto.response.ActiveOtpListData;
 import com.extractor.unraveldocs.admin.dto.AdminData;
 import com.extractor.unraveldocs.admin.dto.request.ChangeRoleDto;
-import com.extractor.unraveldocs.admin.dto.request.CreateAdminRequestDto;
+import com.extractor.unraveldocs.admin.dto.request.AdminSignupRequestDto;
 import com.extractor.unraveldocs.admin.dto.request.OtpRequestDto;
 import com.extractor.unraveldocs.admin.dto.request.UserFilterDto;
 import com.extractor.unraveldocs.admin.dto.response.UserListData;
@@ -19,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminService {
     private final ChangeUserRoleService changeRoleService;
+    private final FetchActiveOtpCodes fetchActiveOtpCodes;
     private final GetAllUsersService getAllUsersService;
     private final GetUserProfileByAdminService getProfileByAdmin;
     private final CreateAdminService createAdminService;
@@ -36,11 +38,15 @@ public class AdminService {
         return getProfileByAdmin.getUserProfileByAdmin(userId);
     }
 
-    public UnravelDocsResponse<AdminData> createAdmin(CreateAdminRequestDto request) {
+    public UnravelDocsResponse<AdminData> createAdmin(AdminSignupRequestDto request) {
         return createAdminService.createAdminUser(request);
     }
 
     public UnravelDocsResponse<List<String>> generateOtp(OtpRequestDto request) {
         return generateOtpService.generateOtp(request);
+    }
+
+    public UnravelDocsResponse<ActiveOtpListData> fetchActiveOtpCodes(int page, int size) {
+        return fetchActiveOtpCodes.fetchActiveOtpCodes(page, size);
     }
 }

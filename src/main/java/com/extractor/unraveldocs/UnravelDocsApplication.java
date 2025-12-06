@@ -8,8 +8,6 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.time.Instant;
-
 @SpringBootApplication(exclude = {
         S3AutoConfiguration.class,
         AwsAutoConfiguration.class

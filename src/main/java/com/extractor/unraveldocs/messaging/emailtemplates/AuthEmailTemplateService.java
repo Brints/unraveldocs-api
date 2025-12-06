@@ -1,10 +1,10 @@
 package com.extractor.unraveldocs.messaging.emailtemplates;
 
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
-import com.extractor.unraveldocs.messaging.emailservice.EmailOrchestratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
 
@@ -12,16 +12,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthEmailTemplateService {
 
-    private final EmailOrchestratorService emailOrchestratorService;
-
-    @Value("${app.base.url}")
-    private String baseUrl;
-
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
     public EmailMessage prepareVerificationEmail(String email, String firstName, String lastName, String token, String expiration) {
-        String verificationUrl = frontendUrl + "/auth/verify-email?email=" + email + "&token=" + token;
+        String verificationUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                .path("/auth/verify-email")
+                .queryParam("email", email)
+                .queryParam("token", token)
+                .toUriString();
 
         return EmailMessage.builder()
                 .to(email)
@@ -34,10 +33,5 @@ public class AuthEmailTemplateService {
                         "expiration", expiration
                 ))
                 .build();
-    }
-
-    public void sendVerificationEmail(String email, String firstName, String lastName, String token, String expiration) {
-        EmailMessage emailMessage = prepareVerificationEmail(email, firstName, lastName, token, expiration);
-        emailOrchestratorService.sendEmail(emailMessage);
     }
 }
