@@ -157,7 +157,7 @@ public class StripeCustomerService {
             customer.setDefaultPaymentMethodId(paymentMethodId);
             stripeCustomerRepository.save(customer);
 
-            log.info("Set default payment method {} for customer {}", paymentMethodId, sanitize.sanitizeLogging(customer.getStripeCustomerId()));
+            log.info("Set default payment method {} for customer {}", sanitize.sanitizeLogging(paymentMethodId), sanitize.sanitizeLogging(customer.getStripeCustomerId()));
         } catch (StripeException e) {
             log.error("Failed to set default payment method for customer {}: {}",
                     sanitize.sanitizeLogging(customer.getStripeCustomerId()), e.getMessage());
