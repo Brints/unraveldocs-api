@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.payment.stripe.service;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.stripe.dto.response.CustomerResponse;
 import com.extractor.unraveldocs.payment.stripe.exception.CustomerNotFoundException;
 import com.extractor.unraveldocs.payment.stripe.exception.StripePaymentException;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class StripeCustomerService {
+    private final SanitizeLogging sanitize;
 
     private final StripeCustomerRepository stripeCustomerRepository;
 
@@ -70,11 +72,11 @@ public class StripeCustomerService {
             customer.setActive(true);
 
             StripeCustomer savedCustomer = stripeCustomerRepository.save(customer);
-            log.info("Created Stripe customer {} for user {}", stripeCustomer.getId(), user.getId());
+            log.info("Created Stripe customer {} for user {}", sanitize.sanitizeLogging(stripeCustomer.getId()), sanitize.sanitizeLogging(user.getId()));
 
             return savedCustomer;
         } catch (StripeException e) {
-            log.error("Failed to create Stripe customer for user {}: {}", user.getId(), e.getMessage());
+            log.error("Failed to create Stripe customer for user {}: {}", sanitize.sanitizeLogging(user.getId()), e.getMessage());
             throw new StripePaymentException("Failed to create customer", e);
         }
     }
@@ -107,7 +109,7 @@ public class StripeCustomerService {
 
             return stripeCustomerRepository.save(customer);
         } catch (StripeException e) {
-            log.error("Failed to update Stripe customer {}: {}", customer.getStripeCustomerId(), e.getMessage());
+            log.error("Failed to update Stripe customer {}: {}", sanitize.sanitizeLogging(customer.getStripeCustomerId()), e.getMessage());
             throw e;
         }
     }
@@ -126,10 +128,10 @@ public class StripeCustomerService {
 
             paymentMethod.attach(params);
 
-            log.info("Attached payment method {} to customer {}", paymentMethodId, customer.getStripeCustomerId());
+            log.info("Attached payment method {} to customer {}", sanitize.sanitizeLogging(paymentMethodId), sanitize.sanitizeLogging(customer.getStripeCustomerId()));
         } catch (StripeException e) {
             log.error("Failed to attach payment method {} to customer {}: {}",
-                    paymentMethodId, customer.getStripeCustomerId(), e.getMessage());
+                    sanitize.sanitizeLogging(paymentMethodId), sanitize.sanitizeLogging(customer.getStripeCustomerId()), e.getMessage());
             throw e;
         }
     }
@@ -155,10 +157,10 @@ public class StripeCustomerService {
             customer.setDefaultPaymentMethodId(paymentMethodId);
             stripeCustomerRepository.save(customer);
 
-            log.info("Set default payment method {} for customer {}", paymentMethodId, customer.getStripeCustomerId());
+            log.info("Set default payment method {} for customer {}", paymentMethodId, sanitize.sanitizeLogging(customer.getStripeCustomerId()));
         } catch (StripeException e) {
             log.error("Failed to set default payment method for customer {}: {}",
-                    customer.getStripeCustomerId(), e.getMessage());
+                    sanitize.sanitizeLogging(customer.getStripeCustomerId()), e.getMessage());
             throw e;
         }
     }
@@ -204,7 +206,7 @@ public class StripeCustomerService {
                     .createdAt(stripeCustomer.getCreated())
                     .build();
         } catch (StripeException e) {
-            log.error("Failed to get customer details for {}: {}", customer.getStripeCustomerId(), e.getMessage());
+            log.error("Failed to get customer details for {}: {}", sanitize.sanitizeLogging(customer.getStripeCustomerId()), e.getMessage());
             throw e;
         }
     }

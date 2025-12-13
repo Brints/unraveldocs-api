@@ -32,11 +32,11 @@ UnravelDocs is a comprehensive document processing and management platform desig
 *   **Database:** PostgreSQL
 *   **Database Migrations:** Flyway
 *   **Authentication:** JWT (JSON Web Tokens)
-*   **Payment Integrations:** Stripe SDK, PayPal SDK, Flutterwave API, Paystack API, Paypal SDK
+*   **Payment Integrations:** Stripe SDK, PayPal SDK, Flutterwave API, Paystack API, Chapa API
 *   **OCR Library:** Tesseract OCR
-*   **Caching (if applicable):** Redis
+*   **Caching:** Redis
 *   **Testing:** JUnit, Mockito
-*  **Containerization (if applicable):** Docker
+*  **Containerization:** Docker
 *  **Logging:** SLF4J, Logback
 *  **Documentation:** Swagger/OpenAPI
 *  **Code Quality:** Checkstyle, SpotBugs, JaCoCo

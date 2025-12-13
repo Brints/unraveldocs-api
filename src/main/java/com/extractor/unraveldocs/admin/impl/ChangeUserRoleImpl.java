@@ -34,8 +34,8 @@ public class ChangeUserRoleImpl implements ChangeUserRoleService {
 
         // Admin or Super Admin check
         if (authentication.getAuthorities().stream()
-                .noneMatch(grantedAuthority -> Objects.equals(grantedAuthority.getAuthority(), "ROLE_admin") ||
-                        Objects.equals(grantedAuthority.getAuthority(), "ROLE_super_admin"))) {
+                .noneMatch(grantedAuthority -> Objects.equals(grantedAuthority.getAuthority(), "ROLE_ADMIN") ||
+                        Objects.equals(grantedAuthority.getAuthority(), "ROLE_SUPER_ADMIN"))) {
             throw new UnauthorizedException("You must be an admin or super admin to change user roles");
         }
 
