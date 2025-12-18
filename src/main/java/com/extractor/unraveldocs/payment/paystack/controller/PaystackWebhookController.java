@@ -41,7 +41,7 @@ public class PaystackWebhookController {
 
             log.info("Received Paystack webhook event: {}", event.getEvent());
 
-            // Verfication must occur unconditionally
+            // Verification must occur unconditionally
             if (!webhookService.verifyWebhookSignature(payload, signature)) {
                 log.warn("Invalid webhook signature");
                 throw new PaystackWebhookException("Invalid webhook signature");

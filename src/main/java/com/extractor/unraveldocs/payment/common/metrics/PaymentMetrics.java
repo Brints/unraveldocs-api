@@ -170,9 +170,6 @@ public class PaymentMetrics {
      * Record dead letter queue size
      */
     public void recordDeadLetterCount(PaymentGateway provider, long count) {
-//        meterRegistry.gauge("payment.webhook.dead_letter",
-//                io.micrometer.core.instrument.Tags.of("provider", provider.name()),
-//                count);
         String key = String.format("webhook.dead_letter.%s", provider.name());
         AtomicLong atomicLong = deadLetterCounts.computeIfAbsent(key, k -> {
             AtomicLong counter = new AtomicLong(count);
