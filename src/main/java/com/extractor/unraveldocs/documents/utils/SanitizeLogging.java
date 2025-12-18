@@ -14,14 +14,14 @@ public class SanitizeLogging {
                    .replaceAll("^_|_$", "");
     }
 
-    public String sanitizeLogging(Object input) {
+    public String sanitizeLoggingObject(Object input) {
         if (input == null) {
             return "null";
         }
         return sanitizeLogging(input.toString());
     }
 
-    public String sanitizeLogging(Integer input) {
+    public String sanitizeLoggingInteger(Integer input) {
         if (input == null) {
             return "null";
         }

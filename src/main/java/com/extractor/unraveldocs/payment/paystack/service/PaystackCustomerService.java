@@ -31,7 +31,7 @@ public class PaystackCustomerService {
     private final RestClient paystackRestClient;
     private final PaystackCustomerRepository customerRepository;
     private final ObjectMapper objectMapper;
-    private SanitizeLogging sanitize;
+    private final SanitizeLogging sanitize;
 
     /**
      * Get or create a Paystack customer for a user

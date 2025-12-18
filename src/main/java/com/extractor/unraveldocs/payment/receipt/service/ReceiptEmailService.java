@@ -80,7 +80,8 @@ public class ReceiptEmailService {
     }
 
     private File createTempPdfFile(String receiptNumber, byte[] pdfContent) throws IOException {
-        File tempFile = File.createTempFile("receipt_" + receiptNumber + "_", ".pdf");
+        //File tempFile = File.createTempFile("receipt_" + receiptNumber + "_", ".pdf");
+        File tempFile = Files.createTempFile("receipt_" + receiptNumber + "_", ".pdf").toFile();
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             fos.write(pdfContent);
         }

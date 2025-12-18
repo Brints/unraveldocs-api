@@ -137,7 +137,7 @@ public class PaystackPaymentService {
 
             return data;
         } catch (Exception e) {
-            log.error("Failed to initialize transaction for user {}: {}", user.getId(), e.getMessage());
+            log.error("Failed to initialize transaction for user {}: {}", sanitize.sanitizeLogging(user.getId()), e.getMessage());
             throw new PaystackPaymentException("Failed to initialize transaction", e);
         }
     }

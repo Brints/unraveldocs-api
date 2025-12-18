@@ -259,7 +259,7 @@ public class PaystackSubscriptionService {
             // Update user subscription
             updateUserSubscriptionStatus(subscription.getUser().getId(), "active");
 
-            log.info("Enabled subscription: {}", subscriptionCode);
+            log.info("Enabled subscription: {}", sanitize.sanitizeLogging(subscriptionCode));
             return savedSubscription;
         } catch (Exception e) {
             log.error("Failed to enable subscription {}: {}", sanitize.sanitizeLogging(subscriptionCode), e.getMessage());
@@ -407,7 +407,7 @@ public class PaystackSubscriptionService {
         try {
             return OffsetDateTime.parse(dateTimeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         } catch (Exception e) {
-            log.warn("Failed to parse datetime: {}", dateTimeString);
+            log.warn("Failed to parse datetime: {}", sanitize.sanitizeLogging(dateTimeString));
             return null;
         }
     }
