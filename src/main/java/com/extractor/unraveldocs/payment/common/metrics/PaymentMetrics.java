@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Centralized payment metrics for monitoring payment operations across all providers.
@@ -23,7 +22,6 @@ public class PaymentMetrics {
     private final ConcurrentHashMap<String, Counter> paymentCounters = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Counter> webhookCounters = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Timer> operationTimers = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, AtomicLong> deadLetterCounts = new ConcurrentHashMap<>();
 
     public PaymentMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
@@ -170,15 +168,8 @@ public class PaymentMetrics {
      * Record dead letter queue size
      */
     public void recordDeadLetterCount(PaymentGateway provider, long count) {
-        String key = String.format("webhook.dead_letter.%s", provider.name());
-        AtomicLong atomicLong = deadLetterCounts.computeIfAbsent(key, k -> {
-            AtomicLong counter = new AtomicLong(count);
-            meterRegistry.gauge("payment.webhook.dead_letter",
-                    io.micrometer.core.instrument.Tags.of("provider", provider.name()),
-                    counter,
-                    AtomicLong::get);
-            return counter;
-        });
-        atomicLong.set(count);
+        meterRegistry.gauge("payment.webhook.dead_letter",
+                io.micrometer.core.instrument.Tags.of("provider", provider.name()),
+                count);
     }
 }

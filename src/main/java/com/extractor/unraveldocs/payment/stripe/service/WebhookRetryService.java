@@ -5,6 +5,7 @@ import com.extractor.unraveldocs.payment.stripe.repository.StripeWebhookEventRep
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.*;
 import com.stripe.model.checkout.Session;
+import com.stripe.net.Webhook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,8 +64,13 @@ public class WebhookRetryService {
         log.info("Retrying webhook event {} (attempt {})", event.getEventId(), event.getRetryCount() + 1);
 
         try {
-            // Deserialize the stored payload directly since signature was verified on initial receipt
-            Event stripeEvent = Event.GSON.fromJson(event.getPayload(), Event.class);
+            // Re-construct and process the event
+            Event stripeEvent = Webhook.constructEvent(
+                    event.getPayload(),
+                    null, // Signature already verified on initial receipt
+                    webhookSecret
+            );
+
             processEvent(stripeEvent, event);
 
             // Mark as successfully processed

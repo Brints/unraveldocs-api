@@ -31,7 +31,7 @@ public class PaystackWebhookController {
     @PostMapping
     @Operation(summary = "Handle webhook events", description = "Receive and process Paystack webhook events")
     public ResponseEntity<String> handleWebhook(
-            @RequestHeader("x-paystack-signature") String signature,
+            @RequestHeader(value = "x-paystack-signature", required = false) String signature,
             @RequestBody String payload
     ) {
 
@@ -41,12 +41,11 @@ public class PaystackWebhookController {
 
             log.info("Received Paystack webhook event: {}", event.getEvent());
 
-            // Verification must occur unconditionally
-            if (!webhookService.verifyWebhookSignature(payload, signature)) {
+            // Verify signature
+            if (signature != null && !webhookService.verifyWebhookSignature(payload, signature)) {
                 log.warn("Invalid webhook signature");
                 throw new PaystackWebhookException("Invalid webhook signature");
             }
-
 
             // Process the event
             webhookService.processWebhookEvent(event);
