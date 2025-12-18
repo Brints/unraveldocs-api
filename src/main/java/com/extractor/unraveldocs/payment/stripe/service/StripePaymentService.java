@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.payment.stripe.service;
 
-import com.extractor.unraveldocs.payment.stripe.enums.PaymentStatus;
-import com.extractor.unraveldocs.payment.stripe.enums.PaymentType;
+import com.extractor.unraveldocs.payment.enums.PaymentStatus;
+import com.extractor.unraveldocs.payment.enums.PaymentType;
 import com.extractor.unraveldocs.payment.stripe.model.StripeCustomer;
 import com.extractor.unraveldocs.payment.stripe.model.StripePayment;
 import com.extractor.unraveldocs.payment.stripe.repository.StripePaymentRepository;

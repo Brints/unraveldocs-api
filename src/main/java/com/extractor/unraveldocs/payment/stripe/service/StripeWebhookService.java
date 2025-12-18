@@ -1,7 +1,10 @@
 package com.extractor.unraveldocs.payment.stripe.service;
 
-import com.extractor.unraveldocs.payment.stripe.enums.PaymentStatus;
-import com.extractor.unraveldocs.payment.stripe.enums.PaymentType;
+import com.extractor.unraveldocs.payment.enums.PaymentStatus;
+import com.extractor.unraveldocs.payment.enums.PaymentType;
+import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
+import com.extractor.unraveldocs.payment.receipt.enums.PaymentProvider;
+import com.extractor.unraveldocs.payment.receipt.service.ReceiptGenerationService;
 import com.extractor.unraveldocs.payment.stripe.exception.StripePaymentException;
 import com.extractor.unraveldocs.payment.stripe.model.StripeCustomer;
 import com.extractor.unraveldocs.payment.stripe.model.StripeWebhookEvent;
@@ -36,6 +39,7 @@ public class StripeWebhookService {
     private final StripeCustomerRepository customerRepository;
     private final StripePaymentService paymentService;
     private final UserSubscriptionRepository userSubscriptionRepository;
+    private final ReceiptGenerationService receiptGenerationService;
 
     /**
      * Check if event has already been processed (idempotency)
@@ -166,6 +170,9 @@ public class StripeWebhookService {
                         null
                 );
             }
+
+            // Generate receipt
+            generateReceipt(user, paymentIntent);
 
             log.info("Successfully processed payment intent succeeded for user {}", user.getId());
         } catch (Exception e) {
@@ -337,6 +344,9 @@ public class StripeWebhookService {
                     null
             );
 
+            // Generate receipt for subscription payment
+            generateReceiptFromInvoice(user, invoice);
+
             log.info("Successfully processed invoice payment succeeded for user {}", user.getId());
         } catch (Exception e) {
             log.error("Failed to handle invoice payment succeeded: {}", e.getMessage(), e);
@@ -379,5 +389,80 @@ public class StripeWebhookService {
             return null;
         }
         return OffsetDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneOffset.UTC);
+    }
+
+    /**
+     * Generate receipt for payment intent
+     */
+    private void generateReceipt(User user, PaymentIntent paymentIntent) {
+        try {
+            BigDecimal amount = BigDecimal.valueOf(paymentIntent.getAmount())
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            String paymentMethodDetails = extractPaymentMethodDetails(paymentIntent);
+
+            ReceiptData receiptData = ReceiptData.builder()
+                    .userId(user.getId())
+                    .customerName(user.getFirstName() + " " + user.getLastName())
+                    .customerEmail(user.getEmail())
+                    .paymentProvider(PaymentProvider.STRIPE)
+                    .externalPaymentId(paymentIntent.getId())
+                    .amount(amount)
+                    .currency(paymentIntent.getCurrency().toUpperCase())
+                    .paymentMethod("card")
+                    .paymentMethodDetails(paymentMethodDetails)
+                    .description(paymentIntent.getDescription())
+                    .paidAt(OffsetDateTime.now())
+                    .build();
+
+            receiptGenerationService.generateAndSendReceipt(receiptData);
+        } catch (Exception e) {
+            log.error("Failed to generate receipt for payment {}: {}", paymentIntent.getId(), e.getMessage());
+            // Don't rethrow - receipt generation failure shouldn't fail the webhook
+        }
+    }
+
+    /**
+     * Generate receipt for invoice payment
+     */
+    private void generateReceiptFromInvoice(User user, Invoice invoice) {
+        try {
+            BigDecimal amount = BigDecimal.valueOf(invoice.getAmountPaid())
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            ReceiptData receiptData = ReceiptData.builder()
+                    .userId(user.getId())
+                    .customerName(user.getFirstName() + " " + user.getLastName())
+                    .customerEmail(user.getEmail())
+                    .paymentProvider(PaymentProvider.STRIPE)
+                    .externalPaymentId(invoice.getId())
+                    .amount(amount)
+                    .currency(invoice.getCurrency().toUpperCase())
+                    .paymentMethod("card")
+                    .paymentMethodDetails(null)
+                    .description("Subscription Payment")
+                    .paidAt(OffsetDateTime.now())
+                    .build();
+
+            receiptGenerationService.generateAndSendReceipt(receiptData);
+        } catch (Exception e) {
+            log.error("Failed to generate receipt for invoice {}: {}", invoice.getId(), e.getMessage());
+            // Don't rethrow - receipt generation failure shouldn't fail the webhook
+        }
+    }
+
+    /**
+     * Extract payment method details from payment intent
+     */
+    private String extractPaymentMethodDetails(PaymentIntent paymentIntent) {
+        try {
+            if (paymentIntent.getPaymentMethod() != null) {
+                // Return placeholder - actual card details would require expanding the payment method
+                return "Card ending in ****";
+            }
+        } catch (Exception e) {
+            log.debug("Could not extract payment method details: {}", e.getMessage());
+        }
+        return null;
     }
 }

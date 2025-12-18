@@ -91,7 +91,10 @@ public class SecurityConfig {
                         "/api/v1/user/forgot-password",
                         "/api/v1/user/reset-password",
                         "/api/v1/auth/resend-verification-email",
-                        "/api/v1/auth/generate-password").permitAll()
+                        "/api/v1/auth/generate-password",
+                        "/api/v1/stripe/webhook/**",
+                        "/api/v1/paystack/webhook/**",
+                        "/api/v1/paystack/callback").permitAll()
                         .requestMatchers(
                                 "/api/v1/admin/**"
                                 ).hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPER_ADMIN")

@@ -13,7 +13,10 @@ import java.time.OffsetDateTime;
 
 @Data
 @Entity
-@Table(name = "user_verification")
+@Table(name = "user_verification", indexes = {
+        @Index(columnList = "email_verification_token"),
+        @Index(columnList = "password_reset_token")
+})
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserVerification {

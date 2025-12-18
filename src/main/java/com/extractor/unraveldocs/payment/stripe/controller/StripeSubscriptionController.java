@@ -11,7 +11,6 @@ import com.stripe.model.checkout.Session;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,7 +32,7 @@ public class StripeSubscriptionController {
 
     @PostMapping("/create-checkout-session")
     @Operation(summary = "Create a checkout session for subscription")
-    public ResponseEntity<@NonNull CheckoutResponseDto> createCheckoutSession(
+    public ResponseEntity<CheckoutResponseDto> createCheckoutSession(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody CheckoutRequestDto request) {
         try {
@@ -65,7 +64,7 @@ public class StripeSubscriptionController {
 
     @PostMapping("/create")
     @Operation(summary = "Create a subscription directly")
-    public ResponseEntity<@NonNull SubscriptionResponse> createSubscription(
+    public ResponseEntity<SubscriptionResponse> createSubscription(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody CreateSubscriptionRequest request) {
         try {
@@ -79,7 +78,7 @@ public class StripeSubscriptionController {
 
     @PostMapping("/{subscriptionId}/cancel")
     @Operation(summary = "Cancel a subscription")
-    public ResponseEntity<@NonNull SubscriptionResponse> cancelSubscription(
+    public ResponseEntity<SubscriptionResponse> cancelSubscription(
             @PathVariable String subscriptionId,
             @RequestParam(defaultValue = "false") boolean immediately) {
         try {
@@ -93,7 +92,7 @@ public class StripeSubscriptionController {
 
     @PostMapping("/{subscriptionId}/pause")
     @Operation(summary = "Pause a subscription")
-    public ResponseEntity<@NonNull SubscriptionResponse> pauseSubscription(@PathVariable String subscriptionId) {
+    public ResponseEntity<SubscriptionResponse> pauseSubscription(@PathVariable String subscriptionId) {
         try {
             SubscriptionResponse response = stripeService.pauseSubscription(subscriptionId);
             return ResponseEntity.ok(response);
@@ -105,7 +104,7 @@ public class StripeSubscriptionController {
 
     @PostMapping("/{subscriptionId}/resume")
     @Operation(summary = "Resume a paused subscription")
-    public ResponseEntity<@NonNull SubscriptionResponse> resumeSubscription(@PathVariable String subscriptionId) {
+    public ResponseEntity<SubscriptionResponse> resumeSubscription(@PathVariable String subscriptionId) {
         try {
             SubscriptionResponse response = stripeService.resumeSubscription(subscriptionId);
             return ResponseEntity.ok(response);
@@ -117,7 +116,7 @@ public class StripeSubscriptionController {
 
     @GetMapping("/{subscriptionId}")
     @Operation(summary = "Get subscription details")
-    public ResponseEntity<@NonNull SubscriptionResponse> getSubscription(@PathVariable String subscriptionId) {
+    public ResponseEntity<SubscriptionResponse> getSubscription(@PathVariable String subscriptionId) {
         try {
             SubscriptionResponse response = stripeService.getSubscription(subscriptionId);
             return ResponseEntity.ok(response);

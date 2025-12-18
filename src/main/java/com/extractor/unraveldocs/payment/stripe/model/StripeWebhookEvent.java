@@ -41,6 +41,15 @@ public class StripeWebhookEvent {
     @Column(name = "processing_error", columnDefinition = "TEXT")
     private String processingError;
 
+    @Column(name = "retry_count")
+    private int retryCount = 0;
+
+    @Column(name = "max_retries_reached")
+    private boolean maxRetriesReached = false;
+
+    @Column(name = "next_retry_at")
+    private OffsetDateTime nextRetryAt;
+
     @Column(name = "processed_at")
     private OffsetDateTime processedAt;
 

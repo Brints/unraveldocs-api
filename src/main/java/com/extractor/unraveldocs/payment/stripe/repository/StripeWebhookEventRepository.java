@@ -43,4 +43,24 @@ public interface StripeWebhookEventRepository extends JpaRepository<StripeWebhoo
      * Delete old processed events (for cleanup)
      */
     void deleteByProcessedTrueAndCreatedAtBefore(OffsetDateTime date);
+
+    /**
+     * Find events ready for retry (not processed, not max retries, next retry time passed)
+     */
+    @org.springframework.data.jpa.repository.Query(
+            "SELECT e FROM StripeWebhookEvent e WHERE e.processed = false " +
+            "AND e.maxRetriesReached = false " +
+            "AND e.processingError IS NOT NULL " +
+            "AND (e.nextRetryAt IS NULL OR e.nextRetryAt <= :now)")
+    List<StripeWebhookEvent> findEventsToRetry(@org.springframework.data.repository.query.Param("now") OffsetDateTime now);
+
+    /**
+     * Find all dead letter events (max retries reached)
+     */
+    List<StripeWebhookEvent> findByMaxRetriesReachedTrue();
+
+    /**
+     * Count dead letter events
+     */
+    long countByMaxRetriesReachedTrue();
 }

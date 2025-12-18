@@ -51,6 +51,12 @@ public class SubscriptionPlan {
     @Column(nullable = false, name = "is_active")
     private boolean isActive = true;
 
+    @Column(name = "paystack_plan_code")
+    private String paystackPlanCode;
+
+    @Column(name = "stripe_price_id")
+    private String stripePriceId;
+
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Discount> discounts;
 

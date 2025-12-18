@@ -26,23 +26,23 @@ public class StripeGlobalExceptionHandler {
         String message = "An error occurred while processing your payment";
 
         switch (ex) {
-            case CardException cardException -> {
+            case CardException ignored -> {
                 status = HttpStatus.BAD_REQUEST;
                 message = "Your card was declined: " + ex.getMessage();
             }
-            case RateLimitException rateLimitException -> {
+            case RateLimitException ignored -> {
                 status = HttpStatus.TOO_MANY_REQUESTS;
                 message = "Too many requests. Please try again later.";
             }
-            case InvalidRequestException invalidRequestException -> {
+            case InvalidRequestException ignored -> {
                 status = HttpStatus.BAD_REQUEST;
                 message = "Invalid payment request: " + ex.getMessage();
             }
-            case AuthenticationException authenticationException -> {
+            case AuthenticationException ignored -> {
                 status = HttpStatus.UNAUTHORIZED;
                 message = "Payment authentication failed";
             }
-            case ApiConnectionException apiConnectionException -> {
+            case ApiConnectionException ignored -> {
                 status = HttpStatus.SERVICE_UNAVAILABLE;
                 message = "Unable to connect to payment service";
             }

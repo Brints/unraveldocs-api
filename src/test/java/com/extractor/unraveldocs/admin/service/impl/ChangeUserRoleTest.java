@@ -67,17 +67,17 @@ public class ChangeUserRoleTest {
     }
 
     private void mockAdminAuthentication() {
-        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_admin"));
+        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
         when(authentication.getAuthorities()).thenReturn((Collection) authorities);
     }
 
     private void mockSuperAdminAuthentication() {
-        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_super_admin"));
+        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
         when(authentication.getAuthorities()).thenReturn((Collection) authorities);
     }
 
     private void mockUserAuthentication() {
-        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_user"));
+        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
         when(authentication.getAuthorities()).thenReturn((Collection) authorities);
     }
 

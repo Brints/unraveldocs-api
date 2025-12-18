@@ -124,6 +124,8 @@ public class SignupUserImpl implements SignupUserService {
                 .isVerified(savedUser.isVerified())
                 .termsAccepted(savedUser.isTermsAccepted())
                 .marketingOptIn(savedUser.isMarketingOptIn())
+                .isPlatformAdmin(savedUser.isPlatformAdmin())
+                .isOrganizationAdmin(savedUser.isOrganizationAdmin())
                 .country(savedUser.getCountry())
                 .profession(savedUser.getProfession())
                 .organization(savedUser.getOrganization())

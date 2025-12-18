@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.payment.stripe.enums;
+package com.extractor.unraveldocs.payment.enums;
 
 /**
  * Enum representing the type of payment transaction

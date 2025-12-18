@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.payment.stripe.model;
 
-import com.extractor.unraveldocs.payment.stripe.enums.PaymentStatus;
-import com.extractor.unraveldocs.payment.stripe.enums.PaymentType;
+import com.extractor.unraveldocs.payment.enums.PaymentStatus;
+import com.extractor.unraveldocs.payment.enums.PaymentType;
 import com.extractor.unraveldocs.user.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

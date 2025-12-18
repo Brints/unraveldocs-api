@@ -81,6 +81,7 @@ public class AdminUserInitializer implements CommandLineRunner {
         adminUser.setActive(true);
         adminUser.setVerified(true);
         adminUser.setRole(Role.SUPER_ADMIN);
+        adminUser.setPlatformAdmin(true);
         adminUser.setCountry("NG");
         adminUser.setTermsAccepted(true);
         adminUser.setMarketingOptIn(true);

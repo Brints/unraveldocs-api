@@ -20,7 +20,14 @@ import java.util.*;
 
 @Data
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+        @Index(columnList = "email", unique = true),
+        @Index(columnList = "is_active"),
+        @Index(columnList = "is_verified"),
+        @Index(columnList = "is_platform_admin"),
+        @Index(columnList = "is_organization_admin"),
+        @Index(columnList = "role")
+})
 @NoArgsConstructor
 @AllArgsConstructor
 public class User implements UserDetails {
@@ -51,6 +58,12 @@ public class User implements UserDetails {
 
     @Column(nullable = false, name = "is_verified")
     private boolean isVerified = false;
+
+    @Column(nullable = false, name = "is_platform_admin")
+    private boolean isPlatformAdmin = false;
+
+    @Column(nullable = false, name = "is_organization_admin")
+    private boolean isOrganizationAdmin = false;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'user'")

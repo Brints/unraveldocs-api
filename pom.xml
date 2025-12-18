@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.extractor</groupId>
     <artifactId>UnravelDocs</artifactId>
-    <version>5.0.0</version>
+    <version>4.2.1</version>
     <name>UnravelDocs</name>
     <description>UnravelDocs</description>
     <url/>
@@ -302,6 +302,13 @@
             <version>${stripe.version}</version>
         </dependency>
 
+        <!-- PDF Generation for Receipts -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>1.3.35</version>
+        </dependency>
+
         <!-- Observability (Structured Logging) -->
         <dependency>
             <groupId>net.logstash.logback</groupId>
@@ -351,6 +358,13 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <!-- Suppress Java 25 deprecation warnings for internal APIs used by gRPC/Netty -->
+                    <jvmArguments>
+                        --add-opens=java.base/java.nio=ALL-UNNAMED
+                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                        --add-opens=java.base/sun.security.ssl=ALL-UNNAMED
+                        --enable-native-access=ALL-UNNAMED
+                    </jvmArguments>
                 </configuration>
             </plugin>
             <plugin>

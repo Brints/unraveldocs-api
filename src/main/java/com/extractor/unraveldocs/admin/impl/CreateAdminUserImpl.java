@@ -86,6 +86,7 @@ public class CreateAdminUserImpl implements CreateAdminService {
         newAdmin.setActive(true);
         newAdmin.setVerified(true);
         newAdmin.setRole(Role.ADMIN);
+        newAdmin.setPlatformAdmin(true);
         newAdmin.setCountry(request.getCountry());
         newAdmin.setTermsAccepted(request.getAcceptTerms());
         newAdmin.setMarketingOptIn(request.getSubscribeToMarketing());

@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.payment.stripe.repository;
 
-import com.extractor.unraveldocs.payment.stripe.enums.PaymentStatus;
+import com.extractor.unraveldocs.payment.enums.PaymentStatus;
 import com.extractor.unraveldocs.payment.stripe.model.StripePayment;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;

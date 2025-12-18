@@ -19,6 +19,8 @@ public record SignupData(
         boolean isVerified,
         boolean termsAccepted,
         boolean marketingOptIn,
+        boolean isPlatformAdmin,
+        boolean isOrganizationAdmin,
         String country,
         String profession,
         String organization,

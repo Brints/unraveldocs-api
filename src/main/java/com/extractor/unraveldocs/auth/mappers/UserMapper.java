@@ -3,12 +3,13 @@ package com.extractor.unraveldocs.auth.mappers;
 import com.extractor.unraveldocs.auth.dto.request.SignupRequestDto;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.utils.userlib.UserLibrary;
+import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.FIELD)
 public abstract class UserMapper {
     @Autowired
     protected PasswordEncoder passwordEncoder;

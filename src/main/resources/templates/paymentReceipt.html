@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title th:text="'Payment Receipt - ' + ${receiptNumber}">Payment Receipt</title>
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no" />
+    <style>
+        html, body { margin:0 !important; padding:0 !important; height:100% !important; width:100% !important; }
+        * { -ms-text-size-adjust:100%; -webkit-text-size-adjust:100%; }
+        table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+        a { text-decoration:none; }
+        @media screen and (max-width:600px) {
+            .container { width:100% !important; }
+            .p-sm { padding:24px !important; }
+            .h1 { font-size:22px !important; line-height:28px !important; }
+        }
+        @media (prefers-color-scheme: dark) {
+            body, .wrapper { background:#0b0f1a !important; }
+            .card { background:#111827 !important; color:#e5e7eb !important; }
+            .muted { color:#9ca3af !important; }
+        }
+    </style>
+</head>
+<body id="body" style="background:#f4f4f7; margin:0; padding:0;" th:inline="text">
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+    Your payment receipt [[${receiptNumber}]] is attached.
+</div>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="wrapper" style="background:#f4f4f7;">
+    <tr>
+        <td align="center" style="padding:24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px; max-width:600px;">
+                <!-- Header -->
+                <tr>
+                    <td align="left" style="padding:12px 8px;">
+                        <span style="font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; font-size:16px; color:#111827; font-weight:700;">
+                            [[${appName}]]
+                        </span>
+                    </td>
+                </tr>
+
+                <!-- Card -->
+                <tr>
+                    <td>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="card" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                            <tr>
+                                <td class="p-sm" style="padding:32px; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#111827;">
+                                    <!-- Success Icon -->
+                                    <div style="text-align:center; padding-bottom:16px;">
+                                        <div style="display:inline-block; width:56px; height:56px; border-radius:50%; background:#22c55e; line-height:56px; text-align:center; color:#ffffff; font-size:28px;">
+                                            ✓
+                                        </div>
+                                    </div>
+
+                                    <!-- Title -->
+                                    <h1 class="h1" style="margin:16px 0 8px; font-size:24px; line-height:32px; font-weight:700; text-align:center;">
+                                        Payment Successful!
+                                    </h1>
+
+                                    <!-- Subtitle -->
+                                    <p style="margin:0; text-align:center; color:#4b5563; font-size:15px; line-height:22px;">
+                                        Thank you for your payment, [[${customerName}]].
+                                    </p>
+
+                                    <!-- Amount Box -->
+                                    <div style="background:#eff6ff; border:1px solid #2563eb; border-radius:8px; padding:20px; margin:24px 0; text-align:center;">
+                                        <p style="margin:0; color:#6b7280; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Amount Paid</p>
+                                        <p style="margin:8px 0 0; font-size:28px; font-weight:700; color:#16a34a;">[[${amount}]]</p>
+                                    </div>
+
+                                    <!-- Receipt Details -->
+                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0;">
+                                        <tr>
+                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb;">
+                                                <span style="color:#6b7280; font-size:14px;">Receipt Number</span>
+                                            </td>
+                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb; text-align:right;">
+                                                <span style="color:#111827; font-size:14px; font-weight:500;">[[${receiptNumber}]]</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb;">
+                                                <span style="color:#6b7280; font-size:14px;">Date</span>
+                                            </td>
+                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb; text-align:right;">
+                                                <span style="color:#111827; font-size:14px; font-weight:500;">[[${paidAt}]]</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb;">
+                                                <span style="color:#6b7280; font-size:14px;">Payment Method</span>
+                                            </td>
+                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb; text-align:right;">
+                                                <span style="color:#111827; font-size:14px; font-weight:500;">[[${paymentMethod}]]</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:8px 0;">
+                                                <span style="color:#6b7280; font-size:14px;">Description</span>
+                                            </td>
+                                            <td style="padding:8px 0; text-align:right;">
+                                                <span style="color:#111827; font-size:14px; font-weight:500;">[[${description}]]</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    <!-- PDF Notice -->
+                                    <div style="background:#f9fafb; border-radius:8px; padding:16px; margin:24px 0; text-align:center;">
+                                        <p style="margin:0; color:#4b5563; font-size:14px;">
+                                            📎 Your PDF receipt is attached to this email.
+                                        </p>
+                                    </div>
+
+                                    <!-- Support -->
+                                    <p class="muted" style="margin:24px 0 0; color:#6b7280; font-size:13px; line-height:20px; text-align:center;">
+                                        Need help? Contact us at
+                                        <a th:href="${'mailto:' + supportEmail}" style="color:#2563eb;">[[${supportEmail}]]</a>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td align="center" style="padding:16px 8px 8px;">
+                        <p class="muted" style="margin:0; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#9ca3af; font-size:12px; line-height:18px;">
+                            © [[${#dates.format(#dates.createNow(), 'yyyy')}]] [[${appName}]]. All rights reserved.
+                        </p>
+                        <p class="muted" style="margin:4px 0 0; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#9ca3af; font-size:12px; line-height:18px;">
+                            This is an automated receipt for your recent payment.
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
