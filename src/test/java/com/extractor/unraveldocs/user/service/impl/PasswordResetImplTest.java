@@ -1,17 +1,14 @@
 package com.extractor.unraveldocs.user.service.impl;
 
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
-import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.events.EventPublisherService;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.user.dto.request.ForgotPasswordDto;
 import com.extractor.unraveldocs.user.dto.request.ResetPasswordDto;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
-import com.extractor.unraveldocs.user.events.PasswordResetEvent;
-import com.extractor.unraveldocs.user.events.PasswordResetSuccessfulEvent;
 import com.extractor.unraveldocs.user.impl.PasswordResetImpl;
 import com.extractor.unraveldocs.user.interfaces.passwordreset.IPasswordReset;
 import com.extractor.unraveldocs.user.model.User;
@@ -53,8 +50,6 @@ class PasswordResetImplTest {
     private ResponseBuilderService responseBuilder;
     @Mock
     private EventPublisherService eventPublisherService;
-    @Mock
-    private UserEventMapper userEventMapper;
 
     @InjectMocks
     private PasswordResetImpl passwordResetService;
@@ -101,8 +96,7 @@ class PasswordResetImplTest {
                 "newPassword123",
                 "newPassword123",
                 "valid-token",
-                "test@email.com"
-        );
+                "test@email.com");
     }
 
     @AfterEach
@@ -110,21 +104,20 @@ class PasswordResetImplTest {
         TransactionSynchronizationManager.clear();
     }
 
-
     // Forgot Password Tests
     @Test
     void forgotPassword_WithValidEmail_ShouldSendResetToken() {
         // Arrange
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(generateVerificationToken.generateVerificationToken()).thenReturn("reset-token");
-        when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(1))).thenReturn(OffsetDateTime.now().plusHours(1));
+        when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(1)))
+                .thenReturn(OffsetDateTime.now().plusHours(1));
         when(responseBuilder.buildUserResponse(isNull(), eq(HttpStatus.OK), anyString()))
                 .thenReturn(new UnravelDocsResponse<>());
-        when(userEventMapper.toPasswordResetRequestedEvent(any(), any(), any())).thenReturn(mock(PasswordResetEvent.class));
 
         // Act
         passwordResetService.forgotPassword(forgotPasswordDto);
-        TransactionSynchronizationManager.getSynchronizations().get(0).afterCommit();
+        TransactionSynchronizationManager.getSynchronizations().getFirst().afterCommit();
 
         // Assert
         verify(userRepository).save(user);
@@ -173,11 +166,10 @@ class PasswordResetImplTest {
         when(passwordEncoder.encode(anyString())).thenReturn("encodedNewPassword");
         when(responseBuilder.buildUserResponse(isNull(), eq(HttpStatus.OK), anyString()))
                 .thenReturn(new UnravelDocsResponse<>());
-        when(userEventMapper.toPasswordResetSuccessfulEvent(any())).thenReturn(mock(PasswordResetSuccessfulEvent.class));
 
         // Act
         passwordResetService.resetPassword(passwordResetParams, resetPasswordDto);
-        TransactionSynchronizationManager.getSynchronizations().get(0).afterCommit();
+        TransactionSynchronizationManager.getSynchronizations().getFirst().afterCommit();
 
         // Assert
         verify(userRepository).save(user);
@@ -193,7 +185,8 @@ class PasswordResetImplTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(NotFoundException.class, () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
+        assertThrows(NotFoundException.class,
+                () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
     }
 
     @Test
@@ -203,7 +196,8 @@ class PasswordResetImplTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
 
         // Act & Assert
-        assertThrows(ForbiddenException.class, () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
+        assertThrows(ForbiddenException.class,
+                () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
     }
 
     @Test
@@ -213,7 +207,8 @@ class PasswordResetImplTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
 
         // Act & Assert
-        assertThrows(BadRequestException.class, () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
+        assertThrows(BadRequestException.class,
+                () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
     }
 
     @Test
@@ -224,7 +219,8 @@ class PasswordResetImplTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
 
         // Act & Assert
-        assertThrows(BadRequestException.class, () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
+        assertThrows(BadRequestException.class,
+                () -> passwordResetService.resetPassword(passwordResetParams, resetPasswordDto));
         assertEquals(VerifiedStatus.EXPIRED, userVerification.getStatus());
         verify(userRepository).save(user);
     }

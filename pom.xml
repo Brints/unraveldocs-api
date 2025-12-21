@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.0</version>
+        <version>4.0.1</version>
         <relativePath/>
     </parent>
     <groupId>com.extractor</groupId>
@@ -70,10 +70,19 @@
             <artifactId>spring-boot-starter-elasticsearch</artifactId>
         </dependency>
 
-        <!-- Messaging Broker (RabbitMq) -->
+        <!-- Message Queuing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-kafka-test</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <!-- Rate Limiting -->
@@ -325,6 +334,11 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
             <scope>runtime</scope>
         </dependency>
+    
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+      </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -358,13 +372,6 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
-                    <!-- Suppress Java 25 deprecation warnings for internal APIs used by gRPC/Netty -->
-                    <jvmArguments>
-                        --add-opens=java.base/java.nio=ALL-UNNAMED
-                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
-                        --add-opens=java.base/sun.security.ssl=ALL-UNNAMED
-                        --enable-native-access=ALL-UNNAMED
-                    </jvmArguments>
                 </configuration>
             </plugin>
             <plugin>

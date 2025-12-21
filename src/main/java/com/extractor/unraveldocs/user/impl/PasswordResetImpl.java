@@ -1,13 +1,12 @@
 package com.extractor.unraveldocs.user.impl;
 
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
-import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.config.RabbitMQConfig;
-import com.extractor.unraveldocs.events.BaseEvent;
-import com.extractor.unraveldocs.events.EventMetadata;
-import com.extractor.unraveldocs.events.EventPublisherService;
-import com.extractor.unraveldocs.events.EventTypes;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventMetadata;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
@@ -43,7 +42,6 @@ public class PasswordResetImpl implements PasswordResetService {
     private final ResponseBuilderService responseBuilder;
     private final UserRepository userRepository;
     private final EventPublisherService eventPublisherService;
-    private final UserEventMapper userEventMapper;
 
     @Override
     @Transactional
@@ -56,8 +54,7 @@ public class PasswordResetImpl implements PasswordResetService {
 
         if (!user.isVerified() || !userVerification.isEmailVerified()) {
             throw new BadRequestException(
-                    "This account is not verified. Please verify your account before resetting the password."
-            );
+                    "This account is not verified. Please verify your account before resetting the password.");
         }
 
         OffsetDateTime currentTime = OffsetDateTime.now();
@@ -65,10 +62,11 @@ public class PasswordResetImpl implements PasswordResetService {
         if (userVerification.getPasswordResetToken() != null &&
                 userVerification.getPasswordResetTokenExpiry() != null &&
                 userVerification.getPasswordResetTokenExpiry().isAfter(currentTime)) {
-            String timeLeft = dateHelper.getTimeLeftToExpiry(currentTime, userVerification.getPasswordResetTokenExpiry(), "hours");
+            String timeLeft = dateHelper.getTimeLeftToExpiry(currentTime,
+                    userVerification.getPasswordResetTokenExpiry(), "hours");
             throw new BadRequestException(
-                    "A password reset request has already been sent. Please check your email. Token expires in: " + timeLeft
-            );
+                    "A password reset request has already been sent. Please check your email. Token expires in: "
+                            + timeLeft);
         }
 
         String token = generateVerificationToken.generateVerificationToken();
@@ -89,8 +87,7 @@ public class PasswordResetImpl implements PasswordResetService {
         return responseBuilder.buildUserResponse(
                 null,
                 HttpStatus.OK,
-                "Password reset link sent to your email."
-        );
+                "Password reset link sent to your email.");
     }
 
     @Override
@@ -108,7 +105,8 @@ public class PasswordResetImpl implements PasswordResetService {
             throw new ForbiddenException("Account not verified. Please verify your account first.");
         }
 
-        if (userVerification.getPasswordResetToken() == null || !userVerification.getPasswordResetToken().equals(token)) {
+        if (userVerification.getPasswordResetToken() == null
+                || !userVerification.getPasswordResetToken().equals(token)) {
             throw new BadRequestException("Invalid password reset token.");
         }
 
@@ -138,12 +136,17 @@ public class PasswordResetImpl implements PasswordResetService {
         return responseBuilder.buildUserResponse(
                 null,
                 HttpStatus.OK,
-                "Password reset successfully."
-        );
+                "Password reset successfully.");
     }
 
     private void publishPasswordResetRequestedEvent(User user, String token, String expiration) {
-        PasswordResetEvent payload = userEventMapper.toPasswordResetRequestedEvent(user, token, expiration);
+        PasswordResetEvent payload = PasswordResetEvent.builder()
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .token(token)
+                .expiration(expiration)
+                .build();
         EventMetadata metadata = EventMetadata.builder()
                 .eventType(EventTypes.PASSWORD_RESET_REQUESTED)
                 .eventSource("PasswordResetImpl")
@@ -153,14 +156,17 @@ public class PasswordResetImpl implements PasswordResetService {
         BaseEvent<PasswordResetEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
-                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
                 "user.password.reset.requested",
-                event
-        );
+                event);
     }
 
     private void publishPasswordResetSuccessfulEvent(User user) {
-        PasswordResetSuccessfulEvent payload = userEventMapper.toPasswordResetSuccessfulEvent(user);
+        PasswordResetSuccessfulEvent payload = PasswordResetSuccessfulEvent.builder()
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .build();
         EventMetadata metadata = EventMetadata.builder()
                 .eventType(EventTypes.PASSWORD_RESET_SUCCESSFUL)
                 .eventSource("PasswordResetImpl")
@@ -170,9 +176,8 @@ public class PasswordResetImpl implements PasswordResetService {
         BaseEvent<PasswordResetSuccessfulEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
-                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
                 "user.password.reset.successful",
-                event
-        );
+                event);
     }
 }

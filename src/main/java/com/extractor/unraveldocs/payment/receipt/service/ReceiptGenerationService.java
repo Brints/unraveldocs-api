@@ -10,7 +10,6 @@ import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +19,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Main service for receipt generation orchestration
+ * Main service for receipt generation orchestration.
+ * This service is invoked by the ReceiptMessageListener after receiving
+ * a receipt generation request from Kafka.
  */
 @Slf4j
 @Service
@@ -37,16 +38,16 @@ public class ReceiptGenerationService {
     private static final AtomicLong receiptCounter = new AtomicLong(System.currentTimeMillis());
 
     /**
-     * Generate and send receipt for a payment
-     * This is the main entry point called from webhook handlers
+     * Process receipt generation for a payment.
+     * This method is called by the Kafka listener (ReceiptMessageListener)
+     * and runs synchronously within the consumer thread.
      *
      * @param data Receipt data from payment
      * @return Generated Receipt entity, or null if already exists (idempotency)
      */
-    @Async
     @Transactional
-    public Receipt generateAndSendReceipt(ReceiptData data) {
-        log.info("Starting receipt generation for payment: {} via {}",
+    public Receipt processReceiptGeneration(ReceiptData data) {
+        log.info("Processing receipt generation for payment: {} via {}",
                 data.getExternalPaymentId(), data.getPaymentProvider());
 
         // Idempotency check - prevent duplicate receipts

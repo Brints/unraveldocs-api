@@ -1,13 +1,10 @@
 package com.extractor.unraveldocs.user.service.impl;
 
-import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
 import com.extractor.unraveldocs.auth.repository.UserVerificationRepository;
-import com.extractor.unraveldocs.events.BaseEvent;
-import com.extractor.unraveldocs.events.EventPublisherService;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.user.events.UserDeletedEvent;
-import com.extractor.unraveldocs.user.events.UserDeletionScheduledEvent;
 import com.extractor.unraveldocs.user.impl.DeleteUserImpl;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
@@ -42,8 +39,6 @@ class DeleteUserImplTest {
     private UserVerificationRepository userVerificationRepository;
     @Mock
     private EventPublisherService eventPublisherService;
-    @Mock
-    private UserEventMapper userEventMapper;
 
     @InjectMocks
     private DeleteUserImpl deleteUserImpl;
@@ -65,8 +60,6 @@ class DeleteUserImplTest {
     void scheduleUserDeletion_shouldSetDeletedAtAndPublishEvent() {
         // Arrange
         when(userRepository.findById("1")).thenReturn(Optional.of(user));
-        when(userEventMapper.toUserDeletionScheduledEvent(any(User.class), any(OffsetDateTime.class)))
-                .thenReturn(new UserDeletionScheduledEvent());
 
         // Act
         deleteUserImpl.scheduleUserDeletion("1");
@@ -102,8 +95,6 @@ class DeleteUserImplTest {
         when(userRepository.findAllByLastLoginDateBefore(any(OffsetDateTime.class), any(Pageable.class)))
                 .thenReturn(inactiveUsersPage)
                 .thenReturn(new PageImpl<>(Collections.emptyList())); // Stop the loop
-        when(userEventMapper.toUserDeletionScheduledEvent(any(User.class), any(OffsetDateTime.class)))
-                .thenReturn(new UserDeletionScheduledEvent());
 
         // Act
         deleteUserImpl.checkAndScheduleInactiveUsers();
@@ -125,7 +116,6 @@ class DeleteUserImplTest {
         when(userRepository.findAllByDeletedAtBefore(any(OffsetDateTime.class), any(Pageable.class)))
                 .thenReturn(usersToDeletePage)
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
-        when(userEventMapper.toUserDeletedEvent(user)).thenReturn(new UserDeletedEvent());
 
         // Act
         deleteUserImpl.processScheduledDeletions();
@@ -140,7 +130,6 @@ class DeleteUserImplTest {
     void deleteUser_shouldPublishEventThenDeleteUserAndRelatedData() {
         // Arrange
         when(userRepository.findById("1")).thenReturn(Optional.of(user));
-        when(userEventMapper.toUserDeletedEvent(user)).thenReturn(new UserDeletedEvent());
 
         // Act
         deleteUserImpl.deleteUser("1");

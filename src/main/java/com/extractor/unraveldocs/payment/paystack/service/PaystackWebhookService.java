@@ -11,11 +11,11 @@ import com.extractor.unraveldocs.payment.paystack.model.PaystackPayment;
 import com.extractor.unraveldocs.payment.paystack.repository.PaystackPaymentRepository;
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
 import com.extractor.unraveldocs.payment.receipt.enums.PaymentProvider;
-import com.extractor.unraveldocs.payment.receipt.service.ReceiptGenerationService;
+import com.extractor.unraveldocs.payment.receipt.events.ReceiptEventPublisher;
 import com.extractor.unraveldocs.user.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +34,6 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PaystackWebhookService {
 
     private static final String HMAC_SHA512 = "HmacSHA512";
@@ -43,9 +42,31 @@ public class PaystackWebhookService {
     private final PaystackPaymentService paymentService;
     private final PaystackSubscriptionService subscriptionService;
     private final PaystackPaymentRepository paymentRepository;
-    private final ReceiptGenerationService receiptGenerationService;
     private final ObjectMapper objectMapper;
     private final SanitizeLogging sanitize;
+
+    private ReceiptEventPublisher receiptEventPublisher;
+
+    @Autowired
+    public PaystackWebhookService(
+            PaystackConfig paystackConfig,
+            PaystackPaymentService paymentService,
+            PaystackSubscriptionService subscriptionService,
+            PaystackPaymentRepository paymentRepository,
+            ObjectMapper objectMapper,
+            SanitizeLogging sanitize) {
+        this.paystackConfig = paystackConfig;
+        this.paymentService = paymentService;
+        this.subscriptionService = subscriptionService;
+        this.paymentRepository = paymentRepository;
+        this.objectMapper = objectMapper;
+        this.sanitize = sanitize;
+    }
+
+    @Autowired(required = false)
+    public void setReceiptEventPublisher(ReceiptEventPublisher receiptEventPublisher) {
+        this.receiptEventPublisher = receiptEventPublisher;
+    }
 
     /**
      * Verify webhook signature
@@ -60,8 +81,7 @@ public class PaystackWebhookService {
             Mac mac = Mac.getInstance(HMAC_SHA512);
             SecretKeySpec secretKeySpec = new SecretKeySpec(
                     paystackConfig.getSecretKey().getBytes(StandardCharsets.UTF_8),
-                    HMAC_SHA512
-            );
+                    HMAC_SHA512);
             mac.init(secretKeySpec);
 
             byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
@@ -170,7 +190,8 @@ public class PaystackWebhookService {
     private void handleSubscriptionCreate(Map<String, Object> data) {
         try {
             SubscriptionData subscriptionData = objectMapper.convertValue(data, SubscriptionData.class);
-            log.info("Processing subscription.create for: {}", sanitize.sanitizeLogging(subscriptionData.getSubscriptionCode()));
+            log.info("Processing subscription.create for: {}",
+                    sanitize.sanitizeLogging(subscriptionData.getSubscriptionCode()));
 
             subscriptionService.updateSubscriptionFromWebhook(subscriptionData);
         } catch (Exception e) {
@@ -185,7 +206,8 @@ public class PaystackWebhookService {
     private void handleSubscriptionDisable(Map<String, Object> data) {
         try {
             SubscriptionData subscriptionData = objectMapper.convertValue(data, SubscriptionData.class);
-            log.info("Processing subscription.disable for: {}", sanitize.sanitizeLogging(subscriptionData.getSubscriptionCode()));
+            log.info("Processing subscription.disable for: {}",
+                    sanitize.sanitizeLogging(subscriptionData.getSubscriptionCode()));
 
             subscriptionService.updateSubscriptionFromWebhook(subscriptionData);
         } catch (Exception e) {
@@ -200,7 +222,8 @@ public class PaystackWebhookService {
     private void handleSubscriptionNotRenew(Map<String, Object> data) {
         try {
             SubscriptionData subscriptionData = objectMapper.convertValue(data, SubscriptionData.class);
-            log.info("Processing subscription.not_renew for: {}", sanitize.sanitizeLogging(subscriptionData.getSubscriptionCode()));
+            log.info("Processing subscription.not_renew for: {}",
+                    sanitize.sanitizeLogging(subscriptionData.getSubscriptionCode()));
 
             subscriptionService.updateSubscriptionFromWebhook(subscriptionData);
         } catch (Exception e) {
@@ -214,7 +237,8 @@ public class PaystackWebhookService {
      */
     private void handleSubscriptionExpiringCards(Map<String, Object> data) {
         // Log for now - can be extended to send notifications to users
-        log.info("Received subscription.expiring_cards notification: {}", sanitize.sanitizeLogging(String.valueOf(data)));
+        log.info("Received subscription.expiring_cards notification: {}",
+                sanitize.sanitizeLogging(String.valueOf(data)));
     }
 
     /**
@@ -327,9 +351,15 @@ public class PaystackWebhookService {
                     .paidAt(payment.getPaidAt() != null ? payment.getPaidAt() : OffsetDateTime.now())
                     .build();
 
-            receiptGenerationService.generateAndSendReceipt(receiptData);
+            if (receiptEventPublisher != null) {
+                receiptEventPublisher.publishReceiptRequest(receiptData);
+            } else {
+                log.debug("Receipt event publisher not available, skipping receipt generation for payment: {}",
+                        sanitize.sanitizeLogging(payment.getReference()));
+            }
         } catch (Exception e) {
-            log.error("Failed to generate receipt for payment {}: {}", sanitize.sanitizeLogging(payment.getReference()), e.getMessage());
+            log.error("Failed to generate receipt for payment {}: {}", sanitize.sanitizeLogging(payment.getReference()),
+                    e.getMessage());
             // Don't rethrow - receipt generation failure shouldn't fail the webhook
         }
     }
@@ -353,4 +383,3 @@ public class PaystackWebhookService {
         return null;
     }
 }
-

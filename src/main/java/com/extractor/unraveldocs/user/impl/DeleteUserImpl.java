@@ -1,10 +1,12 @@
 package com.extractor.unraveldocs.user.impl;
 
-import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.repository.UserVerificationRepository;
-import com.extractor.unraveldocs.config.RabbitMQConfig;
-import com.extractor.unraveldocs.events.*;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventMetadata;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.user.events.UserDeletedEvent;
 import com.extractor.unraveldocs.user.events.UserDeletionScheduledEvent;
 import com.extractor.unraveldocs.user.interfaces.userimpl.DeleteUserService;
@@ -29,7 +31,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeleteUserImpl implements DeleteUserService {
     private final EventPublisherService eventPublisherService;
-    private final UserEventMapper userEventMapper;
     private final UserRepository userRepository;
     private final UserVerificationRepository userVerificationRepository;
 
@@ -66,7 +67,7 @@ public class DeleteUserImpl implements DeleteUserService {
     @Override
     @Transactional
     @Scheduled(cron = "0 0 1 * * ?")
-    @CacheEvict(value = {"getAllUsers", "getProfileByAdmin", "getProfileByUser"}, allEntries = true)
+    @CacheEvict(value = { "getAllUsers", "getProfileByAdmin", "getProfileByUser" }, allEntries = true)
     public void processScheduledDeletions() {
         OffsetDateTime threshold = OffsetDateTime.now();
         Pageable pageable = PageRequest.of(0, BATCH_SIZE);
@@ -89,7 +90,7 @@ public class DeleteUserImpl implements DeleteUserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"getAllUsers", "getProfileByAdmin", "getProfileByUser"}, allEntries = true)
+    @CacheEvict(value = { "getAllUsers", "getProfileByAdmin", "getProfileByUser" }, allEntries = true)
     public void deleteUser(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -110,27 +111,33 @@ public class DeleteUserImpl implements DeleteUserService {
             user.getUserVerification().setDeletedAt(deletionDate);
         }
 
-        UserDeletionScheduledEvent payload = userEventMapper.toUserDeletionScheduledEvent(user, deletionDate);
+        UserDeletionScheduledEvent payload = UserDeletionScheduledEvent.builder()
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .deletionDate(deletionDate)
+                .build();
         EventMetadata metadata = createEventMetadata(EventTypes.USER_DELETION_SCHEDULED);
         BaseEvent<UserDeletionScheduledEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
-                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
                 "user.deletion.scheduled",
-                event
-        );
+                event);
     }
 
     private void publishUserDeletedEvent(User user) {
-        UserDeletedEvent payload = userEventMapper.toUserDeletedEvent(user);
+        UserDeletedEvent payload = UserDeletedEvent.builder()
+                .email(user.getEmail())
+                .profilePictureUrl(user.getProfilePicture())
+                .build();
         EventMetadata metadata = createEventMetadata(EventTypes.USER_DELETED);
         BaseEvent<UserDeletedEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
-                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
                 "user.deleted",
-                event
-        );
+                event);
     }
 
     private EventMetadata createEventMetadata(String eventType) {

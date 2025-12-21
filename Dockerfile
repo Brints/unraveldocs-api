@@ -1,5 +1,5 @@
-# Use a base image with Java 21 installed
-FROM openjdk:21-jdk-slim AS build
+# Use Eclipse Temurin JDK 21 for building
+FROM eclipse-temurin:21-jdk-alpine AS build
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -20,8 +20,8 @@ COPY src ./src
 # Package the application into a JAR file
 RUN ./mvnw package -DskipTests && ls -la /app/target/
 
-# Use a smaller base image for the final application
-FROM openjdk:21-jdk-slim
+# Use Eclipse Temurin JRE 21 Alpine for smaller runtime image
+FROM eclipse-temurin:21-jre-alpine
 
 # Set the working directory inside the container
 WORKDIR /app

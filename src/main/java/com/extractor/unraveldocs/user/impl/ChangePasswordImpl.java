@@ -1,11 +1,10 @@
 package com.extractor.unraveldocs.user.impl;
 
-import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
-import com.extractor.unraveldocs.config.RabbitMQConfig;
-import com.extractor.unraveldocs.events.BaseEvent;
-import com.extractor.unraveldocs.events.EventMetadata;
-import com.extractor.unraveldocs.events.EventPublisherService;
-import com.extractor.unraveldocs.events.EventTypes;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventMetadata;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
@@ -42,7 +41,6 @@ public class ChangePasswordImpl implements ChangePasswordService {
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
     private final EventPublisherService eventPublisherService;
-    private final UserEventMapper userEventMapper;
 
     @Override
     @Transactional
@@ -88,7 +86,11 @@ public class ChangePasswordImpl implements ChangePasswordService {
     }
 
     private void publishPasswordChangedEvent(User user) {
-        PasswordChangedEvent payload = userEventMapper.toPasswordChangedEvent(user);
+        PasswordChangedEvent payload = PasswordChangedEvent.builder()
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .build();
         EventMetadata metadata = EventMetadata.builder()
                 .eventType(EventTypes.PASSWORD_CHANGED)
                 .eventSource("ChangePasswordImpl")
@@ -98,9 +100,8 @@ public class ChangePasswordImpl implements ChangePasswordService {
         BaseEvent<PasswordChangedEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
-                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
                 "user.password.changed",
-                event
-        );
+                event);
     }
 }

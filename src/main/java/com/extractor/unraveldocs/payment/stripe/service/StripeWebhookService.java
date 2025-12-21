@@ -4,7 +4,7 @@ import com.extractor.unraveldocs.payment.enums.PaymentStatus;
 import com.extractor.unraveldocs.payment.enums.PaymentType;
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
 import com.extractor.unraveldocs.payment.receipt.enums.PaymentProvider;
-import com.extractor.unraveldocs.payment.receipt.service.ReceiptGenerationService;
+import com.extractor.unraveldocs.payment.receipt.events.ReceiptEventPublisher;
 import com.extractor.unraveldocs.payment.stripe.exception.StripePaymentException;
 import com.extractor.unraveldocs.payment.stripe.model.StripeCustomer;
 import com.extractor.unraveldocs.payment.stripe.model.StripeWebhookEvent;
@@ -39,7 +39,7 @@ public class StripeWebhookService {
     private final StripeCustomerRepository customerRepository;
     private final StripePaymentService paymentService;
     private final UserSubscriptionRepository userSubscriptionRepository;
-    private final ReceiptGenerationService receiptGenerationService;
+    private final ReceiptEventPublisher receiptEventPublisher;
 
     /**
      * Check if event has already been processed (idempotency)
@@ -415,7 +415,7 @@ public class StripeWebhookService {
                     .paidAt(OffsetDateTime.now())
                     .build();
 
-            receiptGenerationService.generateAndSendReceipt(receiptData);
+            receiptEventPublisher.publishReceiptRequest(receiptData);
         } catch (Exception e) {
             log.error("Failed to generate receipt for payment {}: {}", paymentIntent.getId(), e.getMessage());
             // Don't rethrow - receipt generation failure shouldn't fail the webhook
@@ -444,7 +444,7 @@ public class StripeWebhookService {
                     .paidAt(OffsetDateTime.now())
                     .build();
 
-            receiptGenerationService.generateAndSendReceipt(receiptData);
+            receiptEventPublisher.publishReceiptRequest(receiptData);
         } catch (Exception e) {
             log.error("Failed to generate receipt for invoice {}: {}", invoice.getId(), e.getMessage());
             // Don't rethrow - receipt generation failure shouldn't fail the webhook

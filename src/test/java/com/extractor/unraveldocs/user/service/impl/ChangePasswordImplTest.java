@@ -1,7 +1,6 @@
 package com.extractor.unraveldocs.user.service.impl;
 
-import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
-import com.extractor.unraveldocs.events.EventPublisherService;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
@@ -39,7 +38,6 @@ class ChangePasswordImplTest {
     private Authentication authentication;
     private EventPublisherService eventPublisherService;
 
-
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
@@ -49,7 +47,6 @@ class ChangePasswordImplTest {
         tokenProvider = mock(JwtTokenProvider.class);
         authentication = mock(Authentication.class);
         eventPublisherService = mock(EventPublisherService.class);
-        UserEventMapper userEventMapper = mock(UserEventMapper.class);
         SecurityContext securityContext = mock(SecurityContext.class);
 
         // Setup security context
@@ -59,16 +56,13 @@ class ChangePasswordImplTest {
             TransactionSynchronizationManager.initSynchronization();
         }
 
-
         changePasswordService = new ChangePasswordImpl(
                 passwordEncoder,
                 responseBuilder,
                 tokenBlacklistService,
                 tokenProvider,
                 userRepository,
-                eventPublisherService,
-                userEventMapper
-        );
+                eventPublisherService);
     }
 
     @AfterEach
@@ -182,7 +176,6 @@ class ChangePasswordImplTest {
         // Execute
         UnravelDocsResponse<Void> response = changePasswordService.changePassword(request);
         TransactionSynchronizationManager.getSynchronizations().getFirst().afterCommit();
-
 
         // Assert
         assertNotNull(response);

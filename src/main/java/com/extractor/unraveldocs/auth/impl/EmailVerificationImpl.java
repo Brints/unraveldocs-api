@@ -5,13 +5,12 @@ import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.auth.events.WelcomeEvent;
 import com.extractor.unraveldocs.auth.interfaces.EmailVerificationService;
-import com.extractor.unraveldocs.auth.mappers.UserEventMapper;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.config.RabbitMQConfig;
-import com.extractor.unraveldocs.events.BaseEvent;
-import com.extractor.unraveldocs.events.EventMetadata;
-import com.extractor.unraveldocs.events.EventPublisherService;
-import com.extractor.unraveldocs.events.EventTypes;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventMetadata;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
@@ -38,7 +37,6 @@ public class EmailVerificationImpl implements EmailVerificationService {
     private final DateHelper dateHelper;
     private final ResponseBuilderService responseBuilder;
     private final EventPublisherService eventPublisherService;
-    private final UserEventMapper userEventMapper;
 
     @Override
     @Transactional
@@ -56,7 +54,8 @@ public class EmailVerificationImpl implements EmailVerificationService {
         // Allow resend only if the token is expired or doesn't exist
         if (userVerification.getEmailVerificationToken() != null &&
                 userVerification.getEmailVerificationTokenExpiry().isAfter(now)) {
-            String timeLeft = dateHelper.getTimeLeftToExpiry(now, userVerification.getEmailVerificationTokenExpiry(), "hour");
+            String timeLeft = dateHelper.getTimeLeftToExpiry(now, userVerification.getEmailVerificationTokenExpiry(),
+                    "hour");
             throw new BadRequestException(
                     "A verification email has already been sent. Please check your inbox or try again in " + timeLeft);
         }
@@ -83,7 +82,13 @@ public class EmailVerificationImpl implements EmailVerificationService {
     }
 
     private void publishVerificationEmailEvent(User user, String token, String expiration) {
-        UserRegisteredEvent payload = userEventMapper.toUserRegisteredEvent(user, token, expiration);
+        UserRegisteredEvent payload = UserRegisteredEvent.builder()
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .verificationToken(token)
+                .expiration(expiration)
+                .build();
         EventMetadata metadata = EventMetadata.builder()
                 .eventType(EventTypes.USER_REGISTERED)
                 .eventSource("EmailVerificationImpl")
@@ -93,10 +98,9 @@ public class EmailVerificationImpl implements EmailVerificationService {
         BaseEvent<UserRegisteredEvent> event = new BaseEvent<>(metadata, payload);
 
         eventPublisherService.publishEvent(
-                RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
                 "user.verification.resent",
-                event
-        );
+                event);
     }
 
     @Override
@@ -110,7 +114,8 @@ public class EmailVerificationImpl implements EmailVerificationService {
         }
 
         UserVerification userVerification = user.getUserVerification();
-        if (userVerification.getEmailVerificationToken() == null || !userVerification.getEmailVerificationToken().equals(token)) {
+        if (userVerification.getEmailVerificationToken() == null
+                || !userVerification.getEmailVerificationToken().equals(token)) {
             throw new BadRequestException("Invalid email verification token.");
         }
 
@@ -137,8 +142,7 @@ public class EmailVerificationImpl implements EmailVerificationService {
                 WelcomeEvent welcomeEvent = new WelcomeEvent(
                         updatedUser.getEmail(),
                         updatedUser.getFirstName(),
-                        updatedUser.getLastName()
-                );
+                        updatedUser.getLastName());
                 EventMetadata metadata = EventMetadata.builder()
                         .eventType(EventTypes.WELCOME_EVENT)
                         .eventSource("EmailVerificationImpl")
@@ -147,10 +151,9 @@ public class EmailVerificationImpl implements EmailVerificationService {
                         .build();
                 BaseEvent<WelcomeEvent> event = new BaseEvent<>(metadata, welcomeEvent);
                 eventPublisherService.publishEvent(
-                        RabbitMQConfig.USER_EVENTS_EXCHANGE,
+                        RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
                         "user.welcome",
-                        event
-                );
+                        event);
             }
         });
 

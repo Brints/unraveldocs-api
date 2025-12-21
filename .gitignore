@@ -37,6 +37,7 @@ application.yml
 application-dev.properties
 application-dev.yml
 .env
+!.env.example
 rest-client.private.env.json
 http-client.private.env.json
 

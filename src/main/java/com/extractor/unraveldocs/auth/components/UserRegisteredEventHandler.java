@@ -1,10 +1,10 @@
 package com.extractor.unraveldocs.auth.components;
 
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
-import com.extractor.unraveldocs.messaging.config.EmailRabbitMQConfig;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
-import com.extractor.unraveldocs.events.EventHandler;
-import com.extractor.unraveldocs.events.EventTypes;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventHandler;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
 import com.extractor.unraveldocs.messaging.emailtemplates.AuthEmailTemplateService;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +36,8 @@ public class UserRegisteredEventHandler implements EventHandler<UserRegisteredEv
             );
 
             rabbitTemplate.convertAndSend(
-                    EmailRabbitMQConfig.EXCHANGE_NAME,
-                    EmailRabbitMQConfig.ROUTING_KEY,
+                    RabbitMQQueueConfig.EMAIL_EXCHANGE,
+                    RabbitMQQueueConfig.EMAIL_ROUTING_KEY,
                     emailMessage
             );
             log.info("Sent verification email to: {}", sanitizeLogging.sanitizeLogging(event.getEmail()));

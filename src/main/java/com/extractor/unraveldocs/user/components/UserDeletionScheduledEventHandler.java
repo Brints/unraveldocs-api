@@ -1,8 +1,7 @@
 package com.extractor.unraveldocs.user.components;
 
-import com.extractor.unraveldocs.events.EventHandler;
-import com.extractor.unraveldocs.events.EventPublisherService;
-import com.extractor.unraveldocs.events.EventTypes;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventHandler;
+import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.user.events.UserDeletionScheduledEvent;
 import lombok.RequiredArgsConstructor;
