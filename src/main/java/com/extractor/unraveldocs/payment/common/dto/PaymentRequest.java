@@ -1,6 +1,5 @@
 package com.extractor.unraveldocs.payment.common.dto;
 
-import com.extractor.unraveldocs.payment.common.enums.PaymentGateway;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;

@@ -2,11 +2,10 @@ package com.extractor.unraveldocs.auth.service.impl;
 
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.dto.request.ResendEmailVerificationDto;
-import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.auth.impl.EmailVerificationImpl;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;

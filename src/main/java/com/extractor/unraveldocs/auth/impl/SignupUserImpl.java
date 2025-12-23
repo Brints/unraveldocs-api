@@ -6,12 +6,12 @@ import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.interfaces.SignupUserService;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventMetadata;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
@@ -62,7 +62,7 @@ public class SignupUserImpl implements SignupUserService {
 
                 OffsetDateTime now = OffsetDateTime.now();
 
-                // Create User with direct instantiation
+                // Create new User
                 User user = new User();
                 user.setFirstName(userLibrary.capitalizeFirstLetterOfName(request.firstName()));
                 user.setLastName(userLibrary.capitalizeFirstLetterOfName(request.lastName()));
@@ -82,7 +82,7 @@ public class SignupUserImpl implements SignupUserService {
                 String emailVerificationToken = verificationToken.generateVerificationToken();
                 OffsetDateTime emailVerificationTokenExpiry = dateHelper.setExpiryDate(now, "hour", 3);
 
-                // Create UserVerification with direct instantiation
+                // Create UserVerification and associate with User
                 UserVerification userVerification = new UserVerification();
                 userVerification.setUser(user);
                 userVerification.setEmailVerificationToken(emailVerificationToken);
@@ -91,6 +91,7 @@ public class SignupUserImpl implements SignupUserService {
                 userVerification.setEmailVerified(false);
                 user.setUserVerification(userVerification);
 
+                // Initialize LoginAttempts for the User
                 LoginAttempts loginAttempts = new LoginAttempts();
                 loginAttempts.setUser(user);
                 user.setLoginAttempts(loginAttempts);
@@ -131,6 +132,7 @@ public class SignupUserImpl implements SignupUserService {
                         }
                 });
 
+                // Prepare response data
                 SignupData signupData = SignupData.builder()
                                 .id(savedUser.getId())
                                 .profilePicture(savedUser.getProfilePicture())

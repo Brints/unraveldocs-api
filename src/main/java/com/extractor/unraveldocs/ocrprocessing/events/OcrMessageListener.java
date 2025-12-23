@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.ocrprocessing.events;
 
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
-import com.extractor.unraveldocs.messagequeuing.kafka.config.KafkaTopicConfig;
+import com.extractor.unraveldocs.brokers.kafka.config.KafkaTopicConfig;
 import com.extractor.unraveldocs.ocrprocessing.interfaces.ProcessOcrService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

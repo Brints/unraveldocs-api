@@ -1,10 +1,10 @@
 package com.extractor.unraveldocs.auth.components;
 
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig;
+import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventHandler;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventHandler;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.messaging.dto.EmailMessage;
 import com.extractor.unraveldocs.messaging.emailtemplates.AuthEmailTemplateService;
 import lombok.RequiredArgsConstructor;

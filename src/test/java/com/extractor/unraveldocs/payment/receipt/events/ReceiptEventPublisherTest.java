@@ -1,9 +1,9 @@
 package com.extractor.unraveldocs.payment.receipt.events;
 
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.messagequeuing.core.Message;
-import com.extractor.unraveldocs.messagequeuing.core.MessageResult;
-import com.extractor.unraveldocs.messagequeuing.kafka.producer.KafkaMessageProducer;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.core.Message;
+import com.extractor.unraveldocs.brokers.core.MessageResult;
+import com.extractor.unraveldocs.brokers.kafka.producer.KafkaMessageProducer;
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
 import com.extractor.unraveldocs.payment.receipt.enums.PaymentProvider;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,0 +1,121 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/C:/ProgramData/chocolatey/lib/maven/apache-maven-3.9.11/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+[INFO] Error stacktraces are turned on.
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.extractor:UnravelDocs >----------------------
+[INFO] Building UnravelDocs 5.1.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ UnravelDocs ---
+[INFO] Copying 42 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ UnravelDocs ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 406 source files with javac [debug parameters release 25] to target\classes
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/payment/receipt/model/Receipt.java:[72,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/payment/stripe/model/StripeSubscription.java:[87,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[INFO] 2 warnings 
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[7,65] package org.springframework.boot.autoconfigure.data.elasticsearch does not exist
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[8,65] package org.springframework.boot.autoconfigure.data.elasticsearch does not exist
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[9,60] package org.springframework.boot.autoconfigure.elasticsearch does not exist
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[10,60] package org.springframework.boot.autoconfigure.elasticsearch does not exist
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[20,9] cannot find symbol
+  symbol: class ElasticsearchDataAutoConfiguration
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[21,9] cannot find symbol
+  symbol: class ElasticsearchRepositoriesAutoConfiguration
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[22,9] cannot find symbol
+  symbol: class ElasticsearchClientAutoConfiguration
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[23,9] cannot find symbol
+  symbol: class ElasticsearchRestClientAutoConfiguration
+[INFO] 8 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  31.411 s
+[INFO] Finished at: 2025-12-23T13:51:02+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:compile (default-compile) on project UnravelDocs: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[7,65] package org.springframework.boot.autoconfigure.data.elasticsearch does not exist
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[8,65] package org.springframework.boot.autoconfigure.data.elasticsearch does not exist
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[9,60] package org.springframework.boot.autoconfigure.elasticsearch does not exist
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[10,60] package org.springframework.boot.autoconfigure.elasticsearch does not exist
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[20,9] cannot find symbol
+[ERROR]   symbol: class ElasticsearchDataAutoConfiguration
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[21,9] cannot find symbol
+[ERROR]   symbol: class ElasticsearchRepositoriesAutoConfiguration
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[22,9] cannot find symbol
+[ERROR]   symbol: class ElasticsearchClientAutoConfiguration
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/UnravelDocsApplication.java:[23,9] cannot find symbol
+[ERROR]   symbol: class ElasticsearchRestClientAutoConfiguration
+[ERROR] -> [Help 1]
+org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:compile (default-compile) on project UnravelDocs: Compilation failure
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2 (MojoExecutor.java:333)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute (MojoExecutor.java:316)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:212)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:174)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.access$000 (MojoExecutor.java:75)
+    at org.apache.maven.lifecycle.internal.MojoExecutor$1.run (MojoExecutor.java:162)
+    at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute (DefaultMojosExecutionStrategy.java:39)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:159)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:105)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:73)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:53)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:118)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:261)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:173)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:101)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:906)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:283)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:206)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:104)
+    at java.lang.reflect.Method.invoke (Method.java:565)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:255)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:201)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:361)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:314)
+Caused by: org.apache.maven.plugin.compiler.CompilationFailureException: Compilation failure
+    at org.apache.maven.plugin.compiler.AbstractCompilerMojo.executeReal (AbstractCompilerMojo.java:1318)
+    at org.apache.maven.plugin.compiler.AbstractCompilerMojo.execute (AbstractCompilerMojo.java:708)
+    at org.apache.maven.plugin.compiler.CompilerMojo.execute (CompilerMojo.java:235)
+    at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo (DefaultBuildPluginManager.java:126)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute2 (MojoExecutor.java:328)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.doExecute (MojoExecutor.java:316)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:212)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:174)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.access$000 (MojoExecutor.java:75)
+    at org.apache.maven.lifecycle.internal.MojoExecutor$1.run (MojoExecutor.java:162)
+    at org.apache.maven.plugin.DefaultMojosExecutionStrategy.execute (DefaultMojosExecutionStrategy.java:39)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:159)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:105)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:73)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:53)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:118)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:261)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:173)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:101)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:906)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:283)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:206)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:104)
+    at java.lang.reflect.Method.invoke (Method.java:565)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:255)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:201)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:361)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:314)
+[ERROR] 
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

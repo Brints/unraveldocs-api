@@ -2,7 +2,7 @@ package com.extractor.unraveldocs.user.eventlistener;
 
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.auth.events.WelcomeEvent;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventHandler;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventHandler;
 import com.extractor.unraveldocs.user.events.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@RabbitListener(queues = "#{T(com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig).USER_EVENTS_QUEUE}")
+@RabbitListener(queues = "#{T(com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig).USER_EVENTS_QUEUE}")
 public class UserEventListener {
 
     private final Map<String, EventHandler<?>> eventHandlers;

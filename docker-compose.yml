@@ -153,6 +153,47 @@ services:
     networks:
       - unraveldocs-net
 
+  # --- ELASTICSEARCH SERVICES ---
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=unraveldocs-cluster
+      - node.name=unraveldocs-node
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - unraveldocs-net
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: kibana
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - unraveldocs-net
+
 # Volumes for persistent data
 volumes:
   postgres_data:
@@ -164,6 +205,8 @@ volumes:
   localstack_data:
     driver: local
   kafka_data:
+    driver: local
+  elasticsearch_data:
     driver: local
 
 # Network for inter-service communication
