@@ -1,5 +1,5 @@
 # Use Eclipse Temurin JDK 21 for building
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -21,7 +21,7 @@ COPY src ./src
 RUN ./mvnw package -DskipTests && ls -la /app/target/
 
 # Use Eclipse Temurin JRE 21 Alpine for smaller runtime image
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jdk-alpine
 
 # Set the working directory inside the container
 WORKDIR /app

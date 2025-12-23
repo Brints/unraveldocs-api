@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.user.components;
 
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventHandler;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventHandler;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.user.events.PasswordResetSuccessfulEvent;
 import lombok.RequiredArgsConstructor;

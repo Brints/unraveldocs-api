@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.payment.common.events;
 
-import com.extractor.unraveldocs.messagequeuing.config.MessagingProperties;
+import com.extractor.unraveldocs.brokers.config.MessagingProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -23,24 +23,6 @@ import org.springframework.util.backoff.ExponentialBackOff;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Kafka consumer configuration optimized for high-throughput payment processing.
- *
- * <h2>Throughput Optimizations:</h2>
- * <ul>
- *   <li><b>Batch Processing:</b> Consumes up to 500 records per poll</li>
- *   <li><b>Concurrency:</b> 6 concurrent consumers per listener</li>
- *   <li><b>Manual Acknowledgment:</b> Batch acknowledgment for efficiency</li>
- *   <li><b>Retry with Backoff:</b> Exponential backoff before DLQ</li>
- * </ul>
- *
- * <h2>Scaling for Higher TPS:</h2>
- * <ul>
- *   <li>1,000 TPS: 6 consumers, 12 partitions</li>
- *   <li>5,000 TPS: 12 consumers, 24 partitions</li>
- *   <li>10,000+ TPS: 24+ consumers, 48+ partitions, multiple instances</li>
- * </ul>
- */
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
@@ -62,7 +44,8 @@ public class PaymentKafkaConsumerConfig {
     private int maxPollRecords;
 
     /**
-     * Max time to wait for records. Lower = lower latency, higher = better batching.
+     * Max time to wait for records. Lower = lower latency, higher = better
+     * batching.
      */
     @Value("${payment.kafka.consumer.fetch-max-wait-ms:500}")
     private int fetchMaxWaitMs;
@@ -136,13 +119,10 @@ public class PaymentKafkaConsumerConfig {
      * Batch listener factory for high-throughput payment event processing.
      */
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, PaymentEvent>
-            paymentBatchListenerContainerFactory(
-                    ConsumerFactory<String, PaymentEvent> paymentEventConsumerFactory,
-                    KafkaTemplate<String, Object> kafkaTemplate
-    ) {
-        ConcurrentKafkaListenerContainerFactory<String, PaymentEvent> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentEvent> paymentBatchListenerContainerFactory(
+            ConsumerFactory<String, PaymentEvent> paymentEventConsumerFactory,
+            KafkaTemplate<String, Object> kafkaTemplate) {
+        ConcurrentKafkaListenerContainerFactory<String, PaymentEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(paymentEventConsumerFactory);
 
@@ -176,15 +156,12 @@ public class PaymentKafkaConsumerConfig {
                     if (originalTopic.contains("webhook")) {
                         return new org.apache.kafka.common.TopicPartition(
                                 PaymentTopicConfig.TOPIC_PAYMENT_WEBHOOKS_DLQ,
-                                record.partition() % 3
-                        );
+                                record.partition() % 3);
                     }
                     return new org.apache.kafka.common.TopicPartition(
                             PaymentTopicConfig.TOPIC_PAYMENT_EVENTS_DLQ,
-                            record.partition() % 3
-                    );
-                }
-        );
+                            record.partition() % 3);
+                });
 
         // Exponential backoff: 1s, 2s, 4s, 8s, 16s (max 5 retries)
         ExponentialBackOff backOff = new ExponentialBackOff(1000L, 2.0);
@@ -195,12 +172,10 @@ public class PaymentKafkaConsumerConfig {
         // Don't retry these exceptions
         errorHandler.addNotRetryableExceptions(
                 IllegalArgumentException.class,
-                NullPointerException.class
-        );
+                NullPointerException.class);
 
         log.info("Created error handler with exponential backoff and DLQ");
 
         return errorHandler;
     }
 }
-

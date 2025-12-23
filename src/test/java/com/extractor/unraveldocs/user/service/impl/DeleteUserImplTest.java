@@ -2,8 +2,8 @@ package com.extractor.unraveldocs.user.service.impl;
 
 import com.extractor.unraveldocs.auth.model.UserVerification;
 import com.extractor.unraveldocs.auth.repository.UserVerificationRepository;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.user.impl.DeleteUserImpl;
 import com.extractor.unraveldocs.user.model.User;

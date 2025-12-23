@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.ocrprocessing.service.impl;
 
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig;
+import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionResponse;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionUploadData;
 import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
@@ -9,8 +9,8 @@ import com.extractor.unraveldocs.documents.model.DocumentCollection;
 import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.documents.repository.DocumentCollectionRepository;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.ocrprocessing.events.OcrEventMapper;
 import com.extractor.unraveldocs.ocrprocessing.events.OcrRequestedEvent;

@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.user.service.impl;
 
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;

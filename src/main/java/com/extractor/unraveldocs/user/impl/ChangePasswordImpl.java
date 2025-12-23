@@ -1,10 +1,10 @@
 package com.extractor.unraveldocs.user.impl;
 
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventMetadata;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventPublisherService;
-import com.extractor.unraveldocs.messagequeuing.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;

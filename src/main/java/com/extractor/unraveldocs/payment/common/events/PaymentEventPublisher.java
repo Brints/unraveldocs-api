@@ -1,8 +1,8 @@
 package com.extractor.unraveldocs.payment.common.events;
 
-import com.extractor.unraveldocs.messagequeuing.core.Message;
-import com.extractor.unraveldocs.messagequeuing.core.MessageResult;
-import com.extractor.unraveldocs.messagequeuing.kafka.producer.KafkaMessageProducer;
+import com.extractor.unraveldocs.brokers.core.Message;
+import com.extractor.unraveldocs.brokers.core.MessageResult;
+import com.extractor.unraveldocs.brokers.kafka.producer.KafkaMessageProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
