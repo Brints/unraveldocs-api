@@ -33,7 +33,8 @@ public class UserEventListener {
     }
 
     @RabbitHandler
-    public void handleUserDeletionScheduledEvent(UserDeletionScheduledEvent payload, @Header("__TypeId__") String eventType) {
+    public void handleUserDeletionScheduledEvent(UserDeletionScheduledEvent payload,
+            @Header("__TypeId__") String eventType) {
         processEvent(payload, eventType);
     }
 
@@ -53,7 +54,8 @@ public class UserEventListener {
     }
 
     @RabbitHandler
-    public void handlePasswordResetSuccessfulEvent(PasswordResetSuccessfulEvent payload, @Header("__TypeId__") String eventType) {
+    public void handlePasswordResetSuccessfulEvent(PasswordResetSuccessfulEvent payload,
+            @Header("__TypeId__") String eventType) {
         processEvent(payload, eventType);
     }
 

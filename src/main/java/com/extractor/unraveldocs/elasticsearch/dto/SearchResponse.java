@@ -68,14 +68,14 @@ public class SearchResponse<T> {
      * Whether there are more pages available.
      */
     public boolean hasNext() {
-        return page < totalPages - 1;
+        return page != null && totalPages != null && page < totalPages - 1;
     }
 
     /**
      * Whether there is a previous page.
      */
     public boolean hasPrevious() {
-        return page > 0;
+        return page != null && page > 0;
     }
 
     /**

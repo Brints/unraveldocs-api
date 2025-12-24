@@ -38,7 +38,7 @@ public class PaymentSearchService {
      * @return Search response with matching payments
      */
     public SearchResponse<PaymentSearchIndex> searchPayments(SearchRequest request) {
-        log.debug("Searching payments: query='{}'", request.getQuery());
+        log.debug("Searching payments: query='{}'", sanitizer.sanitizeLogging(request.getQuery()));
 
         Pageable pageable = createPageable(request);
         Page<PaymentSearchIndex> page;

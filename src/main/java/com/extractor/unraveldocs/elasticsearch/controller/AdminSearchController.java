@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.elasticsearch.controller;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.elasticsearch.document.PaymentSearchIndex;
 import com.extractor.unraveldocs.elasticsearch.document.UserSearchIndex;
 import com.extractor.unraveldocs.elasticsearch.dto.SearchRequest;
@@ -32,6 +33,7 @@ public class AdminSearchController {
 
     private final UserSearchService userSearchService;
     private final PaymentSearchService paymentSearchService;
+    private final SanitizeLogging sanitizer;
 
     // ==================== User Search ====================
 
@@ -43,7 +45,7 @@ public class AdminSearchController {
     public ResponseEntity<SearchResponse<UserSearchIndex>> searchUsers(
             @Valid @RequestBody SearchRequest request) {
 
-        log.debug("Admin user search: query={}", request.getQuery());
+        log.debug("Admin user search: query={}", sanitizer.sanitizeLogging(request.getQuery()));
 
         SearchResponse<UserSearchIndex> response = userSearchService.searchUsers(request);
         return ResponseEntity.ok(response);
@@ -93,7 +95,7 @@ public class AdminSearchController {
     public ResponseEntity<SearchResponse<PaymentSearchIndex>> searchPayments(
             @Valid @RequestBody SearchRequest request) {
 
-        log.debug("Admin payment search: query={}", request.getQuery());
+        log.debug("Admin payment search: query={}", sanitizer.sanitizeLogging(request.getQuery()));
 
         SearchResponse<PaymentSearchIndex> response = paymentSearchService.searchPayments(request);
         return ResponseEntity.ok(response);
@@ -141,7 +143,7 @@ public class AdminSearchController {
     public ResponseEntity<SearchResponse<PaymentSearchIndex>> findByReceiptNumber(
             @PathVariable String receiptNumber) {
 
-        log.debug("Looking up receipt: {}", receiptNumber);
+        log.debug("Looking up receipt: {}", sanitizer.sanitizeLogging(receiptNumber));
 
         var page = paymentSearchService.findByReceiptNumber(
                 receiptNumber,

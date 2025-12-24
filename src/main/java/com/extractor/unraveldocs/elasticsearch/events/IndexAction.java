@@ -5,7 +5,7 @@ package com.extractor.unraveldocs.elasticsearch.events;
  */
 public enum IndexAction {
     /**
-     * Create or update a document in the index.
+     * Create a document in the index.
      */
     CREATE,
 

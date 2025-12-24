@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class WelcomeEmailHandler implements EventHandler<WelcomeEvent> {
-    
+
     private final UserEmailTemplateService userEmailTemplateService;
 
     /**
@@ -26,8 +26,7 @@ public class WelcomeEmailHandler implements EventHandler<WelcomeEvent> {
         userEmailTemplateService.sendWelcomeEmail(
                 event.getEmail(),
                 event.getFirstName(),
-                event.getLastName()
-        );
+                event.getLastName());
         log.info("Sent welcome email to: {}", event.getEmail());
     }
 

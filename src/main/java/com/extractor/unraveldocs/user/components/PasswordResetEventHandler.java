@@ -21,12 +21,11 @@ public class PasswordResetEventHandler implements EventHandler<PasswordResetEven
 
         try {
             userEmailTemplateService.sendPasswordResetToken(
-                event.getEmail(),
-                event.getFirstName(),
-                event.getLastName(),
-                event.getToken(),
-                event.getExpiration()
-            );
+                    event.getEmail(),
+                    event.getFirstName(),
+                    event.getLastName(),
+                    event.getToken(),
+                    event.getExpiration());
             log.info("Sent password reset email to: {}", event.getEmail());
         } catch (Exception e) {
             log.error("Failed to send password reset email to {}: {}", event.getEmail(), e.getMessage(), e);

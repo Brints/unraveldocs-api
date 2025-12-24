@@ -8,6 +8,7 @@ import com.extractor.unraveldocs.admin.dto.request.OtpRequestDto;
 import com.extractor.unraveldocs.admin.dto.request.UserFilterDto;
 import com.extractor.unraveldocs.admin.dto.response.UserListData;
 import com.extractor.unraveldocs.admin.service.AdminService;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.dto.UserData;

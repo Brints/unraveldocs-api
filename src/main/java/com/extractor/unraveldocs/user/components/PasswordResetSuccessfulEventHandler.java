@@ -20,13 +20,13 @@ public class PasswordResetSuccessfulEventHandler implements EventHandler<Passwor
         log.info("Processing PasswordResetSuccessfulEvent for email: {}", event.getEmail());
         try {
             userEmailTemplateService.sendSuccessfulPasswordReset(
-                event.getEmail(),
-                event.getFirstName(),
-                event.getLastName()
-            );
+                    event.getEmail(),
+                    event.getFirstName(),
+                    event.getLastName());
             log.info("Sent password reset success notification email to: {}", event.getEmail());
         } catch (Exception e) {
-            log.error("Failed to send password reset success notification email to {}: {}", event.getEmail(), e.getMessage(), e);
+            log.error("Failed to send password reset success notification email to {}: {}", event.getEmail(),
+                    e.getMessage(), e);
         }
         log.info("Password reset successful for email: {}", event.getEmail());
     }

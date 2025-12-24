@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
@@ -14,6 +15,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
+
+import java.net.URI;
 
 /**
  * Elasticsearch configuration for the UnravelDocs application.
@@ -32,6 +35,7 @@ public class ElasticsearchConfig {
      * Creates a low-level REST client for Elasticsearch.
      */
     @Bean
+    @PreDestroy
     public RestClient restClient() {
         String host = extractHost(elasticsearchUri);
         int port = extractPort(elasticsearchUri);
@@ -67,26 +71,16 @@ public class ElasticsearchConfig {
     }
 
     private String extractHost(String uri) {
-        String withoutScheme = uri.replaceFirst("https?://", "");
-        if (withoutScheme.contains(":")) {
-            return withoutScheme.substring(0, withoutScheme.indexOf(":"));
-        }
-        return withoutScheme;
+        return URI.create(uri).getHost();
     }
 
     private int extractPort(String uri) {
-        String withoutScheme = uri.replaceFirst("https?://", "");
-        if (withoutScheme.contains(":")) {
-            String portStr = withoutScheme.substring(withoutScheme.indexOf(":") + 1);
-            return Integer.parseInt(portStr);
-        }
-        return 9200; // default port
+        int port = URI.create(uri).getPort();
+        return port > 0 ? port : 9200;
     }
 
     private String extractScheme(String uri) {
-        if (uri.startsWith("https://")) {
-            return "https";
-        }
-        return "http";
+        String scheme = URI.create(uri).getScheme();
+        return scheme != null ? scheme : "http";
     }
 }

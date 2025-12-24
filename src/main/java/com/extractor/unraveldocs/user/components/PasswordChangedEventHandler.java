@@ -23,8 +23,7 @@ public class PasswordChangedEventHandler implements EventHandler<PasswordChanged
         userEmailTemplateService.sendSuccessfulPasswordChange(
                 event.getEmail(),
                 event.getFirstName(),
-                event.getLastName()
-        );
+                event.getLastName());
         log.info("Sent password changed notification email to: {}", sanitizeLogging.sanitizeLogging(event.getEmail()));
     }
 

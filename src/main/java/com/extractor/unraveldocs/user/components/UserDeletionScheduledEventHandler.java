@@ -21,11 +21,10 @@ public class UserDeletionScheduledEventHandler implements EventHandler<UserDelet
 
         try {
             userEmailTemplateService.scheduleUserDeletion(
-                event.getEmail(),
-                event.getFirstName(),
-                event.getLastName(),
-                event.getDeletionDate()
-            );
+                    event.getEmail(),
+                    event.getFirstName(),
+                    event.getLastName(),
+                    event.getDeletionDate());
             log.info("Sent account deletion scheduled email to: {}", event.getEmail());
         } catch (Exception e) {
             log.error("Failed to send account deletion scheduled email to {}: {}", event.getEmail(), e.getMessage(), e);

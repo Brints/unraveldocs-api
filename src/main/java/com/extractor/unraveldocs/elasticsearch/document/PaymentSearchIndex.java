@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.*;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /**
@@ -75,10 +74,10 @@ public class PaymentSearchIndex {
     private String status;
 
     /**
-     * Payment amount.
+     * Payment amount (stored as Double for Elasticsearch compatibility).
      */
     @Field(type = FieldType.Scaled_Float, scalingFactor = 100)
-    private BigDecimal amount;
+    private Double amount;
 
     /**
      * Currency code (USD, NGN, etc.).
