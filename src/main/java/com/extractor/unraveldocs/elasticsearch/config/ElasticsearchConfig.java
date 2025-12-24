@@ -4,7 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
-import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
@@ -34,8 +33,7 @@ public class ElasticsearchConfig {
     /**
      * Creates a low-level REST client for Elasticsearch.
      */
-    @Bean
-    @PreDestroy
+    @Bean(destroyMethod = "close")
     public RestClient restClient() {
         String host = extractHost(elasticsearchUri);
         int port = extractPort(elasticsearchUri);
@@ -71,16 +69,35 @@ public class ElasticsearchConfig {
     }
 
     private String extractHost(String uri) {
-        return URI.create(uri).getHost();
+        try {
+            String host = URI.create(uri).getHost();
+            if (host == null) {
+                throw new IllegalArgumentException("Elasticsearch URI must have a valid host");
+            }
+            return host;
+        } catch (IllegalArgumentException e) {
+            log.error("Elasticsearch URI must have a valid host", e);
+            throw new IllegalArgumentException("Invalid Elasticsearch URI: " + uri, e);
+        }
     }
 
     private int extractPort(String uri) {
-        int port = URI.create(uri).getPort();
-        return port > 0 ? port : 9200;
+        try {
+            int port = URI.create(uri).getPort();
+            return port != -1 ? port : 9200;
+        } catch (IllegalArgumentException e) {
+            log.error("Elasticsearch URI must have a valid port: {}", uri, e);
+            throw new IllegalArgumentException("Invalid Elasticsearch URI: " + uri, e);
+        }
     }
 
     private String extractScheme(String uri) {
-        String scheme = URI.create(uri).getScheme();
-        return scheme != null ? scheme : "http";
+        try {
+            String scheme = URI.create(uri).getScheme();
+            return scheme != null ? scheme : "http";
+        } catch (IllegalArgumentException e) {
+            log.error("Elasticsearch URI must have a valid scheme: {}", uri, e);
+            throw new IllegalArgumentException("Invalid Elasticsearch URI: " + uri, e);
+        }
     }
 }

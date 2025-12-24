@@ -10,12 +10,12 @@ import com.extractor.unraveldocs.elasticsearch.events.IndexAction;
 import com.extractor.unraveldocs.elasticsearch.repository.DocumentSearchRepository;
 import com.extractor.unraveldocs.elasticsearch.repository.PaymentSearchRepository;
 import com.extractor.unraveldocs.elasticsearch.repository.UserSearchRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
  * RabbitMQ consumer for processing Elasticsearch indexing events.
@@ -30,7 +30,7 @@ public class ElasticsearchIndexConsumer {
     private final DocumentSearchRepository documentSearchRepository;
     private final UserSearchRepository userSearchRepository;
     private final PaymentSearchRepository paymentSearchRepository;
-    private final JsonMapper jsonMapper;
+    private final ObjectMapper jsonMapper;
     private final SanitizeLogging sanitize;
 
     /**
