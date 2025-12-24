@@ -17,6 +17,7 @@ import com.stripe.model.*;
 import com.stripe.model.checkout.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +40,14 @@ public class StripeWebhookService {
     private final StripeCustomerRepository customerRepository;
     private final StripePaymentService paymentService;
     private final UserSubscriptionRepository userSubscriptionRepository;
-    private final ReceiptEventPublisher receiptEventPublisher;
+
+    // Optional dependency - only available when Kafka is configured
+    private ReceiptEventPublisher receiptEventPublisher;
+
+    @Autowired(required = false)
+    public void setReceiptEventPublisher(ReceiptEventPublisher receiptEventPublisher) {
+        this.receiptEventPublisher = receiptEventPublisher;
+    }
 
     /**
      * Check if event has already been processed (idempotency)
@@ -52,10 +60,11 @@ public class StripeWebhookService {
      * Record webhook event for idempotency
      */
     @Transactional
-    public StripeWebhookEvent recordWebhookEvent(String eventId, String eventType, String payload) {
+    public void recordWebhookEvent(String eventId, String eventType, String payload) {
         if (isEventProcessed(eventId)) {
             log.info("Webhook event {} already processed, skipping", eventId);
-            return webhookEventRepository.findByEventId(eventId).orElseThrow();
+            webhookEventRepository.findByEventId(eventId).orElseThrow();
+            return;
         }
 
         StripeWebhookEvent event = new StripeWebhookEvent();
@@ -64,7 +73,7 @@ public class StripeWebhookService {
         event.setPayload(payload);
         event.setProcessed(false);
 
-        return webhookEventRepository.save(event);
+        webhookEventRepository.save(event);
     }
 
     /**
@@ -103,7 +112,8 @@ public class StripeWebhookService {
             PaymentType paymentType = subscriptionId != null ? PaymentType.SUBSCRIPTION : PaymentType.ONE_TIME;
 
             // Record the payment
-            BigDecimal amount = BigDecimal.valueOf(session.getAmountTotal()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal amount = BigDecimal.valueOf(session.getAmountTotal()).divide(BigDecimal.valueOf(100), 2,
+                    RoundingMode.HALF_UP);
 
             paymentService.recordPayment(
                     user,
@@ -118,8 +128,7 @@ public class StripeWebhookService {
                     PaymentStatus.SUCCEEDED,
                     null,
                     "Checkout session completed",
-                    null
-            );
+                    null);
 
             log.info("Successfully processed checkout session completed for user {}", user.getId());
         } catch (Exception e) {
@@ -144,7 +153,8 @@ public class StripeWebhookService {
 
             // Check if payment already exists
             if (!paymentService.paymentExists(paymentIntent.getId())) {
-                BigDecimal amount = BigDecimal.valueOf(paymentIntent.getAmount()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal amount = BigDecimal.valueOf(paymentIntent.getAmount()).divide(BigDecimal.valueOf(100), 2,
+                        RoundingMode.HALF_UP);
 
                 paymentService.recordPayment(
                         user,
@@ -159,16 +169,14 @@ public class StripeWebhookService {
                         PaymentStatus.SUCCEEDED,
                         paymentIntent.getPaymentMethod(),
                         paymentIntent.getDescription(),
-                        null
-                );
+                        null);
             } else {
                 // Update existing payment
                 paymentService.updatePaymentStatus(
                         paymentIntent.getId(),
                         PaymentStatus.SUCCEEDED,
                         null,
-                        null
-                );
+                        null);
             }
 
             // Generate receipt
@@ -196,8 +204,7 @@ public class StripeWebhookService {
                     paymentIntent.getId(),
                     PaymentStatus.FAILED,
                     failureMessage,
-                    null
-            );
+                    null);
 
             log.info("Successfully processed payment intent failed for: {}", paymentIntent.getId());
         } catch (Exception e) {
@@ -235,7 +242,8 @@ public class StripeWebhookService {
             userSubscription.setStatus(subscription.getStatus());
 
             // Get period info from subscription items
-            if (subscription.getItems() != null && subscription.getItems().getData() != null && !subscription.getItems().getData().isEmpty()) {
+            if (subscription.getItems() != null && subscription.getItems().getData() != null
+                    && !subscription.getItems().getData().isEmpty()) {
                 SubscriptionItem item = subscription.getItems().getData().getFirst();
                 userSubscription.setCurrentPeriodStart(convertToOffsetDateTime(item.getCurrentPeriodStart()));
                 userSubscription.setCurrentPeriodEnd(convertToOffsetDateTime(item.getCurrentPeriodEnd()));
@@ -264,21 +272,25 @@ public class StripeWebhookService {
         try {
             log.info("Processing customer.subscription.updated for: {}", subscription.getId());
 
-            userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscription.getId()).ifPresent(userSubscription -> {
-                userSubscription.setStatus(subscription.getStatus());
+            userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscription.getId())
+                    .ifPresent(userSubscription -> {
+                        userSubscription.setStatus(subscription.getStatus());
 
-                // Get period info from subscription items
-                if (subscription.getItems() != null && subscription.getItems().getData() != null && !subscription.getItems().getData().isEmpty()) {
-                    SubscriptionItem item = subscription.getItems().getData().getFirst();
-                    userSubscription.setCurrentPeriodStart(convertToOffsetDateTime(item.getCurrentPeriodStart()));
-                    userSubscription.setCurrentPeriodEnd(convertToOffsetDateTime(item.getCurrentPeriodEnd()));
-                }
+                        // Get period info from subscription items
+                        if (subscription.getItems() != null && subscription.getItems().getData() != null
+                                && !subscription.getItems().getData().isEmpty()) {
+                            SubscriptionItem item = subscription.getItems().getData().getFirst();
+                            userSubscription
+                                    .setCurrentPeriodStart(convertToOffsetDateTime(item.getCurrentPeriodStart()));
+                            userSubscription.setCurrentPeriodEnd(convertToOffsetDateTime(item.getCurrentPeriodEnd()));
+                        }
 
-                userSubscription.setAutoRenew(!subscription.getCancelAtPeriodEnd());
+                        userSubscription.setAutoRenew(!subscription.getCancelAtPeriodEnd());
 
-                userSubscriptionRepository.save(userSubscription);
-                log.info("Updated subscription {} to status {}", subscription.getId(), subscription.getStatus());
-            });
+                        userSubscriptionRepository.save(userSubscription);
+                        log.info("Updated subscription {} to status {}", subscription.getId(),
+                                subscription.getStatus());
+                    });
         } catch (Exception e) {
             log.error("Failed to handle subscription updated: {}", e.getMessage(), e);
             throw new StripePaymentException("Failed to process subscription updated", e);
@@ -293,13 +305,14 @@ public class StripeWebhookService {
         try {
             log.info("Processing customer.subscription.deleted for: {}", subscription.getId());
 
-            userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscription.getId()).ifPresent(userSubscription -> {
-                userSubscription.setStatus("CANCELED");
-                userSubscription.setAutoRenew(false);
+            userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscription.getId())
+                    .ifPresent(userSubscription -> {
+                        userSubscription.setStatus("CANCELED");
+                        userSubscription.setAutoRenew(false);
 
-                userSubscriptionRepository.save(userSubscription);
-                log.info("Canceled subscription {}", subscription.getId());
-            });
+                        userSubscriptionRepository.save(userSubscription);
+                        log.info("Canceled subscription {}", subscription.getId());
+                    });
         } catch (Exception e) {
             log.error("Failed to handle subscription deleted: {}", e.getMessage(), e);
             throw new StripePaymentException("Failed to process subscription deleted", e);
@@ -320,11 +333,10 @@ public class StripeWebhookService {
 
             User user = stripeCustomer.getUser();
 
-            BigDecimal amount = BigDecimal.valueOf(invoice.getAmountPaid()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal amount = BigDecimal.valueOf(invoice.getAmountPaid()).divide(BigDecimal.valueOf(100), 2,
+                    RoundingMode.HALF_UP);
 
             // TODO: Extract payment intent ID and subscription ID
-//             String paymentIntentId = invoice.getPaymentIntent() != null ? invoice.getPaymentIntent().getId() : null;
-//             String subscriptionId = invoice.getSubscription() != null ? invoice.getSubscription().getId() : null;
             String paymentIntentId = null;
             String subscriptionId = null;
 
@@ -341,8 +353,7 @@ public class StripeWebhookService {
                     PaymentStatus.SUCCEEDED,
                     invoice.getDefaultPaymentMethod(),
                     "Invoice payment",
-                    null
-            );
+                    null);
 
             // Generate receipt for subscription payment
             generateReceiptFromInvoice(user, invoice);
@@ -363,15 +374,15 @@ public class StripeWebhookService {
             log.info("Processing invoice.payment_failed for: {}", invoice.getId());
 
             // TODO: Update subscription status if needed
-            //final String subscriptionId = invoice.getSubscription() != null ? invoice.getSubscription().getId() : null;
             final String subscriptionId = null;
 
             if (subscriptionId != null) {
-                userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscriptionId).ifPresent(userSubscription -> {
-                    userSubscription.setStatus("PAST_DUE");
-                    userSubscriptionRepository.save(userSubscription);
-                    log.info("Updated subscription {} to PAST_DUE status", subscriptionId);
-                });
+                userSubscriptionRepository.findByPaymentGatewaySubscriptionId(subscriptionId)
+                        .ifPresent(userSubscription -> {
+                            userSubscription.setStatus("PAST_DUE");
+                            userSubscriptionRepository.save(userSubscription);
+                            log.info("Updated subscription {} to PAST_DUE status", subscriptionId);
+                        });
             }
 
             log.info("Successfully processed invoice payment failed for: {}", invoice.getId());
@@ -415,7 +426,12 @@ public class StripeWebhookService {
                     .paidAt(OffsetDateTime.now())
                     .build();
 
-            receiptEventPublisher.publishReceiptRequest(receiptData);
+            if (receiptEventPublisher != null) {
+                receiptEventPublisher.publishReceiptRequest(receiptData);
+            } else {
+                log.debug("Receipt event publisher not available, skipping receipt generation for payment: {}",
+                        paymentIntent.getId());
+            }
         } catch (Exception e) {
             log.error("Failed to generate receipt for payment {}: {}", paymentIntent.getId(), e.getMessage());
             // Don't rethrow - receipt generation failure shouldn't fail the webhook
@@ -444,7 +460,12 @@ public class StripeWebhookService {
                     .paidAt(OffsetDateTime.now())
                     .build();
 
-            receiptEventPublisher.publishReceiptRequest(receiptData);
+            if (receiptEventPublisher != null) {
+                receiptEventPublisher.publishReceiptRequest(receiptData);
+            } else {
+                log.debug("Receipt event publisher not available, skipping receipt generation for invoice: {}",
+                        invoice.getId());
+            }
         } catch (Exception e) {
             log.error("Failed to generate receipt for invoice {}: {}", invoice.getId(), e.getMessage());
             // Don't rethrow - receipt generation failure shouldn't fail the webhook
@@ -457,7 +478,8 @@ public class StripeWebhookService {
     private String extractPaymentMethodDetails(PaymentIntent paymentIntent) {
         try {
             if (paymentIntent.getPaymentMethod() != null) {
-                // Return placeholder - actual card details would require expanding the payment method
+                // Return placeholder - actual card details would require expanding the payment
+                // method
                 return "Card ending in ****";
             }
         } catch (Exception e) {
