@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.elasticsearch.service;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.elasticsearch.document.DocumentSearchIndex;
 import com.extractor.unraveldocs.elasticsearch.dto.DocumentSearchResult;
 import com.extractor.unraveldocs.elasticsearch.dto.SearchRequest;
@@ -32,6 +33,7 @@ public class DocumentSearchService {
 
     private final DocumentSearchRepository documentSearchRepository;
     private final ElasticsearchEventPublisher eventPublisher;
+    private final SanitizeLogging sanitizer;
 
     private static final int TEXT_PREVIEW_LENGTH = 200;
 
@@ -43,7 +45,7 @@ public class DocumentSearchService {
      * @return Search response with matching documents
      */
     public SearchResponse<DocumentSearchResult> searchDocuments(String userId, SearchRequest request) {
-        log.debug("Searching documents for user {}: query='{}'", userId, request.getQuery());
+        log.debug("Searching documents for user {}: query='{}'", sanitizer.sanitizeLogging(userId), sanitizer.sanitizeLogging(request.getQuery()));
 
         Pageable pageable = createPageable(request);
         Page<DocumentSearchIndex> page;
@@ -77,7 +79,7 @@ public class DocumentSearchService {
      * @return Search response with matching documents
      */
     public SearchResponse<DocumentSearchResult> searchByContent(String userId, String query, int page, int size) {
-        log.debug("Searching document content for user {}: query='{}'", userId, query);
+        log.debug("Searching document content for user {}: query='{}'", sanitizer.sanitizeLogging(userId), sanitizer.sanitizeLogging(query));
 
         Pageable pageable = PageRequest.of(page, size);
         Page<DocumentSearchIndex> results = documentSearchRepository
@@ -113,7 +115,7 @@ public class DocumentSearchService {
      * @param document The document to index
      */
     public void indexDocument(DocumentSearchIndex document) {
-        log.debug("Indexing document: {}", document.getId());
+        log.debug("Indexing document: {}", sanitizer.sanitizeLogging(document.getId()));
 
         String payload = eventPublisher.toJsonPayload(document);
         ElasticsearchIndexEvent event = ElasticsearchIndexEvent.createEvent(
@@ -129,7 +131,7 @@ public class DocumentSearchService {
      * @param document The document to index
      */
     public void indexDocumentSync(DocumentSearchIndex document) {
-        log.debug("Indexing document synchronously: {}", document.getId());
+        log.debug("Indexing document synchronously: {}", sanitizer.sanitizeLogging(document.getId()));
         documentSearchRepository.save(document);
     }
 
@@ -139,7 +141,7 @@ public class DocumentSearchService {
      * @param documentId The document ID to delete
      */
     public void deleteDocument(String documentId) {
-        log.debug("Deleting document from index: {}", documentId);
+        log.debug("Deleting document from index: {}", sanitizer.sanitizeLogging(documentId));
 
         ElasticsearchIndexEvent event = ElasticsearchIndexEvent.deleteEvent(
                 documentId,
@@ -153,7 +155,7 @@ public class DocumentSearchService {
      * @param userId The user ID
      */
     public void deleteDocumentsByUserId(String userId) {
-        log.info("Deleting all documents for user: {}", userId);
+        log.info("Deleting all documents for user: {}", sanitizer.sanitizeLogging(userId));
         documentSearchRepository.deleteByUserId(userId);
     }
 
@@ -163,7 +165,7 @@ public class DocumentSearchService {
      * @param collectionId The collection ID
      */
     public void deleteDocumentsByCollectionId(String collectionId) {
-        log.info("Deleting all documents for collection: {}", collectionId);
+        log.info("Deleting all documents for collection: {}", sanitizer.sanitizeLogging(collectionId));
         documentSearchRepository.deleteByCollectionId(collectionId);
     }
 

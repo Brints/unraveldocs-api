@@ -299,7 +299,12 @@ public class RabbitMQQueueConfig {
         idClassMapping.put(EventTypes.ES_SUBSCRIPTION_INDEX, ElasticsearchIndexEvent.class);
 
         classMapper.setIdClassMapping(idClassMapping);
-        classMapper.setTrustedPackages("*");
+        classMapper.setTrustedPackages(
+                "com.extractor.unraveldocs.auth.events",
+                "com.extractor.unraveldocs.user.events",
+                "com.extractor.unraveldocs.ocrprocessing.events",
+                "com.extractor.unraveldocs.elasticsearch.events"
+        );
         return classMapper;
     }
 }

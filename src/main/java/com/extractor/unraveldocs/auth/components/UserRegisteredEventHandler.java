@@ -21,28 +21,26 @@ public class UserRegisteredEventHandler implements EventHandler<UserRegisteredEv
     private final RabbitTemplate rabbitTemplate;
     private final SanitizeLogging sanitizeLogging;
 
-
     @Override
     public void handleEvent(UserRegisteredEvent event) {
         log.info("Processing UserRegisteredEvent for email: {}", sanitizeLogging.sanitizeLogging(event.getEmail()));
 
         try {
             EmailMessage emailMessage = authEmailTemplateService.prepareVerificationEmail(
-                event.getEmail(),
-                event.getFirstName(),
-                event.getLastName(),
-                event.getVerificationToken(),
-                event.getExpiration()
-            );
+                    event.getEmail(),
+                    event.getFirstName(),
+                    event.getLastName(),
+                    event.getVerificationToken(),
+                    event.getExpiration());
 
             rabbitTemplate.convertAndSend(
                     RabbitMQQueueConfig.EMAIL_EXCHANGE,
                     RabbitMQQueueConfig.EMAIL_ROUTING_KEY,
-                    emailMessage
-            );
+                    emailMessage);
             log.info("Sent verification email to: {}", sanitizeLogging.sanitizeLogging(event.getEmail()));
         } catch (Exception e) {
-            log.error("Failed to send verification email to {}: {}", sanitizeLogging.sanitizeLogging(event.getEmail()), e.getMessage(), e);
+            log.error("Failed to send verification email to {}: {}", sanitizeLogging.sanitizeLogging(event.getEmail()),
+                    e.getMessage(), e);
         }
     }
 

@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Service for bulk synchronization of data from PostgreSQL to Elasticsearch.
@@ -143,9 +145,18 @@ public class ElasticsearchSyncService {
             List<DocumentSearchIndex> batch = new ArrayList<>();
 
             for (DocumentCollection collection : page.getContent()) {
+                // Collect all document IDs first
+                List<String> documentIds = collection.getFiles().stream()
+                        .map(FileEntry::getDocumentId)
+                        .toList();
+
+                // Batch fetch OCR data
+                Map<String, OcrData> ocrDataMap = ocrDataRepository.findByDocumentIdIn(documentIds)
+                        .stream()
+                        .collect(Collectors.toMap(OcrData::getDocumentId, Function.identity()));
+
                 for (FileEntry file : collection.getFiles()) {
-                    // Get OCR data if available
-                    OcrData ocrData = ocrDataRepository.findByDocumentId(file.getDocumentId()).orElse(null);
+                    OcrData ocrData = ocrDataMap.get(file.getDocumentId());
                     batch.add(mapToDocumentSearchIndex(collection, file, ocrData));
                 }
             }
@@ -287,7 +298,7 @@ public class ElasticsearchSyncService {
                 .paymentProvider(receipt.getPaymentProvider().name())
                 .externalPaymentId(receipt.getExternalPaymentId())
                 .status("COMPLETED") // Receipts are only generated for successful payments
-                .amount(receipt.getAmount())
+                .amount(receipt.getAmount() != null ? receipt.getAmount().doubleValue() : null)
                 .currency(receipt.getCurrency())
                 .paymentMethod(receipt.getPaymentMethod())
                 .paymentMethodDetails(receipt.getPaymentMethodDetails())

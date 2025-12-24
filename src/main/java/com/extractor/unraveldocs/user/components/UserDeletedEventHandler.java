@@ -27,16 +27,20 @@ public class UserDeletedEventHandler implements EventHandler<UserDeletedEvent> {
             // Delete user profile image from S3
             if (event.getProfilePictureUrl() != null && !event.getProfilePictureUrl().isEmpty()) {
                 awsS3Service.deleteFile(event.getProfilePictureUrl());
-                log.info("Deleted profile picture from S3 for user: {}", sanitizeLogging.sanitizeLogging(event.getEmail()));
+                log.info("Deleted profile picture from S3 for user: {}",
+                        sanitizeLogging.sanitizeLogging(event.getEmail()));
             } else {
-                log.warn("No profile picture URL provided for user: {}", sanitizeLogging.sanitizeLogging(event.getEmail()));
+                log.warn("No profile picture URL provided for user: {}",
+                        sanitizeLogging.sanitizeLogging(event.getEmail()));
             }
 
             // Send account deletion confirmation email
             userEmailTemplateService.sendDeletedAccountEmail(event.getEmail());
-            log.info("Sent account deletion confirmation email to: {}", sanitizeLogging.sanitizeLogging(event.getEmail()));
+            log.info("Sent account deletion confirmation email to: {}",
+                    sanitizeLogging.sanitizeLogging(event.getEmail()));
         } catch (Exception e) {
-            log.error("Failed to process UserDeletedEvent for {}: {}", sanitizeLogging.sanitizeLogging(event.getEmail()), e.getMessage(), e);
+            log.error("Failed to process UserDeletedEvent for {}: {}",
+                    sanitizeLogging.sanitizeLogging(event.getEmail()), e.getMessage(), e);
         }
     }
 

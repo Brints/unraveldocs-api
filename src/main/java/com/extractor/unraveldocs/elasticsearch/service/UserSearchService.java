@@ -140,7 +140,7 @@ public class UserSearchService {
      * @param user The user to update
      */
     public void updateUser(UserSearchIndex user) {
-        log.debug("Updating user in index: {}", user.getId());
+        log.debug("Updating user in index: {}", sanitizer.sanitizeLogging(user.getId()));
 
         String payload = eventPublisher.toJsonPayload(user);
         ElasticsearchIndexEvent event = ElasticsearchIndexEvent.updateEvent(

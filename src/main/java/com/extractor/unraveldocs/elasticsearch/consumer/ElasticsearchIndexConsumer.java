@@ -65,6 +65,9 @@ public class ElasticsearchIndexConsumer {
             documentSearchRepository.deleteById(event.getDocumentId());
             log.debug("Deleted document from index: {}", sanitize.sanitizeLogging(event.getDocumentId()));
         } else {
+            if (event.getPayload() == null) {
+                throw new IllegalArgumentException("Payload is required for CREATE/UPDATE actions");
+            }
             DocumentSearchIndex document = deserialize(event.getPayload(), DocumentSearchIndex.class);
             documentSearchRepository.save(document);
             log.debug("Indexed document: {}", sanitize.sanitizeLogging(event.getDocumentId()));
