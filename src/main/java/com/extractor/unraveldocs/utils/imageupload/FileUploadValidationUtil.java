@@ -23,7 +23,7 @@ public final class FileUploadValidationUtil {
 
     public static void validateIndividualFile(MultipartFile file) {
         validateFileCheck(file, FileType.IMAGE);
-        if (FileSize.isValidFileSize(file.getSize(), false)) {
+        if (!FileSize.isValidFileSize(file.getSize(), false)) {
             throw new BadRequestException(FileSize.getFileSizeLimitMessage(false));
         }
     }

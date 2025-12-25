@@ -64,6 +64,8 @@ public class OcrProcessingService {
             }
 
             // Primary failed, try fallback if enabled
+            ocrMetrics.stopTimer(timerSample, primaryProvider.getProviderType());
+            timerSample = null; // Reset timer sample for fallback timing
             return handleFailureWithFallback(request, primaryProvider, result, userId, userTier);
 
         } catch (OcrProcessingException e) {
@@ -73,10 +75,15 @@ public class OcrProcessingService {
             }
 
             // Try fallback
+            if (primaryProvider != null) {
+                assert timerSample != null;
+                ocrMetrics.stopTimer(timerSample, primaryProvider.getProviderType());
+                timerSample = null; // Reset timer sample for fallback timing
+            }
             return handleExceptionWithFallback(request, primaryProvider, e, userId, userTier);
 
         } finally {
-            if (primaryProvider != null) {
+            if (primaryProvider != null && timerSample != null) {
                 ocrMetrics.stopTimer(timerSample, primaryProvider.getProviderType());
             }
         }

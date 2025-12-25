@@ -55,6 +55,7 @@ public class GoogleVisionHealthIndicator {
             errorHealth.put("status", "DOWN");
             errorHealth.put("error", e.getMessage());
             errorHealth.put("provider", "google-vision");
+            cachedHealth.set(new CachedHealth(errorHealth, System.currentTimeMillis()));
             return errorHealth;
         }
     }
@@ -105,8 +106,9 @@ public class GoogleVisionHealthIndicator {
                 AnnotateImageResponse annotateResponse = response.getResponses(0);
                 if (annotateResponse.hasError()) {
                     // API responded but with an error - still means connectivity is working
-                    details.put("status", "UP");
-                    details.put("apiResponse", "error_but_responsive");
+                    details.put("status", "DOWN");
+                    details.put("error", annotateResponse.getError().getMessage());
+                    details.put("errorCode", annotateResponse.getError().getCode());
                     return details;
                 }
 
