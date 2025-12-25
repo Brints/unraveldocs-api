@@ -1,0 +1,21 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.extractor:UnravelDocs >----------------------
+[INFO] Building UnravelDocs 5.1.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ UnravelDocs ---
+[INFO] Copying 42 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ UnravelDocs ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 422 source files with javac [debug parameters release 25] to target\classes
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/payment/receipt/model/Receipt.java:[72,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/payment/stripe/model/StripeSubscription.java:[87,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  52.350 s
+[INFO] Finished at: 2025-12-25T21:26:02+01:00
+[INFO] ------------------------------------------------------------------------

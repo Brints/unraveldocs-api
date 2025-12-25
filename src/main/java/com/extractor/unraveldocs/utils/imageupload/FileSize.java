@@ -15,7 +15,7 @@ public enum FileSize {
 
     public static boolean isValidFileSize(long fileSize, boolean isMultipleFiles) {
         long maxSize = isMultipleFiles ? MULTIPLE_FILE_SIZE.getSize() : SINGLE_FILE_SIZE.getSize();
-        return fileSize <= maxSize;
+        return fileSize > maxSize;
     }
 
     public static String getFileSizeLimitMessage(boolean isMultipleFiles) {

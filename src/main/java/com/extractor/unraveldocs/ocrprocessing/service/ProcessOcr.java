@@ -9,21 +9,25 @@ import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
 import com.extractor.unraveldocs.ocrprocessing.interfaces.ProcessOcrService;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
+import com.extractor.unraveldocs.ocrprocessing.provider.OcrProviderFactory;
+import com.extractor.unraveldocs.ocrprocessing.provider.OcrRequest;
+import com.extractor.unraveldocs.ocrprocessing.provider.OcrResult;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
+import com.extractor.unraveldocs.user.model.User;
+import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.sourceforge.tess4j.TesseractException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.extractor.unraveldocs.ocrprocessing.utils.ExtractImageURL.extractImageURL;
-
+/**
+ * Processes OCR requests using the configured OCR provider.
+ * Supports both Tesseract and Google Cloud Vision via the provider abstraction.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,9 +35,8 @@ public class ProcessOcr implements ProcessOcrService {
     private final DocumentCollectionRepository documentCollectionRepository;
     private final SanitizeLogging sanitizeLogging;
     private final OcrDataRepository ocrDataRepository;
-
-    @Value("${tesseract.datapath}")
-    private String tesseractDataPath;
+    private final OcrProcessingService ocrProcessingService;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -47,21 +50,38 @@ public class ProcessOcr implements ProcessOcrService {
                 .orElseThrow(() -> new NotFoundException("File not found with document ID: " + documentId));
 
         OcrData ocrData = ocrDataRepository.findByDocumentId(fileEntry.getDocumentId())
-                .orElseThrow(() -> new NotFoundException("OCR data not found for document ID: " + fileEntry.getDocumentId()));
+                .orElseThrow(() -> new NotFoundException(
+                        "OCR data not found for document ID: " + fileEntry.getDocumentId()));
 
         if (ocrData.getStatus() == OcrStatus.COMPLETED) {
             log.info("File {} already processed. Skipping.", sanitizeLogging.sanitizeLogging(documentId));
             return;
         }
+
         ocrData.setStatus(OcrStatus.PROCESSING);
         ocrDataRepository.save(ocrData);
 
         try {
             log.info("Starting OCR text extraction for document: {}", sanitizeLogging.sanitizeLogging(documentId));
-            extractImageURL(fileEntry, ocrData, tesseractDataPath);
-            log.info("OCR text extraction completed for document: {}",
-                    sanitizeLogging.sanitizeLogging(documentId));
-        } catch (IOException | TesseractException e) {
+
+            // Build OCR request using the new abstraction
+            OcrRequest ocrRequest = buildOcrRequest(fileEntry, collection);
+
+            // Get user info for quota tracking
+            String userId = collection.getUser().getId();
+            String userTier = getUserTier(userId);
+
+            // Process using the new provider abstraction
+            OcrResult result = ocrProcessingService.processOcr(ocrRequest, userId, userTier);
+
+            // Update OCR data with result
+            updateOcrDataFromResult(ocrData, result);
+
+            log.info("OCR text extraction completed for document: {} using provider: {}",
+                    sanitizeLogging.sanitizeLogging(documentId),
+                    result.getProviderType());
+
+        } catch (Exception e) {
             log.error("OCR processing failed for document {}: {}",
                     sanitizeLogging.sanitizeLogging(documentId), e.getMessage(), e);
             ocrData.setStatus(OcrStatus.FAILED);
@@ -70,6 +90,58 @@ public class ProcessOcr implements ProcessOcrService {
             updateCollectionStatus(collection);
             ocrDataRepository.save(ocrData);
             documentCollectionRepository.save(collection);
+        }
+    }
+
+    /**
+     * Build an OCR request from the file entry.
+     */
+    private OcrRequest buildOcrRequest(FileEntry fileEntry, DocumentCollection collection) {
+        return OcrRequest.builder()
+                .documentId(fileEntry.getDocumentId())
+                .collectionId(collection.getId())
+                .imageUrl(fileEntry.getFileUrl())
+                .mimeType(fileEntry.getFileType())
+                .userId(collection.getUser().getId())
+                .fallbackEnabled(true)
+                .build();
+    }
+
+    /**
+     * Update OCR data entity from the result.
+     */
+    private void updateOcrDataFromResult(OcrData ocrData, OcrResult result) {
+        if (result.isSuccess()) {
+            ocrData.setExtractedText(result.getExtractedText());
+            ocrData.setStatus(OcrStatus.COMPLETED);
+            ocrData.setErrorMessage(null);
+        } else {
+            ocrData.setStatus(OcrStatus.FAILED);
+            ocrData.setErrorMessage(result.getErrorMessage());
+        }
+    }
+
+    /**
+     * Get user subscription tier for quota tracking.
+     */
+    private String getUserTier(String userId) {
+        if (userId == null) {
+            return "free";
+        }
+
+        try {
+            return userRepository.findById(userId)
+                    .map(user -> {
+                        if (user.getSubscription() != null &&
+                                user.getSubscription().getPlan() != null) {
+                            return user.getSubscription().getPlan().getName().name().toLowerCase();
+                        }
+                        return "free";
+                    })
+                    .orElse("free");
+        } catch (Exception e) {
+            log.warn("Failed to get user tier for {}, defaulting to free: {}", userId, e.getMessage());
+            return "free";
         }
     }
 
