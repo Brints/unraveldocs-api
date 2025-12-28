@@ -42,8 +42,8 @@ public class AssignSubscriptionService {
 
     private SubscriptionPlans determinePlanNameForRole(Role role) {
         return switch (role) {
-            case Role.SUPER_ADMIN, Role.ADMIN -> SubscriptionPlans.ENTERPRISE_YEARLY;
-            case Role.MODERATOR -> SubscriptionPlans.PREMIUM_YEARLY;
+            case Role.SUPER_ADMIN, Role.ADMIN -> SubscriptionPlans.BUSINESS_YEARLY;
+            case Role.MODERATOR -> SubscriptionPlans.PRO_YEARLY;
             default -> SubscriptionPlans.FREE;
         };
     }

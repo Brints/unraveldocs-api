@@ -159,11 +159,15 @@ services:
     restart: unless-stopped
     ports:
       - "5050:80"
+    env_file:
+      - .env
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
     depends_on:
       - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     networks:
       - unraveldocs-net
 
@@ -221,6 +225,8 @@ volumes:
   kafka_data:
     driver: local
   elasticsearch_data:
+    driver: local
+  pgadmin_data:
     driver: local
 
 # Network for inter-service communication

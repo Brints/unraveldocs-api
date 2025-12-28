@@ -12,7 +12,6 @@ import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.subscription.repository.SubscriptionPlanRepository;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -116,53 +115,60 @@ public class AdminUserInitializer implements CommandLineRunner {
 
         switch (planEnum) {
             case FREE:
+                // Free tier - limited features for trial/evaluation
                 plan.setPrice(BigDecimal.ZERO);
                 plan.setBillingIntervalUnit(BillingIntervalUnit.MONTH);
                 plan.setBillingIntervalValue(1);
-                plan.setDocumentUploadLimit(10);
-                plan.setOcrPageLimit(50);
+                plan.setDocumentUploadLimit(5);
+                plan.setOcrPageLimit(25);
                 break;
-            case BASIC_MONTHLY:
-                plan.setPrice(new BigDecimal("13.00"));
+            case STARTER_MONTHLY:
+                // Starter tier - for individual light users ($9/mo)
+                plan.setPrice(new BigDecimal("9.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.MONTH);
                 plan.setBillingIntervalValue(1);
-                plan.setDocumentUploadLimit(50);
-                plan.setOcrPageLimit(250);
+                plan.setDocumentUploadLimit(30);
+                plan.setOcrPageLimit(150);
                 break;
-            case BASIC_YEARLY:
-                plan.setPrice(new BigDecimal("100.00"));
+            case STARTER_YEARLY:
+                // Starter yearly - 17% savings ($90/year = $7.50/mo)
+                plan.setPrice(new BigDecimal("90.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.YEAR);
                 plan.setBillingIntervalValue(1);
-                plan.setDocumentUploadLimit(600);
-                plan.setOcrPageLimit(3000);
+                plan.setDocumentUploadLimit(360);
+                plan.setOcrPageLimit(1800);
                 break;
-            case PREMIUM_MONTHLY:
-                plan.setPrice(new BigDecimal("28.00"));
+            case PRO_MONTHLY:
+                // Pro tier - for power users ($19/mo)
+                plan.setPrice(new BigDecimal("19.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.MONTH);
                 plan.setBillingIntervalValue(1);
-                plan.setDocumentUploadLimit(200);
-                plan.setOcrPageLimit(1000);
+                plan.setDocumentUploadLimit(100);
+                plan.setOcrPageLimit(500);
                 break;
-            case PREMIUM_YEARLY:
-                plan.setPrice(new BigDecimal("250.00"));
+            case PRO_YEARLY:
+                // Pro yearly - 17% savings ($190/year = $15.83/mo)
+                plan.setPrice(new BigDecimal("190.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.YEAR);
                 plan.setBillingIntervalValue(1);
-                plan.setDocumentUploadLimit(2400);
-                plan.setOcrPageLimit(12000);
+                plan.setDocumentUploadLimit(1200);
+                plan.setOcrPageLimit(6000);
                 break;
-            case ENTERPRISE_MONTHLY:
-                plan.setPrice(new BigDecimal("100.00"));
+            case BUSINESS_MONTHLY:
+                // Business tier - for heavy users ($49/mo)
+                plan.setPrice(new BigDecimal("49.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.MONTH);
                 plan.setBillingIntervalValue(1);
-                plan.setDocumentUploadLimit(1000);
-                plan.setOcrPageLimit(5000);
+                plan.setDocumentUploadLimit(500);
+                plan.setOcrPageLimit(2500);
                 break;
-            case ENTERPRISE_YEARLY:
-                plan.setPrice(new BigDecimal("1000.00"));
+            case BUSINESS_YEARLY:
+                // Business yearly - 17% savings ($490/year = $40.83/mo)
+                plan.setPrice(new BigDecimal("490.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.YEAR);
                 plan.setBillingIntervalValue(1);
-                plan.setDocumentUploadLimit(12000);
-                plan.setOcrPageLimit(60000);
+                plan.setDocumentUploadLimit(6000);
+                plan.setOcrPageLimit(30000);
                 break;
         }
         return plan;

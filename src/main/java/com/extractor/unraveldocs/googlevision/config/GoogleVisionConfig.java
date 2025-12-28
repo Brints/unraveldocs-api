@@ -40,7 +40,6 @@ public class GoogleVisionConfig {
                 properties.isDetectLanguage());
 
         try {
-            //ImageAnnotatorClient client = ImageAnnotatorClient.create();
             ImageAnnotatorSettings.Builder settings = ImageAnnotatorSettings.newBuilder();
             settings
                     .batchAnnotateImagesSettings()

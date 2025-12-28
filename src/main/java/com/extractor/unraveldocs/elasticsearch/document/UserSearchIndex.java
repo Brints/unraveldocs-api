@@ -70,7 +70,7 @@ public class UserSearchIndex {
     private Boolean isPlatformAdmin;
 
     /**
-     * Whether the user is an organization admin.
+     * Whether the user is an team admin.
      */
     @Field(type = FieldType.Boolean)
     private Boolean isOrganizationAdmin;
@@ -90,7 +90,7 @@ public class UserSearchIndex {
     private String profession;
 
     /**
-     * User's organization (searchable).
+     * User's team (searchable).
      */
     @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "standard"), otherFields = {
             @InnerField(suffix = "keyword", type = FieldType.Keyword)

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Team Trial is Ending Soon</title>
+</head>
+
+<body
+    style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 40px 0;">
+                <table role="presentation"
+                    style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td
+                            style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 8px 8px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">⏰ Your Trial is
+                                Ending Soon</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Hi <strong th:text="${firstName}">User</strong>,
+                            </p>
+
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Your free trial for team <strong th:text="${teamName}">Team Name</strong> will expire in
+                                <strong th:text="${daysRemaining}">3</strong> days.
+                            </p>
+
+                            <!-- Trial Info Box -->
+                            <table role="presentation"
+                                style="width: 100%; background-color: #fef3c7; border-radius: 8px; margin: 30px 0;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p style="margin: 0 0 10px; color: #92400e; font-size: 14px; font-weight: 600;">
+                                            TRIAL ENDS ON</p>
+                                        <p style="margin: 0; color: #78350f; font-size: 20px; font-weight: 700;"
+                                            th:text="${trialEndsAt}">December 31, 2024</p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+                                <strong>What happens next?</strong>
+                            </p>
+
+                            <ul
+                                style="margin: 0 0 20px; padding-left: 20px; color: #333333; font-size: 16px; line-height: 1.8;">
+                                <li>Your <strong th:text="${subscriptionType}">Team Premium</strong> subscription will
+                                    automatically start</li>
+                                <li>You'll be charged <strong><span th:text="${price}">$29.00</span> <span
+                                            th:text="${currency}">USD</span></strong> (<span
+                                        th:text="${billingCycle}">monthly</span>)</li>
+                                <li>All your team data and members will be preserved</li>
+                            </ul>
+
+                            <!-- Action Buttons -->
+                            <table role="presentation" style="width: 100%; margin: 30px 0;">
+                                <tr>
+                                    <td style="text-align: center;">
+                                        <p style="margin: 0 0 15px; color: #666666; font-size: 14px;">
+                                            Need to cancel? No problem! You can cancel anytime before the trial ends.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+                                If you have any questions, our support team is here to help.
+                            </p>
+
+                            <p style="margin: 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                                Best regards,<br>
+                                <strong>The UnravelDocs Team</strong>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td
+                            style="padding: 30px 40px; background-color: #f8f9fa; border-radius: 0 0 8px 8px; text-align: center;">
+                            <p style="margin: 0; color: #6c757d; font-size: 12px;">
+                                &copy; 2024 UnravelDocs. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>
