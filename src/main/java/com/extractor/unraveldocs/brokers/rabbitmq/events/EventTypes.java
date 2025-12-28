@@ -20,6 +20,12 @@ public class EventTypes {
     public static final String ES_PAYMENT_INDEX = "EsPaymentIndex";
     public static final String ES_SUBSCRIPTION_INDEX = "EsSubscriptionIndex";
 
+    // Team Events
+    public static final String TEAM_TRIAL_EXPIRING = "TeamTrialExpiring";
+    public static final String TEAM_SUBSCRIPTION_CHARGED = "TeamSubscriptionCharged";
+    public static final String TEAM_SUBSCRIPTION_FAILED = "TeamSubscriptionFailed";
+    public static final String TEAM_CREATED = "TeamCreated";
+
     private EventTypes() {
     } // Prevent instantiation
 }

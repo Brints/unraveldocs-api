@@ -43,15 +43,19 @@
 - **Email Verification**: OTP-based email verification for new accounts
 - **Password Reset**: Secure password reset flow with email notifications
 
-### Organization Management
-- **Organization Creation**: OTP-verified organization creation for Premium/Enterprise subscribers
-- **Subscription Tiers**: Premium (200 docs/month) and Enterprise (unlimited) organization plans
-- **10-Day Free Trial**: Automatic trial period for new organizations
-- **Member Management**: Add, remove, and batch remove members (up to 10 per org)
+### Team Management
+- **Team Creation**: OTP-verified team creation for Premium/Enterprise subscribers
+- **Subscription Tiers**:
+  - **Team Premium**: $29/month or $290/year, 200 docs/month, max 10 members
+  - **Team Enterprise**: $79/month or $790/year, unlimited docs, max 15 members
+- **10-Day Free Trial**: Automatic trial period with 3-day warning emails
+- **Flexible Billing**: Monthly or yearly subscription with auto-renewal
+- **Subscription Management**: Cancel anytime but keep access until period ends
+- **Member Management**: Add, remove, and batch remove members
 - **Role-Based Access**: Owner, Admin, and Member roles with distinct permissions
 - **Admin Promotion**: Enterprise-only feature to promote members to admin
 - **Email Invitations**: Enterprise-only email invitation system with unique tokens
-- **Organization Lifecycle**: Close and reactivate organizations
+- **Team Lifecycle**: Close and reactivate teams
 - **Privacy Controls**: Email masking for non-owner member views
 
 ### Payment Processing
@@ -61,7 +65,24 @@
   - **PayPal**: International payment support *(stub)*
   - **Flutterwave**: African payment gateway *(stub)*
   - **Chappa**: Ethiopian payment gateway *(stub)*
-- **Subscription Management**: Tiered subscription plans with varying features and limits
+
+### Individual Subscription Plans
+
+| Plan | Monthly | Yearly | Docs/Month | OCR Pages |
+|------|---------|--------|------------|-----------|
+| Free | $0 | - | 5 | 25 |
+| Starter | $9 | $90 | 30 | 150 |
+| Pro | $19 | $190 | 100 | 500 |
+| Business | $49 | $490 | 500 | 2,500 |
+
+> Yearly plans include 17% savings
+
+### Currency Conversion
+- **Real-time Exchange Rates**: Prices displayed in user's local currency
+- **60+ Supported Currencies**: USD, EUR, GBP, NGN, INR, JPY, AUD, CAD, and more
+- **Daily Rate Updates**: Exchange rates refreshed automatically via exchangerate-api.com
+- **Fallback Rates**: Cached rates ensure service availability
+
 - **Multi-Currency Support**: Accept payments in multiple currencies
 - **Receipt Generation**: Automatic PDF receipt generation with AWS S3 storage
 

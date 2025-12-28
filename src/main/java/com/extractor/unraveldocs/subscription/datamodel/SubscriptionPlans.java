@@ -5,12 +5,12 @@ import lombok.Getter;
 @Getter
 public enum SubscriptionPlans {
     FREE("Free"),
-    BASIC_MONTHLY("Basic_Monthly"),
-    BASIC_YEARLY("Basic_Yearly"),
-    PREMIUM_MONTHLY("Premium_Monthly"),
-    PREMIUM_YEARLY("Premium_Yearly"),
-    ENTERPRISE_MONTHLY("Enterprise_Monthly"),
-    ENTERPRISE_YEARLY("Enterprise_Yearly");
+    STARTER_MONTHLY("Starter_Monthly"),
+    STARTER_YEARLY("Starter_Yearly"),
+    PRO_MONTHLY("Pro_Monthly"),
+    PRO_YEARLY("Pro_Yearly"),
+    BUSINESS_MONTHLY("Business_Monthly"),
+    BUSINESS_YEARLY("Business_Yearly");
 
     private final String planName;
 

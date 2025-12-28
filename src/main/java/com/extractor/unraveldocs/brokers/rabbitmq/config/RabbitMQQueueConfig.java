@@ -5,6 +5,7 @@ import com.extractor.unraveldocs.auth.events.WelcomeEvent;
 import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.elasticsearch.events.ElasticsearchIndexEvent;
 import com.extractor.unraveldocs.ocrprocessing.events.OcrRequestedEvent;
+import com.extractor.unraveldocs.team.events.TeamTrialExpiringEvent;
 import com.extractor.unraveldocs.user.events.*;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -67,6 +68,15 @@ public class RabbitMQQueueConfig {
     public static final String ES_INDEX_ROUTING_KEY = "elasticsearch.index.#";
     public static final String ES_EVENTS_DLX = ES_EVENTS_EXCHANGE + ".dlx";
     public static final String ES_EVENTS_DLQ = ES_INDEX_QUEUE + ".dlq";
+
+    // ==================== Team Events ====================
+    public static final String TEAM_EVENTS_EXCHANGE = "team.events.exchange";
+    public static final String TEAM_EVENTS_QUEUE = "team.events.queue";
+    public static final String TEAM_EVENTS_ROUTING_KEY_PATTERN = "team.#";
+    public static final String TEAM_TRIAL_EXPIRING_ROUTING_KEY = "team.trial.expiring";
+    public static final String TEAM_SUBSCRIPTION_ROUTING_KEY = "team.subscription.#";
+    public static final String TEAM_EVENTS_DLX = TEAM_EVENTS_EXCHANGE + ".dlx";
+    public static final String TEAM_EVENTS_DLQ = TEAM_EVENTS_QUEUE + ".dlq";
 
     // ==================== Email Exchange/Queue Beans ====================
     @Bean
@@ -246,6 +256,42 @@ public class RabbitMQQueueConfig {
                 .with(ES_INDEX_ROUTING_KEY);
     }
 
+    // ==================== Team Exchange/Queue Beans ====================
+    @Bean
+    TopicExchange teamEventsExchange() {
+        return new TopicExchange(TEAM_EVENTS_EXCHANGE);
+    }
+
+    @Bean
+    DirectExchange teamDeadLetterExchange() {
+        return new DirectExchange(TEAM_EVENTS_DLX);
+    }
+
+    @Bean
+    Queue teamDeadLetterQueue() {
+        return new Queue(TEAM_EVENTS_DLQ);
+    }
+
+    @Bean
+    Binding teamDeadLetterBinding() {
+        return BindingBuilder.bind(teamDeadLetterQueue()).to(teamDeadLetterExchange()).with(TEAM_EVENTS_QUEUE);
+    }
+
+    @Bean
+    Queue teamEventsQueue() {
+        return QueueBuilder.durable(TEAM_EVENTS_QUEUE)
+                .withArgument("x-dead-letter-exchange", TEAM_EVENTS_DLX)
+                .withArgument("x-dead-letter-routing-key", TEAM_EVENTS_QUEUE)
+                .build();
+    }
+
+    @Bean
+    Binding teamEventsBinding() {
+        return BindingBuilder.bind(teamEventsQueue())
+                .to(teamEventsExchange())
+                .with(TEAM_EVENTS_ROUTING_KEY_PATTERN);
+    }
+
     // ==================== Listener Configuration ====================
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
@@ -298,12 +344,16 @@ public class RabbitMQQueueConfig {
         idClassMapping.put(EventTypes.ES_PAYMENT_INDEX, ElasticsearchIndexEvent.class);
         idClassMapping.put(EventTypes.ES_SUBSCRIPTION_INDEX, ElasticsearchIndexEvent.class);
 
+        // Team event types
+        idClassMapping.put(EventTypes.TEAM_TRIAL_EXPIRING, TeamTrialExpiringEvent.class);
+
         classMapper.setIdClassMapping(idClassMapping);
         classMapper.setTrustedPackages(
                 "com.extractor.unraveldocs.auth.events",
                 "com.extractor.unraveldocs.user.events",
                 "com.extractor.unraveldocs.ocrprocessing.events",
                 "com.extractor.unraveldocs.elasticsearch.events",
+                "com.extractor.unraveldocs.team.events",
                 "com.extractor.unraveldocs.messaging.dto");
         return classMapper;
     }

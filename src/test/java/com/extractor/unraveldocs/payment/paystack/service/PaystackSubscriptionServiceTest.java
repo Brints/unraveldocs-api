@@ -70,7 +70,7 @@ class PaystackSubscriptionServiceTest {
 
         premiumMonthlyPlan = new SubscriptionPlan();
         premiumMonthlyPlan.setId("plan-id-123");
-        premiumMonthlyPlan.setName(SubscriptionPlans.PREMIUM_MONTHLY);
+        premiumMonthlyPlan.setName(SubscriptionPlans.PRO_MONTHLY);
         premiumMonthlyPlan.setPrice(new BigDecimal("28.00"));
         premiumMonthlyPlan.setCurrency(SubscriptionCurrency.USD);
         premiumMonthlyPlan.setBillingIntervalUnit(BillingIntervalUnit.MONTH);
@@ -178,15 +178,15 @@ class PaystackSubscriptionServiceTest {
         @DisplayName("Should find subscription plan by name")
         void shouldFindPlanByName() {
             // Given
-            when(subscriptionPlanRepository.findByName(SubscriptionPlans.PREMIUM_MONTHLY))
+            when(subscriptionPlanRepository.findByName(SubscriptionPlans.PRO_MONTHLY))
                     .thenReturn(Optional.of(premiumMonthlyPlan));
 
             // When
-            Optional<SubscriptionPlan> result = subscriptionPlanRepository.findByName(SubscriptionPlans.PREMIUM_MONTHLY);
+            Optional<SubscriptionPlan> result = subscriptionPlanRepository.findByName(SubscriptionPlans.PRO_MONTHLY);
 
             // Then
             assertThat(result).isPresent();
-            assertThat(result.get().getName()).isEqualTo(SubscriptionPlans.PREMIUM_MONTHLY);
+            assertThat(result.get().getName()).isEqualTo(SubscriptionPlans.PRO_MONTHLY);
             assertThat(result.get().getPrice()).isEqualTo(new BigDecimal("28.00"));
         }
 
