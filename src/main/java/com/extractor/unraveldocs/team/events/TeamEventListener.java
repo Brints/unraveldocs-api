@@ -1,10 +1,10 @@
 package com.extractor.unraveldocs.team.events;
 
 import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.messaging.dto.EmailRequestDto;
-import com.extractor.unraveldocs.messaging.service.EmailRequestPublisher;
+import com.extractor.unraveldocs.brokers.service.EmailMessageProducerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -21,7 +21,7 @@ import java.util.Map;
 @ConditionalOnProperty(name = "spring.rabbitmq.host")
 public class TeamEventListener {
 
-    private final EmailRequestPublisher emailRequestPublisher;
+    private final EmailMessageProducerService emailMessageProducerService;
 
     @RabbitListener(queues = RabbitMQQueueConfig.TEAM_EVENTS_QUEUE)
     public void handleTeamEvent(Object event) {
@@ -35,6 +35,18 @@ public class TeamEventListener {
     private void handleTrialExpiringEvent(TeamTrialExpiringEvent event) {
         log.info("Processing trial expiring event for team: {} ({})", event.getTeamName(), event.getTeamCode());
 
+        Map<String, Object> templateVariables = getStringObjectMap(event);
+
+        emailMessageProducerService.queueEmail(
+                event.getOwnerEmail(),
+                "Your " + event.getTeamName() + " team trial ends in " + event.getDaysRemaining() + " days",
+                "team-trial-expiring",
+                templateVariables);
+
+        log.info("Successfully queued trial expiry email for team: {}", event.getTeamCode());
+    }
+
+    private static @NonNull Map<String, Object> getStringObjectMap(TeamTrialExpiringEvent event) {
         Map<String, Object> templateVariables = new HashMap<>();
         templateVariables.put("firstName", event.getOwnerFirstName());
         templateVariables.put("teamName", event.getTeamName());
@@ -44,16 +56,6 @@ public class TeamEventListener {
         templateVariables.put("billingCycle", event.getBillingCycle());
         templateVariables.put("price", event.getPrice());
         templateVariables.put("currency", event.getCurrency());
-
-        EmailRequestDto emailRequest = EmailRequestDto.builder()
-                .to(event.getOwnerEmail())
-                .subject("Your " + event.getTeamName() + " team trial ends in " + event.getDaysRemaining() + " days")
-                .template("team-trial-expiring")
-                .templateVariables(templateVariables)
-                .build();
-
-        emailRequestPublisher.publishEmailRequest(emailRequest);
-
-        log.info("Successfully queued trial expiry email for team: {}", event.getTeamCode());
+        return templateVariables;
     }
 }

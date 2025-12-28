@@ -48,9 +48,9 @@ public class AssignSubscriptionServiceTest {
 
     @ParameterizedTest
     @CsvSource({
-            "SUPER_ADMIN, ENTERPRISE_YEARLY",
-            "ADMIN, ENTERPRISE_YEARLY",
-            "MODERATOR, PREMIUM_YEARLY",
+            "SUPER_ADMIN, BUSINESS_YEARLY",
+            "ADMIN, BUSINESS_YEARLY",
+            "MODERATOR, PRO_YEARLY",
             "USER, FREE"
     })
     void assignDefaultSubscription_successForAllRoles(String roleStr, String planNameStr) {
