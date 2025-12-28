@@ -89,11 +89,12 @@ public class VisionOcrRequestedEvent {
     /**
      * Create event from basic parameters.
      */
-    public static VisionOcrRequestedEvent of(String documentId, String collectionId, String imageUrl, String userId) {
+    public static VisionOcrRequestedEvent of(String documentId, String collectionId, String imageUrl, String userId, String mimeType) {
         return VisionOcrRequestedEvent.builder()
                 .documentId(documentId)
                 .collectionId(collectionId)
                 .imageUrl(imageUrl)
+                .mimeType(mimeType)
                 .userId(userId)
                 .correlationId(java.util.UUID.randomUUID().toString())
                 .build();

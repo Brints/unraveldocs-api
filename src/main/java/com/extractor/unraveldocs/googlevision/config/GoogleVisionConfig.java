@@ -1,11 +1,14 @@
 package com.extractor.unraveldocs.googlevision.config;
 
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.cloud.vision.v1.ImageAnnotatorClient;
+import com.google.cloud.vision.v1.ImageAnnotatorSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.threeten.bp.Duration;
 
 import java.io.IOException;
 
@@ -37,7 +40,17 @@ public class GoogleVisionConfig {
                 properties.isDetectLanguage());
 
         try {
-            ImageAnnotatorClient client = ImageAnnotatorClient.create();
+            //ImageAnnotatorClient client = ImageAnnotatorClient.create();
+            ImageAnnotatorSettings.Builder settings = ImageAnnotatorSettings.newBuilder();
+            settings
+                    .batchAnnotateImagesSettings()
+                            .setRetrySettings(
+                                    RetrySettings.newBuilder()
+                                            .setInitialRpcTimeout(Duration.ofSeconds(properties.getTimeoutSeconds()))
+                                            .setMaxRpcTimeout(Duration.ofSeconds(properties.getTimeoutSeconds()))
+                                            .setMaxAttempts(properties.getMaxRetries())
+                                            .build());
+            ImageAnnotatorClient client = ImageAnnotatorClient.create(settings.build());
             log.info("Google Cloud Vision ImageAnnotatorClient created successfully");
             return client;
         } catch (IOException e) {

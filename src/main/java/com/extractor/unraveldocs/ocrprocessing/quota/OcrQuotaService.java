@@ -139,7 +139,6 @@ public class OcrQuotaService {
         }
 
         return switch (tier.toLowerCase()) {
-            case "free" -> ocrProperties.getQuota().getFreeTierDailyLimit();
             case "basic" -> ocrProperties.getQuota().getBasicTierDailyLimit();
             case "premium" -> ocrProperties.getQuota().getPremiumTierDailyLimit();
             case "enterprise" -> ocrProperties.getQuota().getEnterpriseTierDailyLimit();

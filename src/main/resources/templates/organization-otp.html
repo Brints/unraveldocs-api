@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify Organization Creation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .otp-box {
+            background-color: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .otp-code {
+            font-size: 36px;
+            letter-spacing: 8px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        p {
+            color: #333;
+            line-height: 1.6;
+        }
+        .warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Verify Your Organization</h1>
+        </div>
+        <div class="content">
+            <p>Hi <span th:text="${firstName}">User</span>,</p>
+            
+            <p>You're almost there! Use the following code to verify and complete the creation of your organization:</p>
+            
+            <p><strong>Organization Name:</strong> <span th:text="${organizationName}">My Organization</span></p>
+            
+            <div class="otp-box">
+                <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Your verification code:</p>
+                <div class="otp-code" th:text="${otp}">123456</div>
+            </div>
+            
+            <div class="warning">
+                <strong>⚠️ Important:</strong>
+                <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                    <li>This code expires in <span th:text="${expiryMinutes}">15</span> minutes</li>
+                    <li>Do not share this code with anyone</li>
+                    <li>If you didn't request this, please ignore this email</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer">
+            <p>© 2024 UnravelDocs. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>

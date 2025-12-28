@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class FieldSorter {
-    public static void main(String[] args) throws Exception {
+    static void main(String[] args) throws Exception {
         if (args.length != 1) {
             System.out.println("Usage: java FieldSorter <JavaFile>");
             return;
@@ -23,7 +23,7 @@ public class FieldSorter {
         cu.findAll(ClassOrInterfaceDeclaration.class).forEach(clazz -> {
             List<FieldDeclaration> fields = clazz.getMembers().stream()
                     .filter(m -> m instanceof FieldDeclaration)
-                    .map(m -> (FieldDeclaration) m).sorted(Comparator.comparing(f -> f.getVariables().get(0).getNameAsString())).toList();
+                    .map(m -> (FieldDeclaration) m).sorted(Comparator.comparing(f -> f.getVariables().getFirst().toString())).toList();
 
             fields.forEach(clazz::remove);
 

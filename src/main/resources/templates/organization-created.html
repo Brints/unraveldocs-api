@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Organization Created</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .info-box {
+            background-color: #e7f5ff;
+            border-left: 4px solid #339af0;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .info-row {
+            display: flex;
+            margin: 10px 0;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+            width: 140px;
+        }
+        .info-value {
+            color: #212529;
+        }
+        .trial-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        p {
+            color: #333;
+            line-height: 1.6;
+        }
+        .org-code {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 16px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Organization Created!</h1>
+        </div>
+        <div class="content">
+            <p>Hi <span th:text="${firstName}">User</span>,</p>
+            
+            <p>Congratulations! Your organization has been successfully created and is ready to use.</p>
+            
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="info-label">Organization:</span>
+                    <span class="info-value" th:text="${organizationName}">My Organization</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Organization Code:</span>
+                    <span class="info-value"><code class="org-code" th:text="${orgCode}">ABC12345</code></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Subscription:</span>
+                    <span class="info-value" th:text="${subscriptionType}">Premium</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Document Limit:</span>
+                    <span class="info-value" th:text="${documentLimit}">200 documents/month</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <span class="trial-badge">✨ 10-Day Free Trial Active</span>
+                <p style="color: #666; font-size: 14px;">Trial ends on: <span th:text="${trialEndDate}">January 1, 2025</span></p>
+            </div>
+            
+            <p><strong>What's next?</strong></p>
+            <ul>
+                <li>Invite team members to collaborate</li>
+                <li>Upload and process documents</li>
+                <li>Manage your organization settings</li>
+            </ul>
+        </div>
+        <div class="footer">
+            <p>© 2024 UnravelDocs. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>

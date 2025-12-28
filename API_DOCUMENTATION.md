@@ -11,16 +11,17 @@ This document provides a comprehensive overview of all API endpoints available i
 1. [Root](#root)
 2. [Authentication](#authentication)
 3. [User Management](#user-management)
-4. [Admin Management](#admin-management)
-5. [Documents](#documents)
-6. [OCR Processing](#ocr-processing)
-7. [Word Export](#word-export)
-8. [Payments - Stripe](#payments---stripe)
-9. [Payments - Paystack](#payments---paystack)
-10. [Receipts](#receipts)
-11. [Subscription Management](#subscription-management)
-12. [Search - Elasticsearch](#search---elasticsearch)
-13. [Webhooks](#webhooks)
+4. [Organization Management](#organization-management)
+5. [Admin Management](#admin-management)
+6. [Documents](#documents)
+7. [OCR Processing](#ocr-processing)
+8. [Word Export](#word-export)
+9. [Payments - Stripe](#payments---stripe)
+10. [Payments - Paystack](#payments---paystack)
+11. [Receipts](#receipts)
+12. [Subscription Management](#subscription-management)
+13. [Search - Elasticsearch](#search---elasticsearch)
+14. [Webhooks](#webhooks)
 
 ---
 
@@ -28,9 +29,9 @@ This document provides a comprehensive overview of all API endpoints available i
 
 ### Health Check
 
-| **Method** | **Endpoint** | **Description** |
-|------------|--------------|-----------------|
-| `GET` | `/` | Check if the API is running |
+| **Method** | **Endpoint** | **Description**             |
+|------------|--------------|-----------------------------|
+| `GET`      | `/`          | Check if the API is running |
 
 #### Response
 
@@ -51,16 +52,21 @@ Base path: `/api/v1/auth`
 
 ### Generate Password
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/auth/generate-password` | No |
+| **Method** | **Endpoint**              | **Auth Required** |
+|------------|---------------------------|-------------------|
+| `POST`     | `/auth/generate-password` | No                |
 
 **Request Body:**
 
 ```json
 {
   "length": 16,
-  "excludedCharacters": ["0", "O", "l", "1"]
+  "excludedCharacters": [
+    "0",
+    "O",
+    "l",
+    "1"
+  ]
 }
 ```
 
@@ -81,9 +87,9 @@ Base path: `/api/v1/auth`
 
 ### Register User
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/auth/signup` | No |
+| **Method** | **Endpoint**   | **Auth Required** |
+|------------|----------------|-------------------|
+| `POST`     | `/auth/signup` | No                |
 
 **Request Body:**
 
@@ -106,12 +112,26 @@ Base path: `/api/v1/auth`
 {
   "statusCode": 201,
   "status": "success",
-  "message": "User registered successfully. Please verify your email.",
+  "message": "User registered successfully",
   "data": {
-    "id": "uuid",
-    "email": "john.doe@example.com",
+    "id": "98c0ba52-69e0-4bfe-bb76-793431334e47",
+    "profilePicture": null,
     "firstName": "John",
-    "lastName": "Doe"
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "role": "user",
+    "lastLogin": null,
+    "isActive": false,
+    "isVerified": false,
+    "termsAccepted": true,
+    "marketingOptIn": true,
+    "isPlatformAdmin": false,
+    "isOrganizationAdmin": false,
+    "country": "NG",
+    "profession": "Data Analyst",
+    "organization": "Brints Tech",
+    "createdAt": "2025-12-27T12:33:58.6206681+01:00",
+    "updatedAt": "2025-12-27T12:33:58.6206681+01:00"
   }
 }
 ```
@@ -120,9 +140,9 @@ Base path: `/api/v1/auth`
 
 ### Login
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/auth/login` | No |
+| **Method** | **Endpoint**  | **Auth Required** |
+|------------|---------------|-------------------|
+| `POST`     | `/auth/login` | No                |
 
 **Request Body:**
 
@@ -139,18 +159,20 @@ Base path: `/api/v1/auth`
 {
   "statusCode": 200,
   "status": "success",
-  "message": "Login successful",
+  "message": "User logged in successfully",
   "data": {
-    "accessToken": "jwt_access_token",
-    "refreshToken": "jwt_refresh_token",
-    "tokenType": "Bearer",
-    "expiresIn": 3600,
-    "user": {
-      "id": "uuid",
-      "email": "john.doe@example.com",
-      "firstName": "John",
-      "lastName": "Doe"
-    }
+    "id": "98c0ba52-69e0-4bfe-bb76-793431334e47",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "role": "user",
+    "lastLogin": "2025-12-27T12:53:05.9651815+01:00",
+    "isActive": true,
+    "isVerified": true,
+    "accessToken": "jwt-access-token",
+    "refreshToken": "jwt-refresh-token",
+    "createdAt": "2025-12-27T11:33:58.862233Z",
+    "updatedAt": "2025-12-27T12:53:05.972777+01:00"
   }
 }
 ```
@@ -159,9 +181,9 @@ Base path: `/api/v1/auth`
 
 ### Verify Email
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/auth/verify-email` | No |
+| **Method** | **Endpoint**         | **Auth Required** |
+|------------|----------------------|-------------------|
+| `POST`     | `/auth/verify-email` | No                |
 
 **Request Body:**
 
@@ -178,7 +200,8 @@ Base path: `/api/v1/auth`
 {
   "statusCode": 200,
   "status": "success",
-  "message": "Email verified successfully"
+  "message": "Email verified successfully",
+  "data": null
 }
 ```
 
@@ -186,9 +209,9 @@ Base path: `/api/v1/auth`
 
 ### Resend Verification Email
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/auth/resend-verification-email` | No |
+| **Method** | **Endpoint**                      | **Auth Required** |
+|------------|-----------------------------------|-------------------|
+| `POST`     | `/auth/resend-verification-email` | No                |
 
 **Request Body:**
 
@@ -212,9 +235,9 @@ Base path: `/api/v1/auth`
 
 ### Refresh Token
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/auth/refresh-token` | No |
+| **Method** | **Endpoint**          | **Auth Required** |
+|------------|-----------------------|-------------------|
+| `POST`     | `/auth/refresh-token` | No                |
 
 **Request Body:**
 
@@ -232,10 +255,12 @@ Base path: `/api/v1/auth`
   "status": "success",
   "message": "Token refreshed successfully",
   "data": {
-    "accessToken": "new_jwt_access_token",
-    "refreshToken": "new_jwt_refresh_token",
+    "id": "98c0ba52-69e0-4bfe-bb76-793431334e47",
+    "email": "aniebietafia87@gmail.com",
+    "accessToken": "jwt-access-token",
+    "refreshToken": "refresh-token",
     "tokenType": "Bearer",
-    "expiresIn": 3600
+    "accessExpirationInMs": 3600000
   }
 }
 ```
@@ -244,9 +269,9 @@ Base path: `/api/v1/auth`
 
 ### Logout
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/auth/logout` | Yes (Bearer Token) |
+| **Method** | **Endpoint**   | **Auth Required**  |
+|------------|----------------|--------------------|
+| `POST`     | `/auth/logout` | Yes (Bearer Token) |
 
 **Response:**
 
@@ -268,7 +293,7 @@ Base path: `/api/v1/user`
 
 | **Method** | **Endpoint** | **Auth Required** |
 |------------|--------------|-------------------|
-| `GET` | `/user/me` | Yes |
+| `GET`      | `/user/me`   | Yes               |
 
 **Response:**
 
@@ -276,18 +301,18 @@ Base path: `/api/v1/user`
 {
   "statusCode": 200,
   "status": "success",
-  "message": "Profile retrieved successfully",
+  "message": "User profile retrieved successfully",
   "data": {
-    "id": "uuid",
-    "email": "john.doe@example.com",
+    "id": "98c0ba52-69e0-4bfe-bb76-793431334e47",
+    "profilePicture": null,
     "firstName": "John",
     "lastName": "Doe",
-    "phoneNumber": "+1234567890",
-    "country": "United States",
-    "profilePictureUrl": "https://...",
-    "role": "USER",
-    "isVerified": true,
-    "createdAt": "2024-01-01T12:00:00Z"
+    "email": "john.doe@example.com",
+    "role": "user",
+    "lastLogin": "2025-12-27T11:53:05.965182Z",
+    "createdAt": "2025-12-27T11:33:58.862233Z",
+    "updatedAt": "2025-12-27T11:53:05.972777Z",
+    "verified": true
   }
 }
 ```
@@ -296,9 +321,9 @@ Base path: `/api/v1/user`
 
 ### Forgot Password
 
-| **Method** | **Endpoint** | **Auth Required** | **Rate Limit** |
-|------------|--------------|-------------------|----------------|
-| `POST` | `/user/forgot-password` | No | 5 requests/hour |
+| **Method** | **Endpoint**            | **Auth Required** | **Rate Limit**  |
+|------------|-------------------------|-------------------|-----------------|
+| `POST`     | `/user/forgot-password` | No                | 5 requests/hour |
 
 **Request Body:**
 
@@ -322,9 +347,9 @@ Base path: `/api/v1/user`
 
 ### Reset Password
 
-| **Method** | **Endpoint** | **Auth Required** | **Rate Limit** |
-|------------|--------------|-------------------|----------------|
-| `POST` | `/user/reset-password` | No | 10 requests/hour |
+| **Method** | **Endpoint**           | **Auth Required** | **Rate Limit**   |
+|------------|------------------------|-------------------|------------------|
+| `POST`     | `/user/reset-password` | No                | 10 requests/hour |
 
 **Request Body:**
 
@@ -351,9 +376,9 @@ Base path: `/api/v1/user`
 
 ### Change Password
 
-| **Method** | **Endpoint** | **Auth Required** | **Rate Limit** |
-|------------|--------------|-------------------|----------------|
-| `POST` | `/user/change-password` | Yes | 20 requests/minute |
+| **Method** | **Endpoint**            | **Auth Required** | **Rate Limit**     |
+|------------|-------------------------|-------------------|--------------------|
+| `POST`     | `/user/change-password` | Yes               | 20 requests/minute |
 
 **Request Body:**
 
@@ -379,9 +404,9 @@ Base path: `/api/v1/user`
 
 ### Update Profile
 
-| **Method** | **Endpoint** | **Auth Required** | **Rate Limit** |
-|------------|--------------|-------------------|----------------|
-| `PUT` | `/user/profile/{userId}` | Yes | 20 requests/minute |
+| **Method** | **Endpoint**             | **Auth Required** | **Rate Limit**     |
+|------------|--------------------------|-------------------|--------------------|
+| `PUT`      | `/user/profile/{userId}` | Yes               | 20 requests/minute |
 
 **Content-Type:** `multipart/form-data` or `application/json`
 
@@ -416,9 +441,9 @@ Base path: `/api/v1/user`
 
 ### Delete User
 
-| **Method** | **Endpoint** | **Auth Required** | **Rate Limit** |
-|------------|--------------|-------------------|----------------|
-| `DELETE` | `/user/profile/{userId}` | Yes | 20 requests/minute |
+| **Method** | **Endpoint**             | **Auth Required** | **Rate Limit**     |
+|------------|--------------------------|-------------------|--------------------|
+| `DELETE`   | `/user/profile/{userId}` | Yes               | 20 requests/minute |
 
 **Response:**
 
@@ -430,16 +455,16 @@ Base path: `/api/v1/user`
 
 ### Upload Profile Picture
 
-| **Method** | **Endpoint** | **Auth Required** | **Rate Limit** |
-|------------|--------------|-------------------|----------------|
-| `POST` | `/user/profile/{userId}/upload` | Yes | 20 requests/minute |
+| **Method** | **Endpoint**                    | **Auth Required** | **Rate Limit**     |
+|------------|---------------------------------|-------------------|--------------------|
+| `POST`     | `/user/profile/{userId}/upload` | Yes               | 20 requests/minute |
 
 **Content-Type:** `multipart/form-data`
 
 **Request Body:**
 
-| Field | Type | Description |
-|-------|------|-------------|
+| Field  | Type | Description                  |
+|--------|------|------------------------------|
 | `file` | File | Image file (JPEG, PNG, etc.) |
 
 **Response:**
@@ -457,9 +482,9 @@ Base path: `/api/v1/user`
 
 ### Delete Profile Picture
 
-| **Method** | **Endpoint** | **Auth Required** | **Rate Limit** |
-|------------|--------------|-------------------|----------------|
-| `DELETE` | `/user/profile/{userId}/delete` | Yes | 20 requests/minute |
+| **Method** | **Endpoint**                    | **Auth Required** | **Rate Limit**     |
+|------------|---------------------------------|-------------------|--------------------|
+| `DELETE`   | `/user/profile/{userId}/delete` | Yes               | 20 requests/minute |
 
 **Response:**
 
@@ -473,15 +498,265 @@ Base path: `/api/v1/user`
 
 ---
 
+## Organization Management
+
+Base path: `/api/v1/organizations`
+
+> **Note:** Organization features require Premium or Enterprise subscription. Email invitations and admin promotion are
+> Enterprise-only features.
+
+### Initiate Organization Creation
+
+| **Method** | **Endpoint**              | **Auth Required** |
+|------------|---------------------------|-------------------|
+| `POST`     | `/organizations/initiate` | Yes               |
+
+Sends OTP to user email to verify organization creation.
+
+**Request Body:**
+
+```json
+{
+  "name": "Acme Corporation",
+  "description": "Our company organization",
+  "subscriptionType": "PREMIUM",
+  "paymentGateway": "stripe",
+  "paymentToken": "tok_visa"
+}
+```
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "OTP has been sent to your email. Please verify to complete organization creation.",
+  "data": null
+}
+```
+
+---
+
+### Verify OTP and Create Organization
+
+| **Method** | **Endpoint**            | **Auth Required** |
+|------------|-------------------------|-------------------|
+| `POST`     | `/organizations/verify` | Yes               |
+
+**Request Body:**
+
+```json
+{
+  "otp": "123456"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "statusCode": 201,
+  "status": "success",
+  "message": "Organization created successfully. You have a 10-day free trial.",
+  "data": {
+    "id": "uuid",
+    "name": "Acme Corporation",
+    "orgCode": "ABC12345",
+    "subscriptionType": "PREMIUM",
+    "inTrial": true,
+    "trialEndsAt": "2025-01-06T12:00:00Z",
+    "maxMembers": 10,
+    "monthlyDocumentLimit": 200
+  }
+}
+```
+
+---
+
+### Get Organization Details
+
+| **Method** | **Endpoint**             | **Auth Required** |
+|------------|--------------------------|-------------------|
+| `GET`      | `/organizations/{orgId}` | Yes (Member)      |
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Organization details retrieved successfully",
+  "data": {
+    "id": "uuid",
+    "name": "Acme Corporation",
+    "orgCode": "ABC12345",
+    "subscriptionType": "PREMIUM",
+    "active": true,
+    "verified": true,
+    "closed": false,
+    "currentMemberCount": 5,
+    "maxMembers": 10,
+    "isOwner": true
+  }
+}
+```
+
+---
+
+### Get My Organizations
+
+| **Method** | **Endpoint**        | **Auth Required** |
+|------------|---------------------|-------------------|
+| `GET`      | `/organizations/my` | Yes               |
+
+Returns all organizations the user belongs to.
+
+---
+
+### Get Organization Members
+
+| **Method** | **Endpoint**                     | **Auth Required** |
+|------------|----------------------------------|-------------------|
+| `GET`      | `/organizations/{orgId}/members` | Yes (Member)      |
+
+> **Note:** Email addresses are masked for non-owners (except own email).
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "data": [
+    {
+      "userId": "uuid",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "j***e@e***e.com",
+      "role": "MEMBER",
+      "joinedAt": "2024-12-27T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Add Member
+
+| **Method** | **Endpoint**                     | **Auth Required** | **Role**     |
+|------------|----------------------------------|-------------------|--------------|
+| `POST`     | `/organizations/{orgId}/members` | Yes               | ADMIN, OWNER |
+
+**Request Body:**
+
+```json
+{
+  "userId": "uuid"
+}
+```
+
+---
+
+### Remove Member
+
+| **Method** | **Endpoint**                                | **Auth Required** | **Role**     |
+|------------|---------------------------------------------|-------------------|--------------|
+| `DELETE`   | `/organizations/{orgId}/members/{memberId}` | Yes               | ADMIN, OWNER |
+
+---
+
+### Batch Remove Members
+
+| **Method** | **Endpoint**                           | **Auth Required** | **Role**     |
+|------------|----------------------------------------|-------------------|--------------|
+| `DELETE`   | `/organizations/{orgId}/members/batch` | Yes               | ADMIN, OWNER |
+
+**Request Body:**
+
+```json
+{
+  "userIds": [
+    "uuid1",
+    "uuid2",
+    "uuid3"
+  ]
+}
+```
+
+---
+
+### Promote to Admin (Enterprise Only)
+
+| **Method** | **Endpoint**                                        | **Auth Required** | **Role** |
+|------------|-----------------------------------------------------|-------------------|----------|
+| `POST`     | `/organizations/{orgId}/members/{memberId}/promote` | Yes               | OWNER    |
+
+---
+
+### Send Invitation (Enterprise Only)
+
+| **Method** | **Endpoint**                         | **Auth Required** | **Role**     |
+|------------|--------------------------------------|-------------------|--------------|
+| `POST`     | `/organizations/{orgId}/invitations` | Yes               | ADMIN, OWNER |
+
+**Request Body:**
+
+```json
+{
+  "email": "newmember@example.com"
+}
+```
+
+**Response:**
+
+```json
+{
+  "statusCode": 201,
+  "status": "success",
+  "message": "Invitation sent successfully",
+  "data": "https://api.unraveldocs.com/api/v1/organizations/invitations/{token}/accept"
+}
+```
+
+---
+
+### Accept Invitation
+
+| **Method** | **Endpoint**                                | **Auth Required** |
+|------------|---------------------------------------------|-------------------|
+| `POST`     | `/organizations/invitations/{token}/accept` | Yes               |
+
+---
+
+### Close Organization
+
+| **Method** | **Endpoint**             | **Auth Required** | **Role** |
+|------------|--------------------------|-------------------|----------|
+| `DELETE`   | `/organizations/{orgId}` | Yes               | OWNER    |
+
+Members remain but lose access until reactivated.
+
+---
+
+### Reactivate Organization
+
+| **Method** | **Endpoint**                        | **Auth Required** | **Role** |
+|------------|-------------------------------------|-------------------|----------|
+| `POST`     | `/organizations/{orgId}/reactivate` | Yes               | OWNER    |
+
+---
+
 ## Admin Management
 
 Base path: `/api/v1/admin`
 
 ### Create Admin
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/admin/signup` | No |
+| **Method** | **Endpoint**    | **Auth Required** |
+|------------|-----------------|-------------------|
+| `POST`     | `/admin/signup` | No                |
 
 **Request Body:**
 
@@ -518,9 +793,9 @@ Base path: `/api/v1/admin`
 
 ### Change User Role
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `PUT` | `/admin/change-role` | Yes | ADMIN, SUPER_ADMIN |
+| **Method** | **Endpoint**         | **Auth Required** | **Roles**          |
+|------------|----------------------|-------------------|--------------------|
+| `PUT`      | `/admin/change-role` | Yes               | ADMIN, SUPER_ADMIN |
 
 **Request Body:**
 
@@ -550,20 +825,20 @@ Base path: `/api/v1/admin`
 
 ### Get All Users
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `GET` | `/admin/users` | Yes | ADMIN, MODERATOR, SUPER_ADMIN |
+| **Method** | **Endpoint**   | **Auth Required** | **Roles**                     |
+|------------|----------------|-------------------|-------------------------------|
+| `GET`      | `/admin/users` | Yes               | ADMIN, MODERATOR, SUPER_ADMIN |
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | int | 0 | Page number |
-| `size` | int | 10 | Page size |
-| `sortBy` | string | `createdAt` | Field to sort by |
-| `sortDirection` | string | `desc` | Sort direction |
-| `role` | string | - | Filter by role |
-| `isVerified` | boolean | - | Filter by verification status |
+| Parameter       | Type    | Default     | Description                   |
+|-----------------|---------|-------------|-------------------------------|
+| `page`          | int     | 0           | Page number                   |
+| `size`          | int     | 10          | Page size                     |
+| `sortBy`        | string  | `createdAt` | Field to sort by              |
+| `sortDirection` | string  | `desc`      | Sort direction                |
+| `role`          | string  | -           | Filter by role                |
+| `isVerified`    | boolean | -           | Filter by verification status |
 
 **Response:**
 
@@ -573,7 +848,9 @@ Base path: `/api/v1/admin`
   "status": "success",
   "message": "Users retrieved successfully",
   "data": {
-    "users": [...],
+    "users": [
+      "..."
+    ],
     "totalElements": 100,
     "totalPages": 10,
     "currentPage": 0
@@ -585,9 +862,9 @@ Base path: `/api/v1/admin`
 
 ### Get User Profile by Admin
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `GET` | `/admin/{userId}` | Yes | ADMIN, SUPER_ADMIN |
+| **Method** | **Endpoint**      | **Auth Required** | **Roles**          |
+|------------|-------------------|-------------------|--------------------|
+| `GET`      | `/admin/{userId}` | Yes               | ADMIN, SUPER_ADMIN |
 
 **Response:**
 
@@ -610,9 +887,9 @@ Base path: `/api/v1/admin`
 
 ### Generate OTP
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `POST` | `/admin/generate-otp` | Yes | SUPER_ADMIN |
+| **Method** | **Endpoint**          | **Auth Required** | **Roles**   |
+|------------|-----------------------|-------------------|-------------|
+| `POST`     | `/admin/generate-otp` | Yes               | SUPER_ADMIN |
 
 **Request Body:**
 
@@ -630,7 +907,11 @@ Base path: `/api/v1/admin`
   "statusCode": 200,
   "status": "success",
   "message": "OTPs generated successfully",
-  "data": ["123456", "234567", "345678", ...]
+  "data": [
+    "123456",
+    "234567",
+    "345678"
+  ]
 }
 ```
 
@@ -638,16 +919,16 @@ Base path: `/api/v1/admin`
 
 ### Fetch Active OTPs
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `GET` | `/admin/active-otps` | Yes | SUPER_ADMIN, ADMIN |
+| **Method** | **Endpoint**         | **Auth Required** | **Roles**          |
+|------------|----------------------|-------------------|--------------------|
+| `GET`      | `/admin/active-otps` | Yes               | SUPER_ADMIN, ADMIN |
 
 **Query Parameters:**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | int | 0 | Page number |
-| `size` | int | 5 | Page size |
+| `page`    | int  | 0       | Page number |
+| `size`    | int  | 5       | Page size   |
 
 **Response:**
 
@@ -657,7 +938,9 @@ Base path: `/api/v1/admin`
   "status": "success",
   "message": "Active OTPs fetched successfully",
   "data": {
-    "otps": [...],
+    "otps": [
+      "123456", "654321", "112233"
+    ],
     "totalElements": 50,
     "totalPages": 10
   }
@@ -672,16 +955,16 @@ Base path: `/api/v1/documents`
 
 ### Upload Documents
 
-| **Method** | **Endpoint** | **Auth Required** | **Rate Limit** |
-|------------|--------------|-------------------|----------------|
-| `POST` | `/documents/upload` | Yes | 10 uploads/minute |
+| **Method** | **Endpoint**        | **Auth Required** | **Rate Limit**    |
+|------------|---------------------|-------------------|-------------------|
+| `POST`     | `/documents/upload` | Yes               | 10 uploads/minute |
 
 **Content-Type:** `multipart/form-data`
 
 **Request Body:**
 
-| Field | Type | Description |
-|-------|------|-------------|
+| Field   | Type   | Description                       |
+|---------|--------|-----------------------------------|
 | `files` | File[] | Array of document files to upload |
 
 **Response:**
@@ -709,9 +992,9 @@ Base path: `/api/v1/documents`
 
 ### Get Document Collection by ID
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/documents/collection/{collectionId}` | Yes |
+| **Method** | **Endpoint**                           | **Auth Required** |
+|------------|----------------------------------------|-------------------|
+| `GET`      | `/documents/collection/{collectionId}` | Yes               |
 
 **Response:**
 
@@ -739,9 +1022,9 @@ Base path: `/api/v1/documents`
 
 ### Get All User Collections
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/documents/my-collections` | Yes |
+| **Method** | **Endpoint**                | **Auth Required** |
+|------------|-----------------------------|-------------------|
+| `GET`      | `/documents/my-collections` | Yes               |
 
 **Response:**
 
@@ -764,9 +1047,9 @@ Base path: `/api/v1/documents`
 
 ### Get File from Collection
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/documents/collection/{collectionId}/document/{documentId}` | Yes |
+| **Method** | **Endpoint**                                                 | **Auth Required** |
+|------------|--------------------------------------------------------------|-------------------|
+| `GET`      | `/documents/collection/{collectionId}/document/{documentId}` | Yes               |
 
 **Response:**
 
@@ -789,9 +1072,9 @@ Base path: `/api/v1/documents`
 
 ### Delete Document Collection
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `DELETE` | `/documents/collection/{collectionId}` | Yes |
+| **Method** | **Endpoint**                           | **Auth Required** |
+|------------|----------------------------------------|-------------------|
+| `DELETE`   | `/documents/collection/{collectionId}` | Yes               |
 
 **Response:** `204 No Content`
 
@@ -799,9 +1082,9 @@ Base path: `/api/v1/documents`
 
 ### Delete File from Collection
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `DELETE` | `/documents/collection/{collectionId}/document/{documentId}` | Yes |
+| **Method** | **Endpoint**                                                 | **Auth Required** |
+|------------|--------------------------------------------------------------|-------------------|
+| `DELETE`   | `/documents/collection/{collectionId}/document/{documentId}` | Yes               |
 
 **Response:** `204 No Content`
 
@@ -809,9 +1092,9 @@ Base path: `/api/v1/documents`
 
 ### Clear All Collections
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `DELETE` | `/documents/clear-all` | Yes |
+| **Method** | **Endpoint**           | **Auth Required** |
+|------------|------------------------|-------------------|
+| `DELETE`   | `/documents/clear-all` | Yes               |
 
 **Response:** `204 No Content`
 
@@ -823,9 +1106,9 @@ Base path: `/api/v1/collections`
 
 ### Extract Text from File
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/collections/{collectionId}/document/{documentId}/extract` | Yes |
+| **Method** | **Endpoint**                                                | **Auth Required** |
+|------------|-------------------------------------------------------------|-------------------|
+| `POST`     | `/collections/{collectionId}/document/{documentId}/extract` | Yes               |
 
 **Response:**
 
@@ -847,16 +1130,16 @@ Base path: `/api/v1/collections`
 
 ### Upload and Extract Text from All Files
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/collections/upload/extract-all` | Yes |
+| **Method** | **Endpoint**                      | **Auth Required** |
+|------------|-----------------------------------|-------------------|
+| `POST`     | `/collections/upload/extract-all` | Yes               |
 
 **Content-Type:** `multipart/form-data`
 
 **Request Body:**
 
-| Field | Type | Description |
-|-------|------|-------------|
+| Field   | Type   | Description             |
+|---------|--------|-------------------------|
 | `files` | File[] | Array of document files |
 
 **Response:**
@@ -868,7 +1151,9 @@ Base path: `/api/v1/collections`
   "message": "Documents uploaded and OCR extraction started",
   "data": {
     "collectionId": "uuid",
-    "files": [...]
+    "files": [
+      "..."
+    ]
   }
 }
 ```
@@ -877,9 +1162,9 @@ Base path: `/api/v1/collections`
 
 ### Get OCR Results for Collection
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/collections/{collectionId}/document/results` | Yes |
+| **Method** | **Endpoint**                                   | **Auth Required** |
+|------------|------------------------------------------------|-------------------|
+| `GET`      | `/collections/{collectionId}/document/results` | Yes               |
 
 **Response:**
 
@@ -906,9 +1191,9 @@ Base path: `/api/v1/collections`
 
 ### Get OCR Data for Specific Document
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/collections/{collectionId}/document/{documentId}/ocr-data` | Yes |
+| **Method** | **Endpoint**                                                 | **Auth Required** |
+|------------|--------------------------------------------------------------|-------------------|
+| `GET`      | `/collections/{collectionId}/document/{documentId}/ocr-data` | Yes               |
 
 **Response:**
 
@@ -934,9 +1219,9 @@ Base path: `/api/v1/collections/{collectionId}/documents/{documentId}/download`
 
 ### Download OCR Result as DOCX
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/collections/{collectionId}/documents/{documentId}/download/docx` | Yes |
+| **Method** | **Endpoint**                                                       | **Auth Required** |
+|------------|--------------------------------------------------------------------|-------------------|
+| `GET`      | `/collections/{collectionId}/documents/{documentId}/download/docx` | Yes               |
 
 **Response:** Binary DOCX file download
 
@@ -952,9 +1237,9 @@ Base path: `/api/v1/stripe/customer`
 
 #### Get Customer Details
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/stripe/customer/details` | Yes |
+| **Method** | **Endpoint**               | **Auth Required** |
+|------------|----------------------------|-------------------|
+| `GET`      | `/stripe/customer/details` | Yes               |
 
 **Response:**
 
@@ -964,7 +1249,9 @@ Base path: `/api/v1/stripe/customer`
   "email": "user@example.com",
   "name": "John Doe",
   "defaultPaymentMethod": "pm_xxx",
-  "paymentMethods": [...]
+  "paymentMethods": [
+    "..."
+  ]
 }
 ```
 
@@ -972,15 +1259,15 @@ Base path: `/api/v1/stripe/customer`
 
 #### Attach Payment Method
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/stripe/customer/payment-method/attach` | Yes |
+| **Method** | **Endpoint**                             | **Auth Required** |
+|------------|------------------------------------------|-------------------|
+| `POST`     | `/stripe/customer/payment-method/attach` | Yes               |
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `paymentMethodId` | string | Yes | Stripe payment method ID |
+| Parameter         | Type   | Required | Description              |
+|-------------------|--------|----------|--------------------------|
+| `paymentMethodId` | string | Yes      | Stripe payment method ID |
 
 **Response:** `200 OK`
 
@@ -988,15 +1275,15 @@ Base path: `/api/v1/stripe/customer`
 
 #### Set Default Payment Method
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/stripe/customer/payment-method/set-default` | Yes |
+| **Method** | **Endpoint**                                  | **Auth Required** |
+|------------|-----------------------------------------------|-------------------|
+| `POST`     | `/stripe/customer/payment-method/set-default` | Yes               |
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `paymentMethodId` | string | Yes | Stripe payment method ID |
+| Parameter         | Type   | Required | Description              |
+|-------------------|--------|----------|--------------------------|
+| `paymentMethodId` | string | Yes      | Stripe payment method ID |
 
 **Response:** `200 OK`
 
@@ -1008,9 +1295,9 @@ Base path: `/api/v1/stripe/payment`
 
 #### Create Payment Intent
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/stripe/payment/create-payment-intent` | Yes |
+| **Method** | **Endpoint**                            | **Auth Required** |
+|------------|-----------------------------------------|-------------------|
+| `POST`     | `/stripe/payment/create-payment-intent` | Yes               |
 
 **Request Body:**
 
@@ -1039,9 +1326,9 @@ Base path: `/api/v1/stripe/payment`
 
 #### Get Payment Intent
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/stripe/payment/intent/{paymentIntentId}` | Yes |
+| **Method** | **Endpoint**                               | **Auth Required** |
+|------------|--------------------------------------------|-------------------|
+| `GET`      | `/stripe/payment/intent/{paymentIntentId}` | Yes               |
 
 **Response:**
 
@@ -1058,9 +1345,9 @@ Base path: `/api/v1/stripe/payment`
 
 #### Process Refund
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/stripe/payment/refund` | Yes |
+| **Method** | **Endpoint**             | **Auth Required** |
+|------------|--------------------------|-------------------|
+| `POST`     | `/stripe/payment/refund` | Yes               |
 
 **Request Body:**
 
@@ -1086,16 +1373,16 @@ Base path: `/api/v1/stripe/payment`
 
 #### Get Payment History
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/stripe/payment/history` | Yes |
+| **Method** | **Endpoint**              | **Auth Required** |
+|------------|---------------------------|-------------------|
+| `GET`      | `/stripe/payment/history` | Yes               |
 
 **Query Parameters:**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | int | 0 | Page number |
-| `size` | int | 20 | Page size |
+| `page`    | int  | 0       | Page number |
+| `size`    | int  | 20      | Page size   |
 
 **Response:** Paginated list of `StripePayment` objects
 
@@ -1107,9 +1394,9 @@ Base path: `/api/v1/stripe/subscription`
 
 #### Create Checkout Session
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/stripe/subscription/create-checkout-session` | Yes |
+| **Method** | **Endpoint**                                   | **Auth Required** |
+|------------|------------------------------------------------|-------------------|
+| `POST`     | `/stripe/subscription/create-checkout-session` | Yes               |
 
 **Request Body:**
 
@@ -1141,9 +1428,9 @@ Base path: `/api/v1/stripe/subscription`
 
 #### Create Subscription Directly
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/stripe/subscription/create` | Yes |
+| **Method** | **Endpoint**                  | **Auth Required** |
+|------------|-------------------------------|-------------------|
+| `POST`     | `/stripe/subscription/create` | Yes               |
 
 **Request Body:**
 
@@ -1169,15 +1456,15 @@ Base path: `/api/v1/stripe/subscription`
 
 #### Cancel Subscription
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/stripe/subscription/{subscriptionId}/cancel` | Yes |
+| **Method** | **Endpoint**                                   | **Auth Required** |
+|------------|------------------------------------------------|-------------------|
+| `POST`     | `/stripe/subscription/{subscriptionId}/cancel` | Yes               |
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `immediately` | boolean | false | Cancel immediately or at period end |
+| Parameter     | Type    | Default | Description                         |
+|---------------|---------|---------|-------------------------------------|
+| `immediately` | boolean | false   | Cancel immediately or at period end |
 
 **Response:**
 
@@ -1193,9 +1480,9 @@ Base path: `/api/v1/stripe/subscription`
 
 #### Pause Subscription
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/stripe/subscription/{subscriptionId}/pause` | Yes |
+| **Method** | **Endpoint**                                  | **Auth Required** |
+|------------|-----------------------------------------------|-------------------|
+| `POST`     | `/stripe/subscription/{subscriptionId}/pause` | Yes               |
 
 **Response:**
 
@@ -1210,9 +1497,9 @@ Base path: `/api/v1/stripe/subscription`
 
 #### Resume Subscription
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/stripe/subscription/{subscriptionId}/resume` | Yes |
+| **Method** | **Endpoint**                                   | **Auth Required** |
+|------------|------------------------------------------------|-------------------|
+| `POST`     | `/stripe/subscription/{subscriptionId}/resume` | Yes               |
 
 **Response:**
 
@@ -1227,9 +1514,9 @@ Base path: `/api/v1/stripe/subscription`
 
 #### Get Subscription Details
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/stripe/subscription/{subscriptionId}` | Yes |
+| **Method** | **Endpoint**                            | **Auth Required** |
+|------------|-----------------------------------------|-------------------|
+| `GET`      | `/stripe/subscription/{subscriptionId}` | Yes               |
 
 **Response:**
 
@@ -1252,9 +1539,9 @@ Base path: `/api/v1/paystack`
 
 #### Initialize Transaction
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/paystack/transaction/initialize` | Yes |
+| **Method** | **Endpoint**                       | **Auth Required** |
+|------------|------------------------------------|-------------------|
+| `POST`     | `/paystack/transaction/initialize` | Yes               |
 
 **Request Body:**
 
@@ -1286,9 +1573,9 @@ Base path: `/api/v1/paystack`
 
 #### Verify Transaction
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/paystack/transaction/verify/{reference}` | Yes |
+| **Method** | **Endpoint**                               | **Auth Required** |
+|------------|--------------------------------------------|-------------------|
+| `GET`      | `/paystack/transaction/verify/{reference}` | Yes               |
 
 **Response:**
 
@@ -1309,17 +1596,17 @@ Base path: `/api/v1/paystack`
 
 #### Charge Authorization
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/paystack/transaction/charge-authorization` | Yes |
+| **Method** | **Endpoint**                                 | **Auth Required** |
+|------------|----------------------------------------------|-------------------|
+| `POST`     | `/paystack/transaction/charge-authorization` | Yes               |
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `authorizationCode` | string | Yes | Previously authorized card code |
-| `amount` | long | Yes | Amount in kobo |
-| `currency` | string | No | Currency code |
+| Parameter           | Type   | Required | Description                     |
+|---------------------|--------|----------|---------------------------------|
+| `authorizationCode` | string | Yes      | Previously authorized card code |
+| `amount`            | long   | Yes      | Amount in kobo                  |
+| `currency`          | string | No       | Currency code                   |
 
 **Response:**
 
@@ -1339,9 +1626,9 @@ Base path: `/api/v1/paystack`
 
 #### Get Payment History
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/paystack/transaction/history` | Yes |
+| **Method** | **Endpoint**                    | **Auth Required** |
+|------------|---------------------------------|-------------------|
+| `GET`      | `/paystack/transaction/history` | Yes               |
 
 **Response:** Paginated list of `PaystackPayment` objects
 
@@ -1349,9 +1636,9 @@ Base path: `/api/v1/paystack`
 
 #### Get Payment by Reference
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/paystack/transaction/{reference}` | Yes |
+| **Method** | **Endpoint**                        | **Auth Required** |
+|------------|-------------------------------------|-------------------|
+| `GET`      | `/paystack/transaction/{reference}` | Yes               |
 
 **Response:** `PaystackPayment` object or `404 Not Found`
 
@@ -1361,9 +1648,9 @@ Base path: `/api/v1/paystack`
 
 #### Create Subscription
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/paystack/subscription` | Yes |
+| **Method** | **Endpoint**             | **Auth Required** |
+|------------|--------------------------|-------------------|
+| `POST`     | `/paystack/subscription` | Yes               |
 
 **Request Body:**
 
@@ -1392,9 +1679,9 @@ Base path: `/api/v1/paystack`
 
 #### Get Subscription by Code
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/paystack/subscription/{subscriptionCode}` | Yes |
+| **Method** | **Endpoint**                                | **Auth Required** |
+|------------|---------------------------------------------|-------------------|
+| `GET`      | `/paystack/subscription/{subscriptionCode}` | Yes               |
 
 **Response:** `PaystackSubscription` object or `404 Not Found`
 
@@ -1402,9 +1689,9 @@ Base path: `/api/v1/paystack`
 
 #### Get Active Subscription
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/paystack/subscription/active` | Yes |
+| **Method** | **Endpoint**                    | **Auth Required** |
+|------------|---------------------------------|-------------------|
+| `GET`      | `/paystack/subscription/active` | Yes               |
 
 **Response:** `PaystackSubscription` object or `404 Not Found`
 
@@ -1412,9 +1699,9 @@ Base path: `/api/v1/paystack`
 
 #### Get Subscription History
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/paystack/subscriptions` | Yes |
+| **Method** | **Endpoint**              | **Auth Required** |
+|------------|---------------------------|-------------------|
+| `GET`      | `/paystack/subscriptions` | Yes               |
 
 **Response:** Paginated list of `PaystackSubscription` objects
 
@@ -1422,15 +1709,15 @@ Base path: `/api/v1/paystack`
 
 #### Enable Subscription
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/paystack/subscription/{subscriptionCode}/enable` | Yes |
+| **Method** | **Endpoint**                                       | **Auth Required** |
+|------------|----------------------------------------------------|-------------------|
+| `POST`     | `/paystack/subscription/{subscriptionCode}/enable` | Yes               |
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `emailToken` | string | Yes | Email token from Paystack |
+| Parameter    | Type   | Required | Description               |
+|--------------|--------|----------|---------------------------|
+| `emailToken` | string | Yes      | Email token from Paystack |
 
 **Response:**
 
@@ -1438,7 +1725,9 @@ Base path: `/api/v1/paystack`
 {
   "status": true,
   "message": "Subscription enabled successfully",
-  "data": {...}
+  "data": {
+    "..."
+  }
 }
 ```
 
@@ -1446,15 +1735,15 @@ Base path: `/api/v1/paystack`
 
 #### Disable Subscription
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/paystack/subscription/{subscriptionCode}/disable` | Yes |
+| **Method** | **Endpoint**                                        | **Auth Required** |
+|------------|-----------------------------------------------------|-------------------|
+| `POST`     | `/paystack/subscription/{subscriptionCode}/disable` | Yes               |
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `emailToken` | string | Yes | Email token from Paystack |
+| Parameter    | Type   | Required | Description               |
+|--------------|--------|----------|---------------------------|
+| `emailToken` | string | Yes      | Email token from Paystack |
 
 **Response:**
 
@@ -1462,7 +1751,9 @@ Base path: `/api/v1/paystack`
 {
   "status": true,
   "message": "Subscription disabled successfully",
-  "data": {...}
+  "data": {
+    "..."
+  }
 }
 ```
 
@@ -1470,16 +1761,16 @@ Base path: `/api/v1/paystack`
 
 #### Payment Callback
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/paystack/callback` | No |
+| **Method** | **Endpoint**         | **Auth Required** |
+|------------|----------------------|-------------------|
+| `GET`      | `/paystack/callback` | No                |
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `reference` | string | Yes | Transaction reference |
-| `trxref` | string | No | Alternative transaction reference |
+| Parameter   | Type   | Required | Description                       |
+|-------------|--------|----------|-----------------------------------|
+| `reference` | string | Yes      | Transaction reference             |
+| `trxref`    | string | No       | Alternative transaction reference |
 
 **Response:**
 
@@ -1487,7 +1778,9 @@ Base path: `/api/v1/paystack`
 {
   "status": true,
   "message": "Payment success",
-  "data": {...}
+  "data": {
+    "..."
+  }
 }
 ```
 
@@ -1501,14 +1794,14 @@ Base path: `/api/v1/receipts`
 
 | **Method** | **Endpoint** | **Auth Required** |
 |------------|--------------|-------------------|
-| `GET` | `/receipts` | Yes |
+| `GET`      | `/receipts`  | Yes               |
 
 **Query Parameters:**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | int | 0 | Page number |
-| `size` | int | 10 | Page size |
+| `page`    | int  | 0       | Page number |
+| `size`    | int  | 10      | Page size   |
 
 **Response:**
 
@@ -1538,9 +1831,9 @@ Base path: `/api/v1/receipts`
 
 ### Get Receipt by Number
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/receipts/{receiptNumber}` | Yes |
+| **Method** | **Endpoint**                | **Auth Required** |
+|------------|-----------------------------|-------------------|
+| `GET`      | `/receipts/{receiptNumber}` | Yes               |
 
 **Response:**
 
@@ -1563,9 +1856,9 @@ Base path: `/api/v1/receipts`
 
 ### Download Receipt
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/receipts/{receiptNumber}/download` | Yes |
+| **Method** | **Endpoint**                         | **Auth Required** |
+|------------|--------------------------------------|-------------------|
+| `GET`      | `/receipts/{receiptNumber}/download` | Yes               |
 
 **Response:**
 
@@ -1588,9 +1881,9 @@ Base path: `/api/v1/admin/subscriptions`
 
 ### Create Subscription Plan
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `POST` | `/admin/subscriptions/plans` | Yes | ADMIN, SUPER_ADMIN |
+| **Method** | **Endpoint**                 | **Auth Required** | **Roles**          |
+|------------|------------------------------|-------------------|--------------------|
+| `POST`     | `/admin/subscriptions/plans` | Yes               | ADMIN, SUPER_ADMIN |
 
 **Request Body:**
 
@@ -1601,7 +1894,10 @@ Base path: `/api/v1/admin/subscriptions`
   "price": 1999,
   "currency": "USD",
   "interval": "monthly",
-  "features": ["feature1", "feature2"]
+  "features": [
+    "feature1",
+    "feature2"
+  ]
 }
 ```
 
@@ -1625,9 +1921,9 @@ Base path: `/api/v1/admin/subscriptions`
 
 ### Update Subscription Plan
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `PUT` | `/admin/subscriptions/plans/{planId}` | Yes | ADMIN, SUPER_ADMIN |
+| **Method** | **Endpoint**                          | **Auth Required** | **Roles**          |
+|------------|---------------------------------------|-------------------|--------------------|
+| `PUT`      | `/admin/subscriptions/plans/{planId}` | Yes               | ADMIN, SUPER_ADMIN |
 
 **Request Body:**
 
@@ -1645,7 +1941,9 @@ Base path: `/api/v1/admin/subscriptions`
   "statusCode": 200,
   "status": "success",
   "message": "Subscription plan updated successfully",
-  "data": {...}
+  "data": {
+    "..."
+  }
 }
 ```
 
@@ -1653,9 +1951,9 @@ Base path: `/api/v1/admin/subscriptions`
 
 ### Assign Subscriptions to Existing Users
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `POST` | `/admin/subscriptions/assign-subscriptions-to-existing-users` | Yes | ADMIN, SUPER_ADMIN |
+| **Method** | **Endpoint**                                                  | **Auth Required** | **Roles**          |
+|------------|---------------------------------------------------------------|-------------------|--------------------|
+| `POST`     | `/admin/subscriptions/assign-subscriptions-to-existing-users` | Yes               | ADMIN, SUPER_ADMIN |
 
 **Response:**
 
@@ -1664,7 +1962,9 @@ Base path: `/api/v1/admin/subscriptions`
   "statusCode": 200,
   "status": "success",
   "message": "Subscriptions assigned successfully",
-  "data": {...}
+  "data": {
+    "..."
+  }
 }
 ```
 
@@ -1680,9 +1980,9 @@ Base path: `/api/v1/search/documents`
 
 #### Search Documents (POST)
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `POST` | `/search/documents` | Yes |
+| **Method** | **Endpoint**        | **Auth Required** |
+|------------|---------------------|-------------------|
+| `POST`     | `/search/documents` | Yes               |
 
 **Request Body:**
 
@@ -1701,7 +2001,9 @@ Base path: `/api/v1/search/documents`
 
 ```json
 {
-  "content": [...],
+  "content": [
+    "..."
+  ],
   "totalElements": 100,
   "totalPages": 10,
   "page": 0,
@@ -1713,35 +2015,35 @@ Base path: `/api/v1/search/documents`
 
 #### Search Document Content
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/search/documents/content` | Yes |
+| **Method** | **Endpoint**                | **Auth Required** |
+|------------|-----------------------------|-------------------|
+| `GET`      | `/search/documents/content` | Yes               |
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `query` | string | Yes | Search query |
-| `page` | int | No | Page number (default: 0) |
-| `size` | int | No | Page size (default: 10) |
+| Parameter | Type   | Required | Description              |
+|-----------|--------|----------|--------------------------|
+| `query`   | string | Yes      | Search query             |
+| `page`    | int    | No       | Page number (default: 0) |
+| `size`    | int    | No       | Page size (default: 10)  |
 
 ---
 
 #### Quick Document Search
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/search/documents` | Yes |
+| **Method** | **Endpoint**        | **Auth Required** |
+|------------|---------------------|-------------------|
+| `GET`      | `/search/documents` | Yes               |
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `query` | string | - | Search query |
-| `page` | int | 0 | Page number |
-| `size` | int | 10 | Page size |
-| `sortBy` | string | `createdAt` | Sort field |
-| `sortDirection` | string | `desc` | Sort direction |
+| Parameter       | Type   | Default     | Description    |
+|-----------------|--------|-------------|----------------|
+| `query`         | string | -           | Search query   |
+| `page`          | int    | 0           | Page number    |
+| `size`          | int    | 10          | Page size      |
+| `sortBy`        | string | `createdAt` | Sort field     |
+| `sortDirection` | string | `desc`      | Sort direction |
 
 ---
 
@@ -1753,9 +2055,9 @@ Base path: `/api/v1/admin/search`
 
 #### Search Users (POST)
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `POST` | `/admin/search/users` | Yes | ADMIN |
+| **Method** | **Endpoint**          | **Auth Required** | **Roles** |
+|------------|-----------------------|-------------------|-----------|
+| `POST`     | `/admin/search/users` | Yes               | ADMIN     |
 
 **Request Body:**
 
@@ -1775,30 +2077,30 @@ Base path: `/api/v1/admin/search`
 
 #### Quick User Search
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `GET` | `/admin/search/users` | Yes | ADMIN |
+| **Method** | **Endpoint**          | **Auth Required** | **Roles** |
+|------------|-----------------------|-------------------|-----------|
+| `GET`      | `/admin/search/users` | Yes               | ADMIN     |
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `query` | string | - | Search query |
-| `role` | string | - | Filter by role |
-| `isActive` | boolean | - | Filter by active status |
-| `country` | string | - | Filter by country |
-| `page` | int | 0 | Page number |
-| `size` | int | 10 | Page size |
-| `sortBy` | string | `createdAt` | Sort field |
-| `sortDirection` | string | `desc` | Sort direction |
+| Parameter       | Type    | Default     | Description             |
+|-----------------|---------|-------------|-------------------------|
+| `query`         | string  | -           | Search query            |
+| `role`          | string  | -           | Filter by role          |
+| `isActive`      | boolean | -           | Filter by active status |
+| `country`       | string  | -           | Filter by country       |
+| `page`          | int     | 0           | Page number             |
+| `size`          | int     | 10          | Page size               |
+| `sortBy`        | string  | `createdAt` | Sort field              |
+| `sortDirection` | string  | `desc`      | Sort direction          |
 
 ---
 
 #### Search Payments (POST)
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `POST` | `/admin/search/payments` | Yes | ADMIN |
+| **Method** | **Endpoint**             | **Auth Required** | **Roles** |
+|------------|--------------------------|-------------------|-----------|
+| `POST`     | `/admin/search/payments` | Yes               | ADMIN     |
 
 **Request Body:**
 
@@ -1818,30 +2120,30 @@ Base path: `/api/v1/admin/search`
 
 #### Quick Payment Search
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `GET` | `/admin/search/payments` | Yes | ADMIN |
+| **Method** | **Endpoint**             | **Auth Required** | **Roles** |
+|------------|--------------------------|-------------------|-----------|
+| `GET`      | `/admin/search/payments` | Yes               | ADMIN     |
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `query` | string | - | Search query (receipt number, email, name) |
-| `paymentProvider` | string | - | Filter by provider |
-| `status` | string | - | Filter by status |
-| `currency` | string | - | Filter by currency |
-| `page` | int | 0 | Page number |
-| `size` | int | 10 | Page size |
-| `sortBy` | string | `createdAt` | Sort field |
-| `sortDirection` | string | `desc` | Sort direction |
+| Parameter         | Type   | Default     | Description                                |
+|-------------------|--------|-------------|--------------------------------------------|
+| `query`           | string | -           | Search query (receipt number, email, name) |
+| `paymentProvider` | string | -           | Filter by provider                         |
+| `status`          | string | -           | Filter by status                           |
+| `currency`        | string | -           | Filter by currency                         |
+| `page`            | int    | 0           | Page number                                |
+| `size`            | int    | 10          | Page size                                  |
+| `sortBy`          | string | `createdAt` | Sort field                                 |
+| `sortDirection`   | string | `desc`      | Sort direction                             |
 
 ---
 
 #### Find Payment by Receipt Number
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `GET` | `/admin/search/payments/receipt/{receiptNumber}` | Yes | ADMIN |
+| **Method** | **Endpoint**                                     | **Auth Required** | **Roles** |
+|------------|--------------------------------------------------|-------------------|-----------|
+| `GET`      | `/admin/search/payments/receipt/{receiptNumber}` | Yes               | ADMIN     |
 
 ---
 
@@ -1853,9 +2155,9 @@ Base path: `/api/v1/admin/elasticsearch`
 
 #### Full Sync
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `POST` | `/admin/elasticsearch/sync` | Yes | ADMIN |
+| **Method** | **Endpoint**                | **Auth Required** | **Roles** |
+|------------|-----------------------------|-------------------|-----------|
+| `POST`     | `/admin/elasticsearch/sync` | Yes               | ADMIN     |
 
 **Response:**
 
@@ -1870,9 +2172,9 @@ Base path: `/api/v1/admin/elasticsearch`
 
 #### Sync Users
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `POST` | `/admin/elasticsearch/sync/users` | Yes | ADMIN |
+| **Method** | **Endpoint**                      | **Auth Required** | **Roles** |
+|------------|-----------------------------------|-------------------|-----------|
+| `POST`     | `/admin/elasticsearch/sync/users` | Yes               | ADMIN     |
 
 **Response:**
 
@@ -1887,9 +2189,9 @@ Base path: `/api/v1/admin/elasticsearch`
 
 #### Sync Documents
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `POST` | `/admin/elasticsearch/sync/documents` | Yes | ADMIN |
+| **Method** | **Endpoint**                          | **Auth Required** | **Roles** |
+|------------|---------------------------------------|-------------------|-----------|
+| `POST`     | `/admin/elasticsearch/sync/documents` | Yes               | ADMIN     |
 
 **Response:**
 
@@ -1904,9 +2206,9 @@ Base path: `/api/v1/admin/elasticsearch`
 
 #### Sync Payments
 
-| **Method** | **Endpoint** | **Auth Required** | **Roles** |
-|------------|--------------|-------------------|-----------|
-| `POST` | `/admin/elasticsearch/sync/payments` | Yes | ADMIN |
+| **Method** | **Endpoint**                         | **Auth Required** | **Roles** |
+|------------|--------------------------------------|-------------------|-----------|
+| `POST`     | `/admin/elasticsearch/sync/payments` | Yes               | ADMIN     |
 
 **Response:**
 
@@ -1923,17 +2225,18 @@ Base path: `/api/v1/admin/elasticsearch`
 
 ### Stripe Webhook
 
-| **Method** | **Endpoint** | **Auth Required** | **Description** |
-|------------|--------------|-------------------|-----------------|
-| `POST` | `/api/v1/stripe/webhook` | No | Handles Stripe events |
+| **Method** | **Endpoint**             | **Auth Required** | **Description**       |
+|------------|--------------------------|-------------------|-----------------------|
+| `POST`     | `/api/v1/stripe/webhook` | No                | Handles Stripe events |
 
 **Headers:**
 
-| Header | Description |
-|--------|-------------|
+| Header             | Description              |
+|--------------------|--------------------------|
 | `Stripe-Signature` | Stripe webhook signature |
 
 **Supported Events:**
+
 - `checkout.session.completed`
 - `payment_intent.succeeded`
 - `payment_intent.payment_failed`
@@ -1947,23 +2250,23 @@ Base path: `/api/v1/admin/elasticsearch`
 
 ### Paystack Webhook
 
-| **Method** | **Endpoint** | **Auth Required** | **Description** |
-|------------|--------------|-------------------|-----------------|
-| `POST` | `/api/v1/paystack/webhook` | No | Handles Paystack events |
+| **Method** | **Endpoint**               | **Auth Required** | **Description**         |
+|------------|----------------------------|-------------------|-------------------------|
+| `POST`     | `/api/v1/paystack/webhook` | No                | Handles Paystack events |
 
 **Headers:**
 
-| Header | Description |
-|--------|-------------|
+| Header                 | Description                           |
+|------------------------|---------------------------------------|
 | `x-paystack-signature` | Paystack webhook signature (optional) |
 
 ---
 
 #### Paystack Webhook Health Check
 
-| **Method** | **Endpoint** | **Auth Required** |
-|------------|--------------|-------------------|
-| `GET` | `/api/v1/paystack/webhook/health` | No |
+| **Method** | **Endpoint**                      | **Auth Required** |
+|------------|-----------------------------------|-------------------|
+| `GET`      | `/api/v1/paystack/webhook/health` | No                |
 
 **Response:**
 
@@ -1975,11 +2278,12 @@ Webhook endpoint is healthy
 
 ### Mailgun Webhook
 
-| **Method** | **Endpoint** | **Auth Required** | **Description** |
-|------------|--------------|-------------------|-----------------|
-| `POST` | `/api/webhook/mailgun` | No | Handles Mailgun email events |
+| **Method** | **Endpoint**           | **Auth Required** | **Description**              |
+|------------|------------------------|-------------------|------------------------------|
+| `POST`     | `/api/webhook/mailgun` | No                | Handles Mailgun email events |
 
 **Supported Events:**
+
 - `delivered`
 - `opened`
 - `clicked`
@@ -2064,7 +2368,8 @@ All authenticated endpoints require a Bearer token in the `Authorization` header
 Authorization: Bearer <access_token>
 ```
 
-Access tokens are obtained through the `/api/v1/auth/login` endpoint and can be refreshed using `/api/v1/auth/refresh-token`.
+Access tokens are obtained through the `/api/v1/auth/login` endpoint and can be refreshed using
+`/api/v1/auth/refresh-token`.
 
 ---
 
@@ -2072,13 +2377,13 @@ Access tokens are obtained through the `/api/v1/auth/login` endpoint and can be 
 
 Some endpoints have rate limiting applied:
 
-| Endpoint | Limit |
-|----------|-------|
-| `/user/forgot-password` | 5 requests per hour |
-| `/user/reset-password` | 10 requests per hour |
+| Endpoint                | Limit                  |
+|-------------------------|------------------------|
+| `/user/forgot-password` | 5 requests per hour    |
+| `/user/reset-password`  | 10 requests per hour   |
 | `/user/change-password` | 20 requests per minute |
-| `/user/profile/*` | 20 requests per minute |
-| `/documents/upload` | 10 requests per minute |
+| `/user/profile/*`       | 20 requests per minute |
+| `/documents/upload`     | 10 requests per minute |
 
 ---
 
@@ -2086,21 +2391,23 @@ Some endpoints have rate limiting applied:
 
 Paginated endpoints accept the following query parameters:
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | int | 0 | Page number (0-indexed) |
-| `size` | int | 10-20 | Number of items per page |
-| `sort` | string | varies | Sort field and direction (e.g., `createdAt,desc`) |
+| Parameter | Type   | Default | Description                                       |
+|-----------|--------|---------|---------------------------------------------------|
+| `page`    | int    | 0       | Page number (0-indexed)                           |
+| `size`    | int    | 10-20   | Number of items per page                          |
+| `sort`    | string | varies  | Sort field and direction (e.g., `createdAt,desc`) |
 
 Paginated responses include:
 
 ```json
 {
-  "content": [...],
+  "content": [
+    "..."
+  ],
   "totalElements": 100,
   "totalPages": 10,
   "size": 10,
-  "number": 0, 
+  "number": 0,
   "numberOfElements": 10,
   "first": true,
   "last": false,

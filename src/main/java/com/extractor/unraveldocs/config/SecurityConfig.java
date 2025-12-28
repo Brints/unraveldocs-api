@@ -29,93 +29,94 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+        private final JwtAuthenticationEntryPoint authenticationEntryPoint;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Getter
-    private final ObjectMapper objectMapper;
+        @Getter
+        private final ObjectMapper objectMapper;
 
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public AuthenticationManager manager(AuthenticationConfiguration configuration) throws Exception {
+                return configuration.getAuthenticationManager();
+        }
 
-    @Bean
-    public AuthenticationManager manager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
+        @Bean
+        protected MethodSecurityExpressionHandler methodSecurityExpressionHandler() {
+                DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
+                handler.setPermissionEvaluator(new CustomPermissionEvaluator());
+                return handler;
+        }
 
-    @Bean
-    protected MethodSecurityExpressionHandler methodSecurityExpressionHandler() {
-        DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
-        handler.setPermissionEvaluator(new CustomPermissionEvaluator());
-        return handler;
-    }
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                CorsConfiguration config = new CorsConfiguration();
+                config.setAllowCredentials(true);
+                config.addAllowedOriginPattern("*");
+                config.addAllowedHeader("*");
+                config.addAllowedMethod("*");
+                source.registerCorsConfiguration("/**", config);
+                return source;
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.addAllowedOriginPattern("*");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+        @Bean
+        public SecurityFilterChain securityFilterChain(
+                        HttpSecurity http,
+                        CustomAccessDeniedHandler accessDeniedHandler) throws Exception {
+                http.csrf(AbstractHttpConfigurer::disable)
+                                .cors(cors -> cors
+                                                .configurationSource(corsConfigurationSource()))
+                                .authorizeHttpRequests(authorize -> authorize
+                                                .requestMatchers(
+                                                                "/",
+                                                                "/docs",
+                                                                "/docs/**",
+                                                                "/docs.html",
+                                                                "/swagger-ui/**",
+                                                                "/swagger-ui/index.html",
+                                                                "/v3/api-docs/**",
+                                                                "/swagger-resources/**",
+                                                                "/webjars/**",
+                                                                "/actuator/**",
+                                                                "/api/v1/auth/login",
+                                                                "/api/v1/auth/signup",
+                                                                "/api/v1/auth/verify-email",
+                                                                "/api/v1/auth/refresh-token",
+                                                                "/api/v1/user/forgot-password",
+                                                                "/api/v1/user/reset-password",
+                                                                "/api/v1/auth/resend-verification-email",
+                                                                "/api/v1/auth/generate-password",
+                                                                "/api/v1/stripe/webhook/**",
+                                                                "/api/v1/paystack/webhook/**",
+                                                                "/api/v1/paystack/callback")
+                                                .permitAll()
+                                                .requestMatchers(
+                                                                "/api/v1/admin/**")
+                                                .hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPER_ADMIN")
+                                                .requestMatchers(
+                                                                "/api/v1/auth/logout",
+                                                                "/me/**",
+                                                                "/api/v1/user/**",
+                                                                "/api/v1/user/change-password",
+                                                                "/api/v1/user/update-profile",
+                                                                "/api/v1/documents/**",
+                                                                "/api/v1/collections/**",
+                                                                "/api/v1/organizations/**")
+                                                .authenticated()
+                                                .anyRequest().authenticated())
+                                .exceptionHandling(exception -> exception
+                                                .authenticationEntryPoint(authenticationEntryPoint)
+                                                .accessDeniedHandler(accessDeniedHandler))
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            CustomAccessDeniedHandler accessDeniedHandler) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors
-                        .configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(
-                        "/",
-                        "/docs",
-                        "/docs/**",
-                        "/docs.html",
-                        "/swagger-ui/**",
-                        "/swagger-ui/index.html",
-                        "/v3/api-docs/**",
-                        "/swagger-resources/**",
-                        "/webjars/**",
-                        "/actuator/**",
-                        "/api/v1/auth/login",
-                        "/api/v1/auth/signup",
-                        "/api/v1/auth/verify-email",
-                        "/api/v1/auth/refresh-token",
-                        "/api/v1/user/forgot-password",
-                        "/api/v1/user/reset-password",
-                        "/api/v1/auth/resend-verification-email",
-                        "/api/v1/auth/generate-password",
-                        "/api/v1/stripe/webhook/**",
-                        "/api/v1/paystack/webhook/**",
-                        "/api/v1/paystack/callback").permitAll()
-                        .requestMatchers(
-                                "/api/v1/admin/**"
-                                ).hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPER_ADMIN")
-                        .requestMatchers(
-                                "/api/v1/auth/logout",
-                                "/me/**",
-                                "/api/v1/user/**",
-                                "/api/v1/user/change-password",
-                                "/api/v1/user/update-profile",
-                                "/api/v1/documents/**",
-                                "/api/v1/collections/**"
-                        ).authenticated()
-                        .anyRequest().authenticated())
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler))
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        return http.build();
-    }
+                http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                return http.build();
+        }
 
 }

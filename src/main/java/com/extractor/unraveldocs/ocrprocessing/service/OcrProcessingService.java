@@ -27,7 +27,9 @@ public class OcrProcessingService {
     private final OcrProperties ocrProperties;
 
     /**
-     * Process an OCR request with automatic provider selection and fallback.
+     * Process an OCR request with automatic provider selection based on
+     * subscription tier.
+     * Free tier users use Tesseract, paid subscribers use Google Cloud Vision.
      *
      * @param request  The OCR request
      * @param userId   The user ID for quota tracking
@@ -46,12 +48,13 @@ public class OcrProcessingService {
         OcrProvider primaryProvider = null;
 
         try {
-            // Get provider based on request preferences
-            primaryProvider = providerFactory.getProviderForRequest(request);
+            // Get provider based on user subscription tier
+            OcrProviderType providerType = getProviderForTier(userTier);
+            primaryProvider = getProviderWithFallbackToDefault(providerType);
             ocrMetrics.recordRequestStart(primaryProvider.getProviderType());
 
-            log.info("Processing OCR for document {} using provider: {}",
-                    request.getDocumentId(), primaryProvider.getProviderType());
+            log.info("Processing OCR for document {} using provider: {} (tier: {})",
+                    request.getDocumentId(), primaryProvider.getProviderType(), userTier);
 
             // Process with primary provider
             OcrResult result = primaryProvider.extractText(request);
@@ -87,6 +90,51 @@ public class OcrProcessingService {
                 ocrMetrics.stopTimer(timerSample, primaryProvider.getProviderType());
             }
         }
+    }
+
+    /**
+     * Determine the OCR provider based on user subscription tier.
+     * Free tier users get Tesseract (local), paid subscribers get Google Vision
+     * (cloud).
+     *
+     * @param userTier The user's subscription tier
+     * @return The appropriate OCR provider type
+     */
+    private OcrProviderType getProviderForTier(String userTier) {
+        if (userTier == null || userTier.isBlank()) {
+            return OcrProviderType.TESSERACT;
+        }
+
+        String tier = userTier.toLowerCase();
+
+        // Free tier users use Tesseract
+        if (tier.equals("free") || tier.equals("trial")) {
+            log.debug("User tier '{}' using Tesseract OCR", tier);
+            return OcrProviderType.TESSERACT;
+        }
+
+        // Paid subscribers (basic, premium, enterprise) use Google Vision
+        log.debug("User tier '{}' using Google Cloud Vision OCR", tier);
+        return OcrProviderType.GOOGLE_VISION;
+    }
+
+    /**
+     * Get provider for the specified type, falling back to default if unavailable.
+     *
+     * @param preferredType The preferred provider type
+     * @return An available provider
+     */
+    private OcrProvider getProviderWithFallbackToDefault(OcrProviderType preferredType) {
+        // Try to get the preferred provider
+        if (providerFactory.isProviderAvailable(preferredType)) {
+            return providerFactory.getProvider(preferredType);
+        }
+
+        // Preferred not available, log and fall back to default
+        log.warn("Preferred OCR provider {} is not available, falling back to default: {}",
+                preferredType, ocrProperties.getDefaultProvider());
+
+        return providerFactory.getDefaultProvider();
     }
 
     /**

@@ -72,6 +72,13 @@ public class OcrProperties {
     private TesseractConfig tesseract = new TesseractConfig();
 
     /**
+     * Check if a provider is enabled.
+     */
+    public boolean isProviderEnabled(OcrProviderType provider) {
+        return enabledProviders.contains(provider);
+    }
+
+    /**
      * Quota configuration for controlling OCR usage.
      */
     @Data
@@ -171,12 +178,5 @@ public class OcrProperties {
          * 3 = Default, based on what is available
          */
         private int ocrEngineMode = 3;
-    }
-
-    /**
-     * Check if a provider is enabled.
-     */
-    public boolean isProviderEnabled(OcrProviderType provider) {
-        return enabledProviders.contains(provider);
     }
 }

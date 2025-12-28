@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Organization Invitation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .invite-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .org-name {
+            font-size: 24px;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .inviter-name {
+            color: #666;
+            font-size: 14px;
+        }
+        .accept-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+        .accept-btn:hover {
+            opacity: 0.9;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        p {
+            color: #333;
+            line-height: 1.6;
+        }
+        .warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .link-text {
+            word-break: break-all;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📩 You're Invited!</h1>
+        </div>
+        <div class="content">
+            <p>Hello,</p>
+            
+            <p>You've been invited to join an organization on UnravelDocs.</p>
+            
+            <div class="invite-box">
+                <div class="org-name" th:text="${organizationName}">Acme Corporation</div>
+                <div class="inviter-name">Invited by <span th:text="${invitedByName}">John Doe</span></div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a th:href="${invitationLink}" class="accept-btn">Accept Invitation</a>
+                <p style="font-size: 12px; color: #666;">Or copy this link:</p>
+                <div class="link-text" th:text="${invitationLink}">https://unraveldocs.com/...</div>
+            </div>
+            
+            <div class="warning">
+                <strong>⏰ This invitation expires in <span th:text="${expiryDays}">7</span> days</strong>
+                <p style="margin: 10px 0 0 0;">If you don't recognize this invitation or didn't expect it, you can safely ignore this email.</p>
+            </div>
+        </div>
+        <div class="footer">
+            <p>© 2024 UnravelDocs. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>

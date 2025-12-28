@@ -1,212 +1,505 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
     <title>Verify Your Email Address | UnravelDocs</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
     <style type="text/css">
-        /* Client-specific Resets */
-        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-        table { border-collapse: collapse !important; }
-        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
-        #outlook a { padding: 0; }
-        .ReadMsgBody { width: 100%; }
-        .ExternalClass { width: 100%; }
-        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
-
-        /* General Styles */
+        /* Reset & Client Fixes */
+        html,
         body {
-            background-color: #f4f7f6;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        }
-        p {
-            margin: 1em 0;
-            padding: 0;
-            font-size: 16px;
-            line-height: 1.6;
-            color: #333333;
-        }
-        a {
-            color: #007bff;
-            text-decoration: underline;
-        }
-        strong {
-            font-weight: bold;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
         }
 
-        /* Layout */
-        .email-wrapper {
-            padding: 20px;
+        * {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
         }
+
+        table,
+        td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+            border-collapse: collapse !important;
+        }
+
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        a[x-apple-data-detectors] {
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+
+        u+#body a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        #outlook a {
+            padding: 0;
+        }
+
+        .ReadMsgBody,
+        .ExternalClass {
+            width: 100%;
+        }
+
+        .ExternalClass,
+        .ExternalClass p,
+        .ExternalClass span,
+        .ExternalClass font,
+        .ExternalClass td,
+        .ExternalClass div {
+            line-height: 100%;
+        }
+
+        /* Base Styles */
+        body {
+            background-color: #f8fafc;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Card Container */
         .email-container {
             background-color: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            margin: 0 auto;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
             max-width: 600px;
+            margin: 0 auto;
+            overflow: hidden;
         }
 
-        /* Header */
+        /* Header Gradient */
         .email-header {
-            background-color: #4A90E2;
-            color: #ffffff;
-            padding: 30px 20px;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            padding: 40px 32px;
             text-align: center;
         }
-        .email-header h1 {
+
+        .logo-text {
             color: #ffffff;
-            font-size: 26px;
-            font-weight: bold;
-            line-height: 1.2;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0 0 8px 0;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 16px;
+            font-weight: 400;
             margin: 0;
         }
 
-        /* Body */
+        /* Body Content */
         .email-body {
-            padding: 30px 35px;
+            padding: 40px 32px;
         }
 
-        /* Button */
-        .button {
-            background-color: #5CB85C;
-            border-radius: 5px;
+        .greeting {
+            color: #1e293b;
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+
+        .body-text {
+            color: #475569;
+            font-size: 16px;
+            line-height: 1.7;
+            margin: 0 0 28px 0;
+        }
+
+        /* CTA Button */
+        .btn-container {
+            text-align: center;
+            margin: 32px 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 10px;
             color: #ffffff !important;
             display: inline-block;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             font-size: 16px;
-            font-weight: bold;
-            padding: 15px 30px;
-            text-align: center;
+            font-weight: 600;
+            padding: 16px 40px;
             text-decoration: none !important;
-            -webkit-text-size-adjust: none;
-            mso-hide: all; /* Hide from most Outlook versions */
+            transition: transform 0.2s ease;
+        }
+
+        /* Expiration Notice */
+        .expiration-notice {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            border-radius: 0 8px 8px 0;
+            color: #92400e;
+            font-size: 14px;
+            margin: 24px 0;
+            padding: 12px 16px;
+        }
+
+        /* Fallback Link */
+        .fallback-section {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            margin: 24px 0;
+            padding: 16px;
+        }
+
+        .fallback-label {
+            color: #64748b;
+            font-size: 13px;
+            margin: 0 0 8px 0;
+        }
+
+        .fallback-link {
+            color: #1e3a5f;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        /* Signature */
+        .signature {
+            border-top: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-top: 32px;
+            padding-top: 24px;
+        }
+
+        .signature strong {
+            color: #1e3a5f;
         }
 
         /* Footer */
         .email-footer {
-            background-color: #f0f0f0;
-            padding: 25px 30px;
-            border-bottom-left-radius: 8px;
-            border-bottom-right-radius: 8px;
-            border-top: 1px solid #e0e0e0;
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 32px;
             text-align: center;
         }
-        .email-footer p {
-            color: #888888;
-            font-size: 13px;
-            line-height: 1.5;
-            margin: 0 0 5px 0;
+
+        .social-links {
+            margin-bottom: 20px;
         }
 
-        /* Responsive Styles */
+        .social-link {
+            color: #64748b;
+            display: inline-block;
+            font-size: 14px;
+            margin: 0 12px;
+            text-decoration: none;
+        }
+
+        .social-link:hover {
+            color: #1e3a5f;
+        }
+
+        .footer-text {
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.6;
+            margin: 0 0 8px 0;
+        }
+
+        .footer-links {
+            margin-top: 16px;
+        }
+
+        .footer-link {
+            color: #64748b;
+            font-size: 12px;
+            margin: 0 8px;
+        }
+
+        /* Dark Mode */
+        @media (prefers-color-scheme: dark) {
+
+            body,
+            .email-wrapper {
+                background-color: #0f172a !important;
+            }
+
+            .email-container {
+                background-color: #1e293b !important;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+            }
+
+            .email-body {
+                background-color: #1e293b !important;
+            }
+
+            .greeting {
+                color: #f1f5f9 !important;
+            }
+
+            .body-text {
+                color: #cbd5e1 !important;
+            }
+
+            .fallback-section {
+                background-color: #334155 !important;
+            }
+
+            .fallback-label {
+                color: #94a3b8 !important;
+            }
+
+            .fallback-link {
+                color: #60a5fa !important;
+            }
+
+            .signature {
+                border-color: #334155 !important;
+                color: #94a3b8 !important;
+            }
+
+            .signature strong {
+                color: #f1f5f9 !important;
+            }
+
+            .email-footer {
+                background-color: #0f172a !important;
+                border-color: #334155 !important;
+            }
+
+            .social-link {
+                color: #94a3b8 !important;
+            }
+
+            .footer-text {
+                color: #64748b !important;
+            }
+
+            .footer-link {
+                color: #94a3b8 !important;
+            }
+        }
+
+        /* Responsive */
         @media only screen and (max-width: 640px) {
-            .email-wrapper { padding: 15px !important; }
-            .email-container { width: 100% !important; border-radius: 0 !important; }
-            .email-header { padding: 25px 15px !important; border-radius: 0 !important; }
-            .email-header h1 { font-size: 22px !important; }
-            .email-body { padding: 25px 20px !important; }
-            p { font-size: 15px !important; }
-            .button { padding: 14px 25px !important; font-size: 15px !important; }
-            .email-footer { padding: 20px 15px !important; border-radius: 0 !important; }
-            .email-footer p { font-size: 12px !important; }
+            .email-wrapper {
+                padding: 16px !important;
+            }
+
+            .email-container {
+                border-radius: 12px !important;
+            }
+
+            .email-header {
+                padding: 32px 24px !important;
+            }
+
+            .logo-text {
+                font-size: 24px !important;
+            }
+
+            .email-body {
+                padding: 32px 24px !important;
+            }
+
+            .greeting {
+                font-size: 16px !important;
+            }
+
+            .body-text {
+                font-size: 15px !important;
+            }
+
+            .btn-primary {
+                padding: 14px 32px !important;
+                font-size: 15px !important;
+            }
+
+            .email-footer {
+                padding: 24px !important;
+            }
         }
     </style>
 </head>
-<body style="margin: 0 !important; padding: 0 !important; background-color: #f4f7f6; height: 100% !important; width: 100% !important; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-<!-- PREHEADER TEXT -->
-<div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-    Complete your registration with UnravelDocs.
-</div>
 
-<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-wrapper" style="background-color: #f4f7f6; padding: 20px;">
-    <tr>
-        <td align="center" valign="top">
-            <!--[if (gte mso 9)|(IE)]>
+<body id="body" style="margin: 0 !important; padding: 0 !important; background-color: #f8fafc;">
+    <!-- Preheader Text -->
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+        Complete your registration with UnravelDocs - Your intelligent document processing platform awaits!
+    </div>
+
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-wrapper"
+        style="background-color: #f8fafc; padding: 32px 16px;">
+        <tr>
+            <td align="center" valign="top">
+                <!--[if (gte mso 9)|(IE)]>
             <table align="center" border="0" cellspacing="0" cellpadding="0" width="600">
                 <tr>
                     <td align="center" valign="top" width="600">
             <![endif]-->
-            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-container">
-                <!-- HEADER -->
-                <tr>
-                    <td align="center" valign="top" class="email-header">
-                        <h1 style="color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 26px; font-weight: bold; line-height: 1.2; margin: 0;">
-                            Welcome to UnravelDocs!
-                        </h1>
-                    </td>
-                </tr>
-                <!-- BODY -->
-                <tr>
-                    <td valign="top" class="email-body">
-                        <p style="margin: 0 0 20px 0;">
-                            Hello
-                            <strong th:text="${firstName}">[FirstName]</strong>
-                            <strong th:text="${lastName}">[LastName]</strong>,
-                        </p>
-                        <p style="margin: 0 0 25px 0;">
-                            Thank you for registering. To activate your account, please verify your email address by clicking the button below:
-                        </p>
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+                    class="email-container"
+                    style="background-color: #ffffff; border-radius: 16px; max-width: 600px; overflow: hidden;">
+                    <!-- HEADER -->
+                    <tr>
+                        <td align="center" valign="top" class="email-header"
+                            style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 40px 32px;">
+                            <!-- Logo Placeholder - Replace with actual logo -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="padding-bottom: 12px;">
+                                        <div
+                                            style="width: 56px; height: 56px; background-color: rgba(255,255,255,0.15); border-radius: 12px; display: inline-block; line-height: 56px; text-align: center;">
+                                            <span style="color: #ffffff; font-size: 28px; font-weight: 700;">U</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <h1 class="logo-text"
+                                style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0 0 8px 0;">
+                                UnravelDocs</h1>
+                            <p class="header-subtitle"
+                                style="color: rgba(255, 255, 255, 0.85); font-size: 16px; margin: 0;">Verify Your Email
+                                Address</p>
+                        </td>
+                    </tr>
 
-                        <!-- BUTTON -->
-                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="text-align: center; margin: 25px 0;">
-                            <tr>
-                                <td align="center" valign="top">
-                                    <!--[if mso]>
-                                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" th:href="@{${verificationUrl}}" style="height:50px;v-text-anchor:middle;width:260px;" arcsize="10%" strokecolor="#5CB85C" fillcolor="#5CB85C">
+                    <!-- BODY -->
+                    <tr>
+                        <td valign="top" class="email-body" style="padding: 40px 32px;">
+                            <p class="greeting"
+                                style="color: #1e293b; font-size: 18px; font-weight: 500; margin: 0 0 20px 0;">
+                                Hello <strong th:text="${firstName}">FirstName</strong> <strong
+                                    th:text="${lastName}">LastName</strong>,
+                            </p>
+
+                            <p class="body-text"
+                                style="color: #475569; font-size: 16px; line-height: 1.7; margin: 0 0 28px 0;">
+                                Thank you for joining <strong style="color: #1e3a5f;">UnravelDocs</strong>! We're
+                                excited to have you on board. To get started with intelligent document processing,
+                                please verify your email address by clicking the button below.
+                            </p>
+
+                            <!-- CTA Button -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+                                style="margin: 32px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <!--[if mso]>
+                                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" th:href="@{${verificationUrl}}" style="height: 52px; v-text-anchor: middle; width: 240px;" arcsize="20%" strokecolor="#10b981" fillcolor="#10b981">
                                         <w:anchorlock/>
-                                        <center style="color:#ffffff;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:16px;font-weight:bold;">Verify Email Address</center>
+                                        <center style="color: #ffffff; font-family: Inter, Arial, sans-serif; font-size: 16px; font-weight: 600;">Verify Email Address</center>
                                     </v:roundrect>
                                     <![endif]-->
-                                    <a th:href="@{${verificationUrl}}" target="_blank" class="button">
-                                        Verify Email Address
-                                    </a>
-                                </td>
-                            </tr>
-                        </table>
+                                        <a th:href="@{${verificationUrl}}" target="_blank" class="btn-primary"
+                                            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: 600; padding: 16px 40px; text-decoration: none;">
+                                            Verify Email Address
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
 
-                        <p style="font-size: 14px; color: #777777; text-align: center; margin: 20px 0;">
-                            This link is valid for <strong th:text="${expiration}">[ExpirationTime]</strong>.
-                        </p>
-                        <p style="font-size: 14px; color: #555555; margin-top: 25px; margin-bottom: 5px;">
-                            If you're having trouble with the link, copy and paste this URL into your browser:
-                        </p>
-                        <p style="font-size: 12px; word-break: break-all; margin-bottom: 25px;">
-                            <a th:href="@{${verificationUrl}}" th:text="${verificationUrl}" target="_blank">[VerificationURL]</a>
-                        </p>
-                        <p style="margin-top: 25px;">
-                            If you did not request this email, please ignore it.
-                        </p>
-                        <p style="color: #888888; font-size: 13px; line-height: 1.5; margin-top: 20px;">
-                            Best regards,<br>
-                            <strong>The UnravelDocs Team</strong>
-                        </p>
+                            <!-- Expiration Notice -->
+                            <div class="expiration-notice"
+                                style="background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; color: #92400e; font-size: 14px; margin: 24px 0; padding: 12px 16px;">
+                                ⏰ This verification link expires in <strong th:text="${expiration}">24 hours</strong>.
+                                Please verify your email soon.
+                            </div>
+
+                            <!-- Fallback Link -->
+                            <div class="fallback-section"
+                                style="background-color: #f1f5f9; border-radius: 8px; margin: 24px 0; padding: 16px;">
+                                <p class="fallback-label" style="color: #64748b; font-size: 13px; margin: 0 0 8px 0;">
+                                    Having trouble with the button? Copy and paste this link into your browser:
+                                </p>
+                                <a th:href="@{${verificationUrl}}" th:text="${verificationUrl}" class="fallback-link"
+                                    style="color: #1e3a5f; font-size: 12px; word-break: break-all;" target="_blank">
+                                    https://example.com/verify
+                                </a>
+                            </div>
+
+                            <p class="body-text"
+                                style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 24px 0 0 0;">
+                                If you didn't create an account with UnravelDocs, you can safely ignore this email.
+                            </p>
+
+                            <!-- Signature -->
+                            <div class="signature"
+                                style="border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; line-height: 1.6; margin-top: 32px; padding-top: 24px;">
+                                Best regards,<br>
+                                <strong style="color: #1e3a5f;">The UnravelDocs Team</strong>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                        <td align="center" valign="top" class="email-footer"
+                            style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 32px;">
+                            <!-- Social Links -->
+                            <div class="social-links" style="margin-bottom: 20px;">
+                                <a href="https://twitter.com/unraveldocs" class="social-link"
+                                    style="color: #64748b; display: inline-block; font-size: 14px; margin: 0 12px; text-decoration: none;">Twitter</a>
+                                <a href="https://linkedin.com/company/unraveldocs" class="social-link"
+                                    style="color: #64748b; display: inline-block; font-size: 14px; margin: 0 12px; text-decoration: none;">LinkedIn</a>
+                                <a href="https://github.com/Brints/unraveldocs-api" class="social-link"
+                                    style="color: #64748b; display: inline-block; font-size: 14px; margin: 0 12px; text-decoration: none;">GitHub</a>
+                            </div>
+
+                            <p class="footer-text"
+                                style="color: #94a3b8; font-size: 12px; line-height: 1.6; margin: 0 0 8px 0;">
+                                &copy; <span th:text="${#dates.year(#dates.createNow())}">2024</span> UnravelDocs. All
+                                rights reserved.
+                            </p>
+                            <p class="footer-text"
+                                style="color: #94a3b8; font-size: 12px; line-height: 1.6; margin: 0;">
+                                You received this email because you signed up for an UnravelDocs account.
+                            </p>
+
+                            <div class="footer-links" style="margin-top: 16px;">
+                                <a href="https://unraveldocs.xyz/privacy" class="footer-link"
+                                    style="color: #64748b; font-size: 12px; margin: 0 8px;">Privacy Policy</a>
+                                <span style="color: #cbd5e1;">|</span>
+                                <a href="https://unraveldocs.xyz/terms" class="footer-link"
+                                    style="color: #64748b; font-size: 12px; margin: 0 8px;">Terms of Service</a>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <!--[if (gte mso 9)|(IE)]>
                     </td>
                 </tr>
-                <!-- FOOTER -->
-                <tr>
-                    <td align="center" valign="top" class="email-footer">
-                        <p style="font-size: 12px; margin: 0 0 5px 0;">
-                            &copy; <span th:text="${#dates.year(#dates.createNow())}">2024</span> UnravelDocs. All rights reserved.
-                        </p>
-                        <p style="font-size: 12px; margin: 0;">
-                            123 Innovation Drive, Tech City, TX 75001
-                        </p>
-                    </td>
-                </tr>
-            </table>
-            <!--[if (gte mso 9)|(IE)]>
-            </td>
-            </tr>
             </table>
             <![endif]-->
-        </td>
-    </tr>
-</table>
+            </td>
+        </tr>
+    </table>
 </body>
+
 </html>

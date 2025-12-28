@@ -113,6 +113,50 @@ OCR_GOOGLE_VISION_INCLUDE_CONFIDENCE=true
 
 ---
 
+## Subscription-Based Provider Selection
+
+The OCR system automatically selects the appropriate provider based on user subscription tier:
+
+| Subscription Tier | OCR Provider | Notes |
+|-------------------|--------------|-------|
+| **Free** | Tesseract | Local processing, no API costs |
+| **Trial** | Tesseract | Local processing during trial period |
+| **Basic** | Google Vision | Cloud API for better accuracy |
+| **Premium** | Google Vision | Cloud API for better accuracy |
+| **Enterprise** | Google Vision | Cloud API for better accuracy |
+
+### How It Works
+
+1. When a user uploads a document for OCR processing
+2. The system checks the user's subscription tier
+3. Free/Trial users → Tesseract OCR (local)
+4. Paid subscribers → Google Cloud Vision (cloud)
+5. If the preferred provider is unavailable, it falls back to the other
+
+### Implementation
+
+The provider selection logic is in `OcrProcessingService.getProviderForTier()`:
+
+```java
+private OcrProviderType getProviderForTier(String userTier) {
+    if (userTier == null || userTier.isBlank()) {
+        return OcrProviderType.TESSERACT;
+    }
+
+    String tier = userTier.toLowerCase();
+
+    // Free tier users use Tesseract
+    if (tier.equals("free") || tier.equals("trial")) {
+        return OcrProviderType.TESSERACT;
+    }
+
+    // Paid subscribers use Google Vision
+    return OcrProviderType.GOOGLE_VISION;
+}
+```
+
+---
+
 ## Key Features
 
 ### Provider Abstraction

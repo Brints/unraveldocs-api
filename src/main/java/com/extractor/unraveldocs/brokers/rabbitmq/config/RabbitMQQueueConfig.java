@@ -303,8 +303,8 @@ public class RabbitMQQueueConfig {
                 "com.extractor.unraveldocs.auth.events",
                 "com.extractor.unraveldocs.user.events",
                 "com.extractor.unraveldocs.ocrprocessing.events",
-                "com.extractor.unraveldocs.elasticsearch.events"
-        );
+                "com.extractor.unraveldocs.elasticsearch.events",
+                "com.extractor.unraveldocs.messaging.dto");
         return classMapper;
     }
 }

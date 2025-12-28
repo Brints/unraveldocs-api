@@ -43,6 +43,17 @@
 - **Email Verification**: OTP-based email verification for new accounts
 - **Password Reset**: Secure password reset flow with email notifications
 
+### Organization Management
+- **Organization Creation**: OTP-verified organization creation for Premium/Enterprise subscribers
+- **Subscription Tiers**: Premium (200 docs/month) and Enterprise (unlimited) organization plans
+- **10-Day Free Trial**: Automatic trial period for new organizations
+- **Member Management**: Add, remove, and batch remove members (up to 10 per org)
+- **Role-Based Access**: Owner, Admin, and Member roles with distinct permissions
+- **Admin Promotion**: Enterprise-only feature to promote members to admin
+- **Email Invitations**: Enterprise-only email invitation system with unique tokens
+- **Organization Lifecycle**: Close and reactivate organizations
+- **Privacy Controls**: Email masking for non-owner member views
+
 ### Payment Processing
 - **Multi-Gateway Support**:
   - **Stripe**: Full integration with webhooks, subscriptions, and one-time payments
@@ -405,6 +416,7 @@ Once the application is running, access the interactive API documentation:
 |----------|-----------|-------------|
 | Auth | `/api/v1/auth` | Authentication & registration |
 | Users | `/api/v1/users` | User management |
+| Organizations | `/api/v1/organizations` | Organization management |
 | Documents | `/api/v1/documents` | Document operations |
 | OCR | `/api/v1/ocr` | OCR processing |
 | Payments | `/api/v1/payments` | Payment operations |
@@ -492,6 +504,12 @@ unraveldocs-api/
 │   │   │   ├── loginattempts/    # Login attempt tracking
 │   │   │   ├── messaging/        # Email & notification services
 │   │   │   ├── ocrprocessing/    # OCR processing services
+│   │   │   ├── organization/     # Organization management
+│   │   │   │   ├── controller/   # REST endpoints
+│   │   │   │   ├── dto/          # Request/response DTOs
+│   │   │   │   ├── impl/         # Service implementations
+│   │   │   │   ├── model/        # Entity models
+│   │   │   │   └── repository/   # Data repositories
 │   │   │   ├── payment/          # Payment gateway integrations
 │   │   │   │   ├── common/       # Shared payment utilities
 │   │   │   │   ├── stripe/       # Stripe integration

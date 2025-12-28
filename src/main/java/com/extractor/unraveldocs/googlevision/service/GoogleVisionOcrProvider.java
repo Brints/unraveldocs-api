@@ -114,7 +114,7 @@ public class GoogleVisionOcrProvider implements OcrProvider {
             // Check if this is a transient error
             if (isTransientError(e)) {
                 isAvailable.set(false);
-                // Schedule availability check (in production, use a health check)
+                // TODO: Schedule availability check (in production, use a health check)
             }
 
             return OcrResult.failure(e, OcrProviderType.GOOGLE_VISION, processingTime)
@@ -261,7 +261,7 @@ public class GoogleVisionOcrProvider implements OcrProvider {
         List<EntityAnnotation> annotations = response.getTextAnnotationsList();
         if (!annotations.isEmpty()) {
             // First annotation contains the full text
-            return annotations.get(0).getDescription();
+            return annotations.getFirst().getDescription();
         }
 
         return "";
@@ -296,8 +296,8 @@ public class GoogleVisionOcrProvider implements OcrProvider {
 
         // Try text annotations
         List<EntityAnnotation> annotations = response.getTextAnnotationsList();
-        if (!annotations.isEmpty() && annotations.get(0).getScore() > 0) {
-            return (double) annotations.get(0).getScore();
+        if (!annotations.isEmpty() && annotations.getFirst().getScore() > 0) {
+            return (double) annotations.getFirst().getScore();
         }
 
         return null;
@@ -324,8 +324,8 @@ public class GoogleVisionOcrProvider implements OcrProvider {
 
         // Try text annotations
         List<EntityAnnotation> annotations = response.getTextAnnotationsList();
-        if (!annotations.isEmpty() && !annotations.get(0).getLocale().isEmpty()) {
-            return annotations.get(0).getLocale();
+        if (!annotations.isEmpty() && !annotations.getFirst().getLocale().isEmpty()) {
+            return annotations.getFirst().getLocale();
         }
 
         return null;
