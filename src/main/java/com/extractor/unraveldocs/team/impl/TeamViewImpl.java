@@ -112,8 +112,8 @@ public class TeamViewImpl {
                 sanitizer.sanitizeLogging(user.getId()));
 
         // 1. Get team
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new NotFoundException("Team not found"));
+//        Team team = teamRepository.findById(teamId)
+//                .orElseThrow(() -> new NotFoundException("Team not found"));
 
         // 2. Verify user is a member
         TeamMember requestingMember = teamMemberRepository.findByTeamIdAndUserId(teamId, user.getId())

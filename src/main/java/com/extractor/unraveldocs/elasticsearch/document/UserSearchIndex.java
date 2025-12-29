@@ -70,7 +70,7 @@ public class UserSearchIndex {
     private Boolean isPlatformAdmin;
 
     /**
-     * Whether the user is an team admin.
+     * Whether the user is an organization admin.
      */
     @Field(type = FieldType.Boolean)
     private Boolean isOrganizationAdmin;

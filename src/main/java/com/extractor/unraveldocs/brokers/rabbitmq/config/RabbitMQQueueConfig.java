@@ -6,6 +6,7 @@ import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
 import com.extractor.unraveldocs.elasticsearch.events.ElasticsearchIndexEvent;
 import com.extractor.unraveldocs.ocrprocessing.events.OcrRequestedEvent;
 import com.extractor.unraveldocs.team.events.TeamTrialExpiringEvent;
+import com.extractor.unraveldocs.team.impl.InitiateTeamCreationImpl;
 import com.extractor.unraveldocs.user.events.*;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -346,6 +347,9 @@ public class RabbitMQQueueConfig {
 
         // Team event types
         idClassMapping.put(EventTypes.TEAM_TRIAL_EXPIRING, TeamTrialExpiringEvent.class);
+        idClassMapping.put(EventTypes.TEAM_SUBSCRIPTION_CHARGED, TeamTrialExpiringEvent.class);
+        idClassMapping.put(EventTypes.TEAM_SUBSCRIPTION_FAILED, TeamTrialExpiringEvent.class);
+        idClassMapping.put(EventTypes.TEAM_CREATED, InitiateTeamCreationImpl.class);
 
         classMapper.setIdClassMapping(idClassMapping);
         classMapper.setTrustedPackages(

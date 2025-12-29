@@ -52,7 +52,7 @@ public class CloseOrganizationImpl {
                     null);
         }
 
-        // 3. Close team (members remain but lose access)
+        // 3. Close organization (members remain but lose access)
         org.setClosed(true);
         org.setClosedAt(OffsetDateTime.now());
         org.setActive(false);

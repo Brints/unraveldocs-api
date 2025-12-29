@@ -71,6 +71,11 @@ public class TeamBillingServiceImpl implements TeamBillingService {
     public boolean createSubscription(Team team, String paymentToken) {
         String gateway = team.getPaymentGateway();
 
+        if (gateway == null) {
+            log.warn("No payment gateway configured for team: {}", sanitizer.sanitizeLogging(team.getTeamCode()));
+            return false;
+        }
+
         try {
             boolean success = switch (gateway.toLowerCase()) {
                 case "stripe" -> createStripeSubscription(team, paymentToken);
@@ -134,6 +139,11 @@ public class TeamBillingServiceImpl implements TeamBillingService {
      */
     private void publishReceipt(Team team, String description) {
         try {
+            if (team.getPaymentGateway() == null) {
+                log.warn("Cannot publish receipt for team {} - no payment gateway configured", sanitizer.sanitizeLogging(team.getTeamCode()));
+                return;
+            }
+
             PaymentProvider provider = switch (team.getPaymentGateway().toLowerCase()) {
                 case "stripe" -> PaymentProvider.STRIPE;
                 case "paystack" -> PaymentProvider.PAYSTACK;
@@ -200,7 +210,9 @@ public class TeamBillingServiceImpl implements TeamBillingService {
 
         if (paymentToken != null && !paymentToken.isEmpty()) {
             team.setStripeSubscriptionId(paymentToken);
-            log.info("Stored Stripe subscription ID {} for team {}", sanitizer.sanitizeLogging(paymentToken), sanitizer.sanitizeLogging(team.getTeamCode()));
+            log.info(
+                    "Stored Stripe subscription ID for team {}",
+                    sanitizer.sanitizeLogging(team.getTeamCode()));
             return true;
         }
 
@@ -261,7 +273,9 @@ public class TeamBillingServiceImpl implements TeamBillingService {
         // This stores the subscription code after creation
         if (paymentToken != null && !paymentToken.isEmpty()) {
             team.setPaystackSubscriptionCode(paymentToken);
-            log.info("Stored Paystack subscription code {} for team {}", sanitizer.sanitizeLogging(paymentToken), sanitizer.sanitizeLogging(team.getTeamCode()));
+            log.info(
+                    "Stored Paystack subscription code for team {}",
+                    sanitizer.sanitizeLogging(team.getTeamCode()));
             return true;
         }
 

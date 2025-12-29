@@ -12,16 +12,17 @@ This document provides a comprehensive overview of all API endpoints available i
 2. [Authentication](#authentication)
 3. [User Management](#user-management)
 4. [Team Management](#team-management)
-5. [Admin Management](#admin-management)
-6. [Documents](#documents)
-7. [OCR Processing](#ocr-processing)
-8. [Word Export](#word-export)
-9. [Payments - Stripe](#payments---stripe)
-10. [Payments - Paystack](#payments---paystack)
-11. [Receipts](#receipts)
-12. [Subscription Management](#subscription-management)
-13. [Search - Elasticsearch](#search---elasticsearch)
-14. [Webhooks](#webhooks)
+5. [Organization Management](#organization-management)
+6. [Admin Management](#admin-management)
+7. [Documents](#documents)
+8. [OCR Processing](#ocr-processing)
+9. [Word Export](#word-export)
+10. [Payments - Stripe](#payments---stripe)
+11. [Payments - Paystack](#payments---paystack)
+12. [Receipts](#receipts)
+13. [Subscription Management](#subscription-management)
+14. [Search - Elasticsearch](#search---elasticsearch)
+15. [Webhooks](#webhooks)
 
 ---
 
@@ -537,6 +538,450 @@ Sends OTP to user email to verify team creation.
   "name": "Acme Corporation",
   "description": "Our company team",
   "subscriptionType": "PREMIUM",
+  "billingCycle": "MONTHLY",
+  "paymentGateway": "stripe",
+  "paymentToken": "tok_visa"
+}
+```
+
+| Field              | Type   | Required | Description                                      |
+|--------------------|--------|----------|--------------------------------------------------|
+| `name`             | String | Yes      | Team name (2-100 characters)                     |
+| `description`      | String | No       | Team description (max 500 characters)            |
+| `subscriptionType` | Enum   | Yes      | `PREMIUM` or `ENTERPRISE`                        |
+| `billingCycle`     | Enum   | Yes      | `MONTHLY` or `YEARLY`                            |
+| `paymentGateway`   | String | Yes      | `stripe` or `paystack`                           |
+| `paymentToken`     | String | No       | Payment token from gateway (for immediate charge)|
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "OTP has been sent to your email. Please verify to complete team creation.",
+  "data": null
+}
+```
+
+---
+
+### Verify OTP and Create Team
+
+| **Method** | **Endpoint**    | **Auth Required** |
+|------------|-----------------|-------------------|
+| `POST`     | `/teams/verify` | Yes               |
+
+**Request Body:**
+
+```json
+{
+  "otp": "123456"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "statusCode": 201,
+  "status": "success",
+  "message": "Team created successfully. You have a 10-day free trial.",
+  "data": {
+    "id": "uuid",
+    "name": "Acme Corporation",
+    "description": "Our company team",
+    "teamCode": "ACM12345",
+    "subscriptionType": "PREMIUM",
+    "billingCycle": "MONTHLY",
+    "subscriptionStatus": "TRIALING",
+    "subscriptionPrice": 29.00,
+    "currency": "USD",
+    "isActive": true,
+    "isVerified": true,
+    "isClosed": false,
+    "autoRenew": true,
+    "trialEndsAt": "2025-01-08T12:00:00Z",
+    "nextBillingDate": "2025-01-08T12:00:00Z",
+    "subscriptionEndsAt": null,
+    "cancellationRequestedAt": null,
+    "createdAt": "2024-12-29T12:00:00Z",
+    "currentMemberCount": 1,
+    "maxMembers": 10,
+    "monthlyDocumentLimit": 200,
+    "isOwner": true
+  }
+}
+```
+
+---
+
+### Get Team Details
+
+| **Method** | **Endpoint**      | **Auth Required** |
+|------------|-------------------|-------------------|
+| `GET`      | `/teams/{teamId}` | Yes (Member)      |
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Team details retrieved successfully",
+  "data": {
+    "id": "uuid",
+    "name": "Acme Corporation",
+    "description": "Our company team",
+    "teamCode": "ACM12345",
+    "subscriptionType": "PREMIUM",
+    "billingCycle": "MONTHLY",
+    "subscriptionStatus": "ACTIVE",
+    "subscriptionPrice": 29.00,
+    "currency": "USD",
+    "isActive": true,
+    "isVerified": true,
+    "isClosed": false,
+    "autoRenew": true,
+    "trialEndsAt": null,
+    "nextBillingDate": "2025-02-08T12:00:00Z",
+    "subscriptionEndsAt": null,
+    "cancellationRequestedAt": null,
+    "createdAt": "2024-12-29T12:00:00Z",
+    "currentMemberCount": 5,
+    "maxMembers": 10,
+    "monthlyDocumentLimit": 200,
+    "isOwner": true
+  }
+}
+```
+
+---
+
+### Get My Teams
+
+| **Method** | **Endpoint** | **Auth Required** |
+|------------|--------------|-------------------|
+| `GET`      | `/teams/my`  | Yes               |
+
+Returns all teams the user belongs to.
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Teams retrieved successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Acme Corporation",
+      "teamCode": "ACM12345",
+      "subscriptionType": "PREMIUM",
+      "subscriptionStatus": "ACTIVE",
+      "currentMemberCount": 5,
+      "maxMembers": 10,
+      "isOwner": true
+    }
+  ]
+}
+```
+
+---
+
+### Get Team Members
+
+| **Method** | **Endpoint**             | **Auth Required** |
+|------------|--------------------------|-------------------|
+| `GET`      | `/teams/{teamId}/members`| Yes (Member)      |
+
+> **Note:** Email addresses are masked for non-owners (except own email).
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Team members retrieved successfully",
+  "data": [
+    {
+      "id": "member-uuid",
+      "userId": "user-uuid",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "j***e@e***e.com",
+      "role": "MEMBER",
+      "joinedAt": "2024-12-27T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Add Member
+
+| **Method** | **Endpoint**              | **Auth Required** | **Role**     |
+|------------|---------------------------|-------------------|--------------|
+| `POST`     | `/teams/{teamId}/members` | Yes               | ADMIN, OWNER |
+
+**Request Body:**
+
+```json
+{
+  "email": "newmember@example.com"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "statusCode": 201,
+  "status": "success",
+  "message": "Member added successfully",
+  "data": {
+    "id": "member-uuid",
+    "userId": "user-uuid",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "newmember@example.com",
+    "role": "MEMBER",
+    "joinedAt": "2024-12-29T12:00:00Z"
+  }
+}
+```
+
+---
+
+### Remove Member
+
+| **Method** | **Endpoint**                           | **Auth Required** | **Role**     |
+|------------|----------------------------------------|-------------------|--------------|
+| `DELETE`   | `/teams/{teamId}/members/{memberId}`   | Yes               | ADMIN, OWNER |
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Member removed successfully",
+  "data": null
+}
+```
+
+---
+
+### Batch Remove Members
+
+| **Method** | **Endpoint**                  | **Auth Required** | **Role**     |
+|------------|-------------------------------|-------------------|--------------|
+| `DELETE`   | `/teams/{teamId}/members/batch`| Yes               | ADMIN, OWNER |
+
+**Request Body:**
+
+```json
+{
+  "memberIds": [
+    "member-uuid-1",
+    "member-uuid-2",
+    "member-uuid-3"
+  ]
+}
+```
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Members removed successfully",
+  "data": null
+}
+```
+
+---
+
+### Promote to Admin (Enterprise Only)
+
+| **Method** | **Endpoint**                                   | **Auth Required** | **Role** |
+|------------|------------------------------------------------|-------------------|----------|
+| `POST`     | `/teams/{teamId}/members/{memberId}/promote`   | Yes               | OWNER    |
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Member promoted to admin successfully",
+  "data": {
+    "id": "member-uuid",
+    "userId": "user-uuid",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane@example.com",
+    "role": "ADMIN",
+    "joinedAt": "2024-12-27T12:00:00Z"
+  }
+}
+```
+
+---
+
+### Send Invitation (Enterprise Only)
+
+| **Method** | **Endpoint**                    | **Auth Required** | **Role**     |
+|------------|---------------------------------|-------------------|--------------|
+| `POST`     | `/teams/{teamId}/invitations`   | Yes               | ADMIN, OWNER |
+
+**Request Body:**
+
+```json
+{
+  "email": "newmember@example.com"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "statusCode": 201,
+  "status": "success",
+  "message": "Invitation sent successfully",
+  "data": "https://api.unraveldocs.com/api/v1/teams/invitations/{token}/accept"
+}
+```
+
+---
+
+### Accept Invitation
+
+| **Method** | **Endpoint**                          | **Auth Required** |
+|------------|---------------------------------------|-------------------|
+| `POST`     | `/teams/invitations/{token}/accept`   | Yes               |
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Invitation accepted successfully",
+  "data": {
+    "id": "member-uuid",
+    "userId": "user-uuid",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane@example.com",
+    "role": "MEMBER",
+    "joinedAt": "2024-12-29T12:00:00Z"
+  }
+}
+```
+
+---
+
+### Cancel Subscription
+
+| **Method** | **Endpoint**            | **Auth Required** | **Role** |
+|------------|-------------------------|-------------------|----------|
+| `POST`     | `/teams/{teamId}/cancel`| Yes               | OWNER    |
+
+Cancels the subscription but service continues until the current billing period ends.
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Subscription cancelled. Service will continue until the end of the billing period.",
+  "data": {
+    "id": "uuid",
+    "name": "Acme Corporation",
+    "subscriptionStatus": "CANCELLED",
+    "autoRenew": false,
+    "subscriptionEndsAt": "2025-02-08T12:00:00Z",
+    "cancellationRequestedAt": "2024-12-29T12:00:00Z"
+  }
+}
+```
+
+---
+
+### Close Team
+
+| **Method** | **Endpoint**       | **Auth Required** | **Role** |
+|------------|--------------------|-------------------|----------|
+| `DELETE`   | `/teams/{teamId}`  | Yes               | OWNER    |
+
+Closes the team. Members remain but lose access until reactivated.
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Team closed successfully",
+  "data": null
+}
+```
+
+---
+
+### Reactivate Team
+
+| **Method** | **Endpoint**                  | **Auth Required** | **Role** |
+|------------|-------------------------------|-------------------|----------|
+| `POST`     | `/teams/{teamId}/reactivate`  | Yes               | OWNER    |
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Team reactivated successfully",
+  "data": {
+    "id": "uuid",
+    "name": "Acme Corporation",
+    "subscriptionStatus": "ACTIVE",
+    "isActive": true,
+    "isClosed": false
+  }
+}
+```
+
+---
+
+## Organization Management
+
+Base path: `/api/v1/organizations`
+
+> **Note:** Organizations are a legacy feature. For new implementations, use the Team Management endpoints above.
+
+### Initiate Organization Creation
+
+| **Method** | **Endpoint**              | **Auth Required** |
+|------------|---------------------------|-------------------|
+| `POST`     | `/organizations/initiate` | Yes               |
+
+Sends OTP to user email to verify organization creation.
+
+**Request Body:**
+
+```json
+{
+  "name": "Acme Corporation",
+  "description": "Our company organization",
+  "subscriptionType": "PREMIUM",
   "paymentGateway": "stripe",
   "paymentToken": "tok_visa"
 }
@@ -548,7 +993,7 @@ Sends OTP to user email to verify team creation.
 {
   "statusCode": 200,
   "status": "success",
-  "message": "OTP has been sent to your email. Please verify to complete team creation.",
+  "message": "OTP has been sent to your email. Please verify to complete organization creation.",
   "data": null
 }
 ```
@@ -2381,7 +2826,7 @@ All endpoints may return the following error responses:
 
 All authenticated endpoints require a Bearer token in the `Authorization` header:
 
-```
+```text
 Authorization: Bearer <access_token>
 ```
 

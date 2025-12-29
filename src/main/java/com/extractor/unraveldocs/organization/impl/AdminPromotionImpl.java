@@ -30,7 +30,7 @@ public class AdminPromotionImpl {
     private final OrganizationRepository organizationRepository;
     private final OrganizationMemberRepository memberRepository;
     private final UserRepository userRepository;
-    private SanitizeLogging sanitizer;
+    private final SanitizeLogging sanitizer;
 
     @Transactional
     @CacheEvict(value = { "organizations", "org-members" }, key = "#orgId")

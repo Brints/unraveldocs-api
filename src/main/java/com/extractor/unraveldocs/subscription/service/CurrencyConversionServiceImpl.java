@@ -181,13 +181,13 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
             case EUR -> Locale.GERMANY;
             case JPY -> Locale.JAPAN;
             case CNY -> Locale.CHINA;
-            case INR -> new Locale("en", "IN");
-            case NGN -> new Locale("en", "NG");
-            case ZAR -> new Locale("en", "ZA");
-            case BRL -> new Locale("pt", "BR");
-            case MXN -> new Locale("es", "MX");
+            case INR -> new Locale.Builder().setLanguage("en").setRegion("IN").build();
+            case NGN -> new Locale.Builder().setLanguage("en").setRegion("NG").build();
+            case ZAR -> new Locale.Builder().setLanguage("en").setRegion("ZA").build();
+            case BRL -> new Locale.Builder().setLanguage("pt").setRegion("BR").build();
+            case MXN -> new Locale.Builder().setLanguage("es").setRegion("MX").build();
             case CAD -> Locale.CANADA;
-            case AUD -> new Locale("en", "AU");
+            case AUD -> new Locale.Builder().setLanguage("en").setRegion("AU").build();
             default -> Locale.US;
         };
     }
