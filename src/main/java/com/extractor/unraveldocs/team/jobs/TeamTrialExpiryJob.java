@@ -5,11 +5,11 @@ import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
 import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
 import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
-import com.extractor.unraveldocs.team.datamodel.TeamMemberRole;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
+import com.extractor.unraveldocs.shared.datamodel.MemberRole;
 import com.extractor.unraveldocs.team.events.TeamTrialExpiringEvent;
 import com.extractor.unraveldocs.team.model.Team;
 import com.extractor.unraveldocs.team.model.TeamMember;
-import com.extractor.unraveldocs.team.model.TeamSubscriptionPlan;
 import com.extractor.unraveldocs.team.repository.TeamMemberRepository;
 import com.extractor.unraveldocs.team.repository.TeamRepository;
 import com.extractor.unraveldocs.team.service.TeamSubscriptionPlanService;
@@ -37,6 +37,7 @@ public class TeamTrialExpiryJob {
     private final TeamMemberRepository teamMemberRepository;
     private final EventPublisherService eventPublisherService;
     private final TeamSubscriptionPlanService planService;
+    private final SanitizeLogging sanitizer;
 
     private static final int DAYS_BEFORE_EXPIRY = 3;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
@@ -54,25 +55,25 @@ public class TeamTrialExpiryJob {
 
         List<Team> teamsNeedingReminder = teamRepository.findTeamsNeedingTrialReminder(now, reminderDate);
 
-        log.info("Found {} teams needing trial expiry reminder", teamsNeedingReminder.size());
+        log.info("Found {} teams needing trial expiry reminder", sanitizer.sanitizeLoggingInteger(teamsNeedingReminder.size()));
 
         for (Team team : teamsNeedingReminder) {
             try {
                 sendTrialExpiringEvent(team);
                 teamRepository.markTrialReminderSent(team.getId());
-                log.info("Sent trial expiry reminder for team: {} ({})", team.getName(), team.getTeamCode());
+                log.info("Sent trial expiry reminder for team: {} ({})", sanitizer.sanitizeLogging(team.getName()), sanitizer.sanitizeLogging(team.getTeamCode()));
             } catch (Exception e) {
                 log.error("Failed to send trial expiry reminder for team: {} - {}",
-                        team.getTeamCode(), e.getMessage(), e);
+                        sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
             }
         }
 
-        log.info("Completed team trial expiry reminder job. Processed {} teams.", teamsNeedingReminder.size());
+        log.info("Completed team trial expiry reminder job. Processed {} teams.", sanitizer.sanitizeLoggingInteger(teamsNeedingReminder.size()));
     }
 
     private void sendTrialExpiringEvent(Team team) {
         // Find the team owner
-        TeamMember owner = teamMemberRepository.findFirstByTeamIdAndRole(team.getId(), TeamMemberRole.OWNER)
+        TeamMember owner = teamMemberRepository.findFirstByTeamIdAndRole(team.getId(), MemberRole.OWNER)
                 .orElseThrow(() -> new IllegalStateException("Team has no owner: " + team.getTeamCode()));
 
         int daysRemaining = team.getDaysUntilTrialExpiry();

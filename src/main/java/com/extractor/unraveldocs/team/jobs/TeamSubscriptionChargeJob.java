@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.team.jobs;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.team.datamodel.TeamSubscriptionStatus;
 import com.extractor.unraveldocs.team.model.Team;
 import com.extractor.unraveldocs.team.repository.TeamRepository;
@@ -26,6 +27,7 @@ public class TeamSubscriptionChargeJob {
 
     private final TeamRepository teamRepository;
     private final TeamBillingService teamBillingService;
+    private final SanitizeLogging sanitizer;
 
     /**
      * Runs daily at 2:00 AM to process subscription charges.
@@ -41,7 +43,7 @@ public class TeamSubscriptionChargeJob {
 
         // 1. Process trial expiry with auto-renew
         List<Team> teamsForAutoCharge = teamRepository.findTeamsWithExpiredTrialForAutoCharge(now);
-        log.info("Found {} teams with expired trial for auto-charge", teamsForAutoCharge.size());
+        log.info("Found {} teams with expired trial for auto-charge", sanitizer.sanitizeLoggingInteger(teamsForAutoCharge.size()));
 
         for (Team team : teamsForAutoCharge) {
             try {
@@ -52,44 +54,44 @@ public class TeamSubscriptionChargeJob {
                     team.setNextBillingDate(calculateNextBillingDate(team, now));
                     teamRepository.save(team);
                     processedCount++;
-                    log.info("Successfully charged team {} for subscription", team.getTeamCode());
+                    log.info("Successfully charged team {} for subscription", sanitizer.sanitizeLogging(team.getTeamCode()));
                 } else {
                     team.setSubscriptionStatus(TeamSubscriptionStatus.PAST_DUE);
                     teamRepository.save(team);
                     failedCount++;
-                    log.warn("Payment failed for team {}", team.getTeamCode());
+                    log.warn("Payment failed for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
                 }
             } catch (Exception e) {
-                log.error("Error processing charge for team {}: {}", team.getTeamCode(), e.getMessage(), e);
+                log.error("Error processing charge for team {}: {}", sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
                 failedCount++;
             }
         }
 
         // 2. Expire teams with no auto-renew
         List<Team> teamsToExpire = teamRepository.findTeamsWithExpiredTrialNoAutoRenew(now);
-        log.info("Found {} teams to expire (no auto-renew)", teamsToExpire.size());
+        log.info("Found {} teams to expire (no auto-renew)", sanitizer.sanitizeLoggingInteger(teamsToExpire.size()));
 
         for (Team team : teamsToExpire) {
             team.setSubscriptionStatus(TeamSubscriptionStatus.EXPIRED);
             team.setActive(false);
             teamRepository.save(team);
-            log.info("Expired team {} (no auto-renew)", team.getTeamCode());
+            log.info("Expired team {} (no auto-renew)", sanitizer.sanitizeLogging(team.getTeamCode()));
         }
 
         // 3. Expire cancelled teams past their subscription end date
         List<Team> cancelledTeamsToExpire = teamRepository.findCancelledTeamsReadyToExpire(now);
-        log.info("Found {} cancelled teams to expire", cancelledTeamsToExpire.size());
+        log.info("Found {} cancelled teams to expire", sanitizer.sanitizeLoggingInteger(cancelledTeamsToExpire.size()));
 
         for (Team team : cancelledTeamsToExpire) {
             team.setSubscriptionStatus(TeamSubscriptionStatus.EXPIRED);
             team.setActive(false);
             teamRepository.save(team);
-            log.info("Expired cancelled team {}", team.getTeamCode());
+            log.info("Expired cancelled team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
         }
 
         // 4. Process recurring billing for active subscriptions
         List<Team> teamsDueForBilling = teamRepository.findTeamsDueForBilling(now);
-        log.info("Found {} teams due for recurring billing", teamsDueForBilling.size());
+        log.info("Found {} teams due for recurring billing", sanitizer.sanitizeLoggingInteger(teamsDueForBilling.size()));
 
         for (Team team : teamsDueForBilling) {
             try {
@@ -99,20 +101,20 @@ public class TeamSubscriptionChargeJob {
                     team.setNextBillingDate(calculateNextBillingDate(team, now));
                     teamRepository.save(team);
                     processedCount++;
-                    log.info("Successfully charged recurring billing for team {}", team.getTeamCode());
+                    log.info("Successfully charged recurring billing for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
                 } else {
                     team.setSubscriptionStatus(TeamSubscriptionStatus.PAST_DUE);
                     teamRepository.save(team);
                     failedCount++;
-                    log.warn("Recurring payment failed for team {}", team.getTeamCode());
+                    log.warn("Recurring payment failed for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
                 }
             } catch (Exception e) {
-                log.error("Error processing recurring charge for team {}: {}", team.getTeamCode(), e.getMessage(), e);
+                log.error("Error processing recurring charge for team {}: {}", sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
                 failedCount++;
             }
         }
 
-        log.info("Completed team subscription charge job. Processed: {}, Failed: {}", processedCount, failedCount);
+        log.info("Completed team subscription charge job. Processed: {}, Failed: {}", sanitizer.sanitizeLoggingInteger(processedCount), sanitizer.sanitizeLoggingInteger(failedCount));
     }
 
     private OffsetDateTime calculateNextBillingDate(Team team, OffsetDateTime from) {

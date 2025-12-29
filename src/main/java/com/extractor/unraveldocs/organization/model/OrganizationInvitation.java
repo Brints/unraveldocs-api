@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.team.model;
+package com.extractor.unraveldocs.organization.model;
 
 import com.extractor.unraveldocs.shared.datamodel.InvitationStatus;
 import jakarta.persistence.*;
@@ -11,8 +11,8 @@ import java.time.OffsetDateTime;
 
 @Data
 @Entity
-@Table(name = "team_invitations", indexes = {
-        @Index(columnList = "team_id"),
+@Table(name = "organization_invitations", indexes = {
+        @Index(columnList = "organization_id"),
         @Index(columnList = "invitation_token", unique = true),
         @Index(columnList = "email"),
         @Index(columnList = "status"),
@@ -20,14 +20,14 @@ import java.time.OffsetDateTime;
 })
 @NoArgsConstructor
 @AllArgsConstructor
-public class TeamInvitation {
+public class OrganizationInvitation {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id", nullable = false)
-    private Team team;
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
 
     @Column(nullable = false)
     private String email;

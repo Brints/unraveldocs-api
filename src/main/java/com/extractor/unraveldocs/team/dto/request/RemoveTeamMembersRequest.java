@@ -8,5 +8,5 @@ import java.util.List;
  * Request DTO for batch removing members from a team.
  */
 public record RemoveTeamMembersRequest(
-        @NotEmpty(message = "At least one user ID is required") List<String> userIds) {
+                @NotEmpty(message = "At least one member ID is required") List<String> memberIds) {
 }

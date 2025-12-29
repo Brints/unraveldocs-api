@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Team Created Successfully</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 10px 0 0 0;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .team-info {
+            background-color: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .team-info h3 {
+            color: #059669;
+            margin: 0 0 15px 0;
+        }
+
+        .info-row {
+            display: flex;
+            margin: 8px 0;
+        }
+
+        .info-label {
+            color: #666;
+            width: 120px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .team-code {
+            background-color: #059669;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .trial-notice {
+            background-color: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .trial-notice h4 {
+            color: #1d4ed8;
+            margin: 0 0 10px 0;
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+
+        p {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .next-steps {
+            margin-top: 30px;
+        }
+
+        .next-steps h4 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .next-steps ul {
+            color: #555;
+            padding-left: 20px;
+        }
+
+        .next-steps li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Team Created!</h1>
+            <p>Your team is ready to collaborate</p>
+        </div>
+        <div class="content">
+            <p>Hi <span th:text="${firstName}">User</span>,</p>
+
+            <p>Congratulations! Your team has been successfully created on UnravelDocs.</p>
+
+            <div class="team-info">
+                <h3>Team Details</h3>
+                <div class="info-row">
+                    <span class="info-label">Team Name:</span>
+                    <span class="info-value" th:text="${teamName}">My Team</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Team Code:</span>
+                    <span class="team-code" th:text="${teamCode}">ABCD1234</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Plan:</span>
+                    <span class="info-value" th:text="${subscriptionType}">Team Premium</span>
+                </div>
+            </div>
+
+            <div class="trial-notice">
+                <h4>🎁 Free Trial Active</h4>
+                <p style="margin: 0;">Your trial ends on <strong th:text="${trialEndsAt}">Dec 31, 2024</strong>. Enjoy
+                    full access to all features!</p>
+            </div>
+
+            <div class="next-steps">
+                <h4>Next Steps</h4>
+                <ul>
+                    <li>Add team members to start collaborating</li>
+                    <li>Upload your first document for AI-powered extraction</li>
+                    <li>Set up your payment method before the trial ends</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer">
+            <p>© 2024 UnravelDocs. All rights reserved.</p>
+            <p>Questions? Contact us at support@unraveldocs.com</p>
+        </div>
+    </div>
+</body>
+
+</html>

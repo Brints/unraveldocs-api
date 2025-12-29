@@ -1,6 +1,6 @@
-package com.extractor.unraveldocs.team.model;
+package com.extractor.unraveldocs.organization.model;
 
-import com.extractor.unraveldocs.shared.datamodel.MemberRole;
+import com.extractor.unraveldocs.organization.datamodel.OrganizationMemberRole;
 import com.extractor.unraveldocs.user.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,23 +12,23 @@ import java.time.OffsetDateTime;
 
 @Data
 @Entity
-@Table(name = "team_members", indexes = {
-        @Index(columnList = "team_id"),
+@Table(name = "organization_members", indexes = {
+        @Index(columnList = "organization_id"),
         @Index(columnList = "user_id"),
         @Index(columnList = "role")
 }, uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "team_id", "user_id" })
+        @UniqueConstraint(columnNames = { "organization_id", "user_id" })
 })
 @NoArgsConstructor
 @AllArgsConstructor
-public class TeamMember {
+public class OrganizationMember {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id", nullable = false)
-    private Team team;
+    @JoinColumn(name = "organization_id", nullable = false)
+    private Organization organization;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -36,7 +36,7 @@ public class TeamMember {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MemberRole role;
+    private OrganizationMemberRole role;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invited_by_id")
@@ -48,26 +48,26 @@ public class TeamMember {
 
     // Helper methods
     public boolean isOwner() {
-        return role == MemberRole.OWNER;
+        return role == OrganizationMemberRole.OWNER;
     }
 
     public boolean isAdmin() {
-        return role == MemberRole.ADMIN;
+        return role == OrganizationMemberRole.ADMIN;
     }
 
     public boolean isMember() {
-        return role == MemberRole.MEMBER;
+        return role == OrganizationMemberRole.MEMBER;
     }
 
     public boolean canManageMembers() {
-        return role.isCanManageMembers();
+        return role.canManageMembers();
     }
 
     public boolean canPromoteToAdmin() {
-        return role.isCanPromoteToAdmin();
+        return role.canPromoteToAdmin();
     }
 
-    public boolean canCloseTeam() {
-        return role.isCanCloseTeam();
+    public boolean canCloseOrganization() {
+        return role.canCloseOrganization();
     }
 }

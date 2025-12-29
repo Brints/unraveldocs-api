@@ -23,4 +23,13 @@ public class GenerateVerificationToken {
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp).substring(0, len);
     }
+
+    public String generateToken(int length) {
+        if (length <= 0) {
+            throw new IllegalArgumentException("Token length must be positive");
+        }
+        byte[] token = new byte[length];
+        random.nextBytes(token);
+        return new BigInteger(1, token).toString(16);
+    }
 }

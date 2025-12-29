@@ -16,7 +16,7 @@ public class TeamMemberResponse {
     private String userId;
     private String firstName;
     private String lastName;
-    private String email; // Masked for non-owners
+    private String email;
     private String role;
     private OffsetDateTime joinedAt;
 }

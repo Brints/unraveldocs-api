@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.team.repository;
 
-import com.extractor.unraveldocs.team.datamodel.InvitationStatus;
+import com.extractor.unraveldocs.shared.datamodel.InvitationStatus;
 import com.extractor.unraveldocs.team.model.TeamInvitation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,6 +23,10 @@ public interface TeamInvitationRepository extends JpaRepository<TeamInvitation, 
 
     @Query("SELECT i FROM TeamInvitation i WHERE i.team.id = :teamId AND i.email = :email AND i.status = 'PENDING'")
     Optional<TeamInvitation> findPendingInvitation(@Param("teamId") String teamId, @Param("email") String email);
+
+    @Query("SELECT i FROM TeamInvitation i WHERE i.team.id = :teamId AND i.email = :email AND i.status = 'PENDING' AND i.expiresAt > :now")
+    Optional<TeamInvitation> findPendingByTeamIdAndEmail(@Param("teamId") String teamId, @Param("email") String email,
+            @Param("now") OffsetDateTime now);
 
     @Query("SELECT i FROM TeamInvitation i WHERE i.status = 'PENDING' AND i.expiresAt < :now")
     List<TeamInvitation> findExpiredPendingInvitations(@Param("now") OffsetDateTime now);

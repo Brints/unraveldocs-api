@@ -1,7 +1,6 @@
-package com.extractor.unraveldocs.team.model;
+package com.extractor.unraveldocs.organization.model;
 
-import com.extractor.unraveldocs.team.datamodel.TeamBillingCycle;
-import com.extractor.unraveldocs.team.datamodel.TeamSubscriptionType;
+import com.extractor.unraveldocs.organization.datamodel.OrganizationSubscriptionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,13 +11,14 @@ import java.time.OffsetDateTime;
 
 @Data
 @Entity
-@Table(name = "team_otp_verifications", indexes = {
+@Table(name = "organization_otp_verifications", indexes = {
         @Index(columnList = "user_id"),
+        @Index(columnList = "otp"),
         @Index(columnList = "expires_at")
 })
 @NoArgsConstructor
 @AllArgsConstructor
-public class TeamOtpVerification {
+public class OrganizationOtpVerification {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -26,27 +26,23 @@ public class TeamOtpVerification {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(name = "team_name", nullable = false)
-    private String teamName;
+    @Column(name = "organization_name", nullable = false)
+    private String organizationName;
 
-    @Column(name = "team_description", columnDefinition = "TEXT")
-    private String teamDescription;
+    @Column(name = "organization_description")
+    private String organizationDescription;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "subscription_type", nullable = false)
-    private TeamSubscriptionType subscriptionType;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "billing_cycle", nullable = false)
-    private TeamBillingCycle billingCycle;
+    private OrganizationSubscriptionType subscriptionType;
 
     @Column(name = "payment_gateway")
     private String paymentGateway;
 
     @Column(name = "payment_token")
-    private String paymentToken;
+    private String paymentToken; // Token from payment gateway for setting up subscription
 
-    @Column(nullable = false, length = 6)
+    @Column(nullable = false)
     private String otp;
 
     @Column(name = "expires_at", nullable = false)
@@ -59,6 +55,7 @@ public class TeamOtpVerification {
     @Column(nullable = false, updatable = false, name = "created_at")
     private OffsetDateTime createdAt;
 
+    // Helper methods
     public boolean isExpired() {
         return OffsetDateTime.now().isAfter(expiresAt);
     }

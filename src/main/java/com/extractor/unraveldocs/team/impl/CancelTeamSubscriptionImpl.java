@@ -1,13 +1,13 @@
 package com.extractor.unraveldocs.team.impl;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.team.datamodel.TeamMemberRole;
+import com.extractor.unraveldocs.shared.datamodel.MemberRole;
 import com.extractor.unraveldocs.team.datamodel.TeamSubscriptionStatus;
 import com.extractor.unraveldocs.team.dto.response.TeamResponse;
 import com.extractor.unraveldocs.team.model.Team;
 import com.extractor.unraveldocs.team.model.TeamMember;
-import com.extractor.unraveldocs.team.model.TeamSubscriptionPlan;
 import com.extractor.unraveldocs.team.repository.TeamMemberRepository;
 import com.extractor.unraveldocs.team.repository.TeamRepository;
 import com.extractor.unraveldocs.team.service.TeamBillingService;
@@ -36,12 +36,12 @@ public class CancelTeamSubscriptionImpl {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final TeamBillingService teamBillingService;
-    private final TeamSubscriptionPlanService planService;
     private final ResponseBuilderService responseBuilder;
+    private final SanitizeLogging sanitizer;
 
     @Transactional
     public UnravelDocsResponse<TeamResponse> cancelSubscription(String teamId, User user) {
-        log.info("Processing subscription cancellation for team {} by user {}", teamId, user.getEmail());
+        log.info("Processing subscription cancellation for team {} by user {}", sanitizer.sanitizeLogging(teamId), sanitizer.sanitizeLogging(user.getEmail()));
 
         // Find the team
         Team team = teamRepository.findById(teamId)
@@ -51,13 +51,13 @@ public class CancelTeamSubscriptionImpl {
         TeamMember member = teamMemberRepository.findByTeamIdAndUserId(teamId, user.getId())
                 .orElseThrow(() -> new ForbiddenException("You are not a member of this team"));
 
-        if (member.getRole() != TeamMemberRole.OWNER) {
+        if (member.getRole() != MemberRole.OWNER) {
             throw new ForbiddenException("Only the team owner can cancel the subscription");
         }
 
         // Check if already cancelled
         if (team.getSubscriptionStatus() == TeamSubscriptionStatus.CANCELLED) {
-            log.info("Team {} subscription is already cancelled", teamId);
+            log.info("Team {} subscription is already cancelled", sanitizer.sanitizeLogging(teamId));
             return buildResponse(team, "Subscription is already cancelled");
         }
 
@@ -69,8 +69,7 @@ public class CancelTeamSubscriptionImpl {
         // Cancel with payment gateway
         boolean gatewaySuccess = teamBillingService.cancelSubscription(team);
         if (!gatewaySuccess) {
-            log.warn("Failed to cancel subscription in payment gateway for team {}", teamId);
-            // Continue anyway - the important part is our DB state
+            log.warn("Failed to cancel subscription in payment gateway for team {}", sanitizer.sanitizeLogging(teamId));
         }
 
         // Update team subscription status
@@ -93,14 +92,14 @@ public class CancelTeamSubscriptionImpl {
         teamRepository.save(team);
 
         log.info("Successfully cancelled subscription for team {} - access until {}",
-                teamId, team.getSubscriptionEndsAt());
+                sanitizer.sanitizeLogging(teamId), sanitizer.sanitizeLoggingObject(team.getSubscriptionEndsAt()));
 
         return buildResponse(team, "Subscription cancelled successfully. You can continue using the service until "
                 + team.getSubscriptionEndsAt().toLocalDate());
     }
 
     private UnravelDocsResponse<TeamResponse> buildResponse(Team team, String message) {
-        TeamMember ownerMember = teamMemberRepository.findFirstByTeamIdAndRole(team.getId(), TeamMemberRole.OWNER)
+        TeamMember ownerMember = teamMemberRepository.findFirstByTeamIdAndRole(team.getId(), MemberRole.OWNER)
                 .orElse(null);
 
         long memberCount = teamMemberRepository.countByTeamId(team.getId());

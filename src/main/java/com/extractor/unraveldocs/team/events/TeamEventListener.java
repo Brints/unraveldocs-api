@@ -2,6 +2,7 @@ package com.extractor.unraveldocs.team.events;
 
 import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
 import com.extractor.unraveldocs.brokers.service.EmailMessageProducerService;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -22,18 +23,19 @@ import java.util.Map;
 public class TeamEventListener {
 
     private final EmailMessageProducerService emailMessageProducerService;
+    private final SanitizeLogging sanitizer;
 
     @RabbitListener(queues = RabbitMQQueueConfig.TEAM_EVENTS_QUEUE)
     public void handleTeamEvent(Object event) {
         if (event instanceof TeamTrialExpiringEvent trialEvent) {
             handleTrialExpiringEvent(trialEvent);
         } else {
-            log.warn("Received unknown team event type: {}", event.getClass().getName());
+            log.warn("Received unknown team event type: {}", sanitizer.sanitizeLogging(event.getClass().getName()));
         }
     }
 
     private void handleTrialExpiringEvent(TeamTrialExpiringEvent event) {
-        log.info("Processing trial expiring event for team: {} ({})", event.getTeamName(), event.getTeamCode());
+        log.info("Processing trial expiring event for team: {} ({})", sanitizer.sanitizeLogging(event.getTeamName()), sanitizer.sanitizeLogging(event.getTeamCode()));
 
         Map<String, Object> templateVariables = getStringObjectMap(event);
 
@@ -43,7 +45,7 @@ public class TeamEventListener {
                 "team-trial-expiring",
                 templateVariables);
 
-        log.info("Successfully queued trial expiry email for team: {}", event.getTeamCode());
+        log.info("Successfully queued trial expiry email for team: {}", sanitizer.sanitizeLogging(event.getTeamCode()));
     }
 
     private static @NonNull Map<String, Object> getStringObjectMap(TeamTrialExpiringEvent event) {

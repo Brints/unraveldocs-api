@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.team.repository;
 
-import com.extractor.unraveldocs.team.datamodel.TeamMemberRole;
+import com.extractor.unraveldocs.shared.datamodel.MemberRole;
 import com.extractor.unraveldocs.team.model.TeamMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -35,14 +35,14 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, String> 
 
     @Query("SELECT m FROM TeamMember m WHERE m.team.id = :teamId AND m.role = :role")
     List<TeamMember> findMembersByTeamIdAndRole(@Param("teamId") String teamId,
-            @Param("role") TeamMemberRole role);
+            @Param("role") MemberRole role);
 
     @Query("SELECT m FROM TeamMember m WHERE m.team.id = :teamId AND m.role IN :roles")
     List<TeamMember> findByTeamIdAndRoleIn(@Param("teamId") String teamId,
-            @Param("roles") List<TeamMemberRole> roles);
+            @Param("roles") List<MemberRole> roles);
 
     @Query("SELECT COUNT(m) FROM TeamMember m WHERE m.team.id = :teamId AND m.role = :role")
-    long countByTeamIdAndRole(@Param("teamId") String teamId, @Param("role") TeamMemberRole role);
+    long countByTeamIdAndRole(@Param("teamId") String teamId, @Param("role") MemberRole role);
 
-    Optional<TeamMember> findFirstByTeamIdAndRole(String teamId, TeamMemberRole role);
+    Optional<TeamMember> findFirstByTeamIdAndRole(String teamId, MemberRole role);
 }

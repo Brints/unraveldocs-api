@@ -437,13 +437,14 @@ Once the application is running, access the interactive API documentation:
 |----------|-----------|-------------|
 | Auth | `/api/v1/auth` | Authentication & registration |
 | Users | `/api/v1/users` | User management |
-| Organizations | `/api/v1/organizations` | Organization management |
+| Teams | `/api/v1/teams` | Team subscriptions & member management |
+| Organizations | `/api/v1/organizations` | Enterprise organization management |
 | Documents | `/api/v1/documents` | Document operations |
 | OCR | `/api/v1/ocr` | OCR processing |
 | Payments | `/api/v1/payments` | Payment operations |
 | Stripe | `/api/v1/stripe` | Stripe-specific endpoints |
 | Paystack | `/api/v1/paystack` | Paystack-specific endpoints |
-| Subscriptions | `/api/v1/subscriptions` | Subscription management |
+| Subscriptions | `/api/v1/subscriptions` | Individual subscription management |
 | Admin | `/api/v1/admin` | Administrative operations |
 | Search | `/api/v1/search` | Elasticsearch queries |
 
@@ -525,12 +526,19 @@ unraveldocs-api/
 │   │   │   ├── loginattempts/    # Login attempt tracking
 │   │   │   ├── messaging/        # Email & notification services
 │   │   │   ├── ocrprocessing/    # OCR processing services
-│   │   │   ├── organization/     # Organization management
+│   │   │   ├── organization/     # Enterprise organization management
 │   │   │   │   ├── controller/   # REST endpoints
 │   │   │   │   ├── dto/          # Request/response DTOs
 │   │   │   │   ├── impl/         # Service implementations
 │   │   │   │   ├── model/        # Entity models
 │   │   │   │   └── repository/   # Data repositories
+│   │   │   ├── team/             # Team subscription management
+│   │   │   │   ├── controller/   # Team REST endpoints
+│   │   │   │   ├── dto/          # Team request/response DTOs
+│   │   │   │   ├── impl/         # Team service implementations
+│   │   │   │   ├── model/        # Team entity models
+│   │   │   │   ├── repository/   # Team data repositories
+│   │   │   │   └── service/      # Team service interfaces
 │   │   │   ├── payment/          # Payment gateway integrations
 │   │   │   │   ├── common/       # Shared payment utilities
 │   │   │   │   ├── stripe/       # Stripe integration

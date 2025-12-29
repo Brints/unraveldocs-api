@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.team.service;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.paystack.repository.PaystackSubscriptionRepository;
 import com.extractor.unraveldocs.payment.paystack.service.PaystackSubscriptionService;
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
@@ -9,7 +10,6 @@ import com.extractor.unraveldocs.payment.stripe.repository.StripeSubscriptionRep
 import com.extractor.unraveldocs.payment.stripe.service.StripeSubscriptionService;
 import com.extractor.unraveldocs.team.datamodel.TeamBillingCycle;
 import com.extractor.unraveldocs.team.model.Team;
-import com.extractor.unraveldocs.team.model.TeamSubscriptionPlan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,13 +34,14 @@ public class TeamBillingServiceImpl implements TeamBillingService {
     private final PaystackSubscriptionRepository paystackSubscriptionRepository;
     private final ReceiptEventPublisher receiptEventPublisher;
     private final TeamSubscriptionPlanService planService;
+    private final SanitizeLogging sanitizer;
 
     @Override
     public boolean chargeSubscription(Team team) {
         String gateway = team.getPaymentGateway();
 
         if (gateway == null) {
-            log.warn("No payment gateway configured for team: {}", team.getTeamCode());
+            log.warn("No payment gateway configured for team: {}", sanitizer.sanitizeLogging(team.getTeamCode()));
             return false;
         }
 
@@ -49,7 +50,7 @@ public class TeamBillingServiceImpl implements TeamBillingService {
                 case "stripe" -> chargeViaStripe(team);
                 case "paystack" -> chargeViaPaystack(team);
                 default -> {
-                    log.error("Unknown payment gateway: {}", gateway);
+                    log.error("Unknown payment gateway: {}", sanitizer.sanitizeLogging(gateway));
                     yield false;
                 }
             };
@@ -61,7 +62,7 @@ public class TeamBillingServiceImpl implements TeamBillingService {
 
             return success;
         } catch (Exception e) {
-            log.error("Failed to charge subscription for team {}: {}", team.getTeamCode(), e.getMessage(), e);
+            log.error("Failed to charge subscription for team {}: {}", sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
             return false;
         }
     }
@@ -75,7 +76,7 @@ public class TeamBillingServiceImpl implements TeamBillingService {
                 case "stripe" -> createStripeSubscription(team, paymentToken);
                 case "paystack" -> createPaystackSubscription(team, paymentToken);
                 default -> {
-                    log.error("Unknown payment gateway: {}", gateway);
+                    log.error("Unknown payment gateway: {}", sanitizer.sanitizeLogging(gateway));
                     yield false;
                 }
             };
@@ -87,7 +88,7 @@ public class TeamBillingServiceImpl implements TeamBillingService {
 
             return success;
         } catch (Exception e) {
-            log.error("Failed to create subscription for team {}: {}", team.getTeamCode(), e.getMessage(), e);
+            log.error("Failed to create subscription for team {}: {}", sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
             return false;
         }
     }
@@ -97,8 +98,7 @@ public class TeamBillingServiceImpl implements TeamBillingService {
         String gateway = team.getPaymentGateway();
 
         if (gateway == null) {
-            log.warn("No payment gateway configured for team: {} - proceeding with local cancellation",
-                    team.getTeamCode());
+            log.warn("No payment gateway configured for team: {} - proceeding with local cancellation", sanitizer.sanitizeLogging(team.getTeamCode()));
             return true;
         }
 
@@ -107,12 +107,12 @@ public class TeamBillingServiceImpl implements TeamBillingService {
                 case "stripe" -> cancelStripeSubscription(team);
                 case "paystack" -> cancelPaystackSubscription(team);
                 default -> {
-                    log.error("Unknown payment gateway: {}", gateway);
+                    log.error("Unknown payment gateway: {}", sanitizer.sanitizeLogging(gateway));
                     yield false;
                 }
             };
         } catch (Exception e) {
-            log.error("Failed to cancel subscription for team {}: {}", team.getTeamCode(), e.getMessage(), e);
+            log.error("Failed to cancel subscription for team {}: {}", sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
             return false;
         }
     }
@@ -160,10 +160,10 @@ public class TeamBillingServiceImpl implements TeamBillingService {
                     .build();
 
             receiptEventPublisher.publishReceiptRequest(receiptData);
-            log.info("Published receipt request for team {} payment", team.getTeamCode());
+            log.info("Published receipt request for team {} payment", sanitizer.sanitizeLogging(team.getTeamCode()));
         } catch (Exception e) {
             // Don't fail the payment if receipt generation fails
-            log.error("Failed to publish receipt for team {}: {}", team.getTeamCode(), e.getMessage(), e);
+            log.error("Failed to publish receipt for team {}: {}", sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
         }
     }
 
@@ -171,12 +171,12 @@ public class TeamBillingServiceImpl implements TeamBillingService {
 
     private boolean chargeViaStripe(Team team) {
         log.info("Charging team {} via Stripe subscription: {}",
-                team.getTeamCode(), team.getStripeSubscriptionId());
+                sanitizer.sanitizeLogging(team.getTeamCode()), sanitizer.sanitizeLogging(team.getStripeSubscriptionId()));
 
         // For Stripe recurring subscriptions, the charge happens automatically
         // This method verifies the subscription is active
         if (team.getStripeSubscriptionId() == null) {
-            log.warn("No Stripe subscription ID for team: {}", team.getTeamCode());
+            log.warn("No Stripe subscription ID for team: {}", sanitizer.sanitizeLogging(team.getTeamCode()));
             return false;
         }
 
@@ -189,21 +189,18 @@ public class TeamBillingServiceImpl implements TeamBillingService {
 
         // Stripe handles recurring charges automatically - we just verify it's active
         log.info("Stripe subscription {} is active for team {}",
-                team.getStripeSubscriptionId(), team.getTeamCode());
+                sanitizer.sanitizeLogging(team.getStripeSubscriptionId()), sanitizer.sanitizeLogging(team.getTeamCode()));
         return true;
     }
 
     private boolean createStripeSubscription(Team team, String paymentToken) {
-        log.info("Creating Stripe subscription for team {}", team.getTeamCode());
+        log.info("Creating Stripe subscription for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
 
-        // Note: The actual Stripe subscription creation happens via the existing
-        // StripeSubscriptionController and StripeService. This method would be
-        // called after the subscription is already created in Stripe via webhook.
         // The paymentToken is the Stripe subscription ID in this case.
 
         if (paymentToken != null && !paymentToken.isEmpty()) {
             team.setStripeSubscriptionId(paymentToken);
-            log.info("Stored Stripe subscription ID {} for team {}", paymentToken, team.getTeamCode());
+            log.info("Stored Stripe subscription ID {} for team {}", sanitizer.sanitizeLogging(paymentToken), sanitizer.sanitizeLogging(team.getTeamCode()));
             return true;
         }
 
@@ -212,10 +209,10 @@ public class TeamBillingServiceImpl implements TeamBillingService {
 
     private boolean cancelStripeSubscription(Team team) {
         log.info("Cancelling Stripe subscription for team {}: {}",
-                team.getTeamCode(), team.getStripeSubscriptionId());
+                sanitizer.sanitizeLogging(team.getTeamCode()), sanitizer.sanitizeLogging(team.getStripeSubscriptionId()));
 
         if (team.getStripeSubscriptionId() == null) {
-            log.warn("No Stripe subscription to cancel for team: {}", team.getTeamCode());
+            log.warn("No Stripe subscription to cancel for team: {}", sanitizer.sanitizeLogging(team.getTeamCode()));
             return true;
         }
 
@@ -226,10 +223,10 @@ public class TeamBillingServiceImpl implements TeamBillingService {
         );
 
         if (result.isPresent()) {
-            log.info("Successfully scheduled Stripe subscription cancellation for team {}", team.getTeamCode());
+            log.info("Successfully scheduled Stripe subscription cancellation for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
             return true;
         } else {
-            log.warn("Stripe subscription not found for cancellation: {}", team.getStripeSubscriptionId());
+            log.warn("Stripe subscription not found for cancellation: {}", sanitizer.sanitizeLogging(team.getStripeSubscriptionId()));
             return false;
         }
     }
@@ -238,35 +235,33 @@ public class TeamBillingServiceImpl implements TeamBillingService {
 
     private boolean chargeViaPaystack(Team team) {
         log.info("Charging team {} via Paystack subscription: {}",
-                team.getTeamCode(), team.getPaystackSubscriptionCode());
+                sanitizer.sanitizeLogging(team.getTeamCode()), sanitizer.sanitizeLogging(team.getPaystackSubscriptionCode()));
 
         // For Paystack recurring subscriptions, charges happen automatically
         if (team.getPaystackSubscriptionCode() == null) {
-            log.warn("No Paystack subscription code for team: {}", team.getTeamCode());
+            log.warn("No Paystack subscription code for team: {}", sanitizer.sanitizeLogging(team.getTeamCode()));
             return false;
         }
 
         // Verify subscription exists and is active
         var subscription = paystackSubscriptionRepository.findBySubscriptionCode(team.getPaystackSubscriptionCode());
         if (subscription.isEmpty()) {
-            log.warn("Paystack subscription not found in database for team: {}", team.getTeamCode());
+            log.warn("Paystack subscription not found in database for team: {}", sanitizer.sanitizeLogging(team.getTeamCode()));
             return false;
         }
 
         log.info("Paystack subscription {} is active for team {}",
-                team.getPaystackSubscriptionCode(), team.getTeamCode());
+                sanitizer.sanitizeLogging(team.getPaystackSubscriptionCode()), sanitizer.sanitizeLogging(team.getTeamCode()));
         return true;
     }
 
     private boolean createPaystackSubscription(Team team, String paymentToken) {
-        log.info("Creating Paystack subscription for team {}", team.getTeamCode());
+        log.info("Creating Paystack subscription for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
 
-        // Similar to Stripe, the actual creation happens via
-        // PaystackSubscriptionService
         // This stores the subscription code after creation
         if (paymentToken != null && !paymentToken.isEmpty()) {
             team.setPaystackSubscriptionCode(paymentToken);
-            log.info("Stored Paystack subscription code {} for team {}", paymentToken, team.getTeamCode());
+            log.info("Stored Paystack subscription code {} for team {}", sanitizer.sanitizeLogging(paymentToken), sanitizer.sanitizeLogging(team.getTeamCode()));
             return true;
         }
 
@@ -275,27 +270,25 @@ public class TeamBillingServiceImpl implements TeamBillingService {
 
     private boolean cancelPaystackSubscription(Team team) {
         log.info("Cancelling Paystack subscription for team {}: {}",
-                team.getTeamCode(), team.getPaystackSubscriptionCode());
+                sanitizer.sanitizeLogging(team.getTeamCode()), sanitizer.sanitizeLogging(team.getPaystackSubscriptionCode()));
 
         if (team.getPaystackSubscriptionCode() == null) {
-            log.warn("No Paystack subscription to cancel for team: {}", team.getTeamCode());
+            log.warn("No Paystack subscription to cancel for team: {}", sanitizer.sanitizeLogging(team.getTeamCode()));
             return true;
         }
 
         try {
-            // Paystack requires an email token for cancellation
-            // In practice, you'd get this from the subscription or user
             String emailToken = team.getCreatedBy().getEmail();
 
             paystackSubscriptionService.disableSubscription(
                     team.getPaystackSubscriptionCode(),
                     emailToken);
 
-            log.info("Successfully disabled Paystack subscription for team {}", team.getTeamCode());
+            log.info("Successfully disabled Paystack subscription for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
             return true;
         } catch (Exception e) {
             log.error("Failed to disable Paystack subscription for team {}: {}",
-                    team.getTeamCode(), e.getMessage());
+                    sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage());
             return false;
         }
     }

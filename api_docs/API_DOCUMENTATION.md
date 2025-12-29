@@ -11,7 +11,7 @@ This document provides a comprehensive overview of all API endpoints available i
 1. [Root](#root)
 2. [Authentication](#authentication)
 3. [User Management](#user-management)
-4. [Organization Management](#organization-management)
+4. [Team Management](#team-management)
 5. [Admin Management](#admin-management)
 6. [Documents](#documents)
 7. [OCR Processing](#ocr-processing)

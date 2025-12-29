@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Team Invitation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .invitation-box {
+            background-color: #f0fdf4;
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .team-name {
+            font-size: 24px;
+            color: #059669;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .inviter {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .accept-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .accept-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+
+        p {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .expiry-notice {
+            color: #dc2626;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+
+        .benefits {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .benefits h4 {
+            color: #333;
+            margin: 0 0 15px 0;
+        }
+
+        .benefits ul {
+            color: #555;
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .benefits li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📨 You're Invited!</h1>
+        </div>
+        <div class="content">
+            <p>Hello,</p>
+
+            <p>You've been invited to join a team on UnravelDocs!</p>
+
+            <div class="invitation-box">
+                <p class="inviter">Invited by <span th:text="${inviterName}">John Doe</span></p>
+                <p class="team-name" th:text="${teamName}">Awesome Team</p>
+                <a th:href="${inviteLink}" class="accept-btn">Accept Invitation</a>
+                <p class="expiry-notice">⏰ This invitation expires in <span th:text="${expiryDays}">7</span> days</p>
+            </div>
+
+            <div class="benefits">
+                <h4>By joining, you'll be able to:</h4>
+                <ul>
+                    <li>Collaborate on document processing with your team</li>
+                    <li>Access shared document collections</li>
+                    <li>Use AI-powered text extraction together</li>
+                    <li>Track team usage and analytics</li>
+                </ul>
+            </div>
+
+            <p style="font-size: 13px; color: #666;">
+                If you don't have an UnravelDocs account yet, you'll be prompted to create one when you accept the
+                invitation.
+            </p>
+        </div>
+        <div class="footer">
+            <p>© 2024 UnravelDocs. All rights reserved.</p>
+            <p>If you didn't expect this invitation, you can safely ignore this email.</p>
+        </div>
+    </div>
+</body>
+
+</html>

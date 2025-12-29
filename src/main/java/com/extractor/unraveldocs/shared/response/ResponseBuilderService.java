@@ -14,4 +14,14 @@ public class ResponseBuilderService {
 
         return unravelDocsResponse;
     }
+
+    public UnravelDocsResponse<Void> buildVoidResponse(HttpStatus statusCode, String message) {
+        UnravelDocsResponse<Void> unravelDocsResponse = new UnravelDocsResponse<>();
+        unravelDocsResponse.setStatusCode(statusCode.value());
+        unravelDocsResponse.setStatus("success");
+        unravelDocsResponse.setMessage(message);
+        unravelDocsResponse.setData(null);
+
+        return unravelDocsResponse;
+    }
 }
