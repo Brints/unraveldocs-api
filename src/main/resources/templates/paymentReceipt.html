@@ -1,144 +1,512 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
     <title th:text="'Payment Receipt - ' + ${receiptNumber}">Payment Receipt</title>
-    <meta name="x-apple-disable-message-reformatting" />
-    <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no" />
-    <style>
-        html, body { margin:0 !important; padding:0 !important; height:100% !important; width:100% !important; }
-        * { -ms-text-size-adjust:100%; -webkit-text-size-adjust:100%; }
-        table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
-        a { text-decoration:none; }
-        @media screen and (max-width:600px) {
-            .container { width:100% !important; }
-            .p-sm { padding:24px !important; }
-            .h1 { font-size:22px !important; line-height:28px !important; }
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style type="text/css">
+        /* Reset & Client Fixes */
+        html,
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
         }
+
+        * {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        table,
+        td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+            border-collapse: collapse !important;
+        }
+
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        a[x-apple-data-detectors] {
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+
+        /* Base Styles */
+        body {
+            background-color: #f8fafc;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Card Container */
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        /* Header Gradient */
+        .email-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 40px 32px;
+            text-align: center;
+        }
+
+        /* Success Icon */
+        .success-icon {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            color: #ffffff;
+            display: inline-block;
+            font-size: 36px;
+            height: 72px;
+            line-height: 66px;
+            margin-bottom: 16px;
+            text-align: center;
+            width: 72px;
+        }
+
+        .header-title {
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0 0 8px 0;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        /* Body Content */
+        .email-body {
+            padding: 40px 32px;
+        }
+
+        .greeting-text {
+            color: #1e293b;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0 0 24px 0;
+        }
+
+        /* Amount Box */
+        .amount-box {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: center;
+        }
+
+        .amount-label {
+            color: #065f46;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+        }
+
+        .amount-value {
+            color: #047857;
+            font-size: 36px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* Receipt Details */
+        .details-section {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            margin: 24px 0;
+            padding: 24px;
+        }
+
+        .details-title {
+            color: #1e3a5f;
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 16px 0;
+        }
+
+        .detail-row {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            color: #1e293b;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* PDF Notice */
+        .pdf-notice {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 0 8px 8px 0;
+            margin: 24px 0;
+            padding: 16px;
+        }
+
+        .pdf-notice-text {
+            color: #1e40af;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* CTA Button */
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            border-radius: 10px;
+            color: #ffffff !important;
+            display: inline-block;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 14px 32px;
+            text-decoration: none !important;
+        }
+
+        /* Footer */
+        .email-footer {
+            background-color: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 24px 32px;
+            text-align: center;
+        }
+
+        .footer-text {
+            color: #94a3b8;
+            font-size: 12px;
+            line-height: 1.6;
+            margin: 0 0 8px 0;
+        }
+
+        .footer-link {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        /* Dark Mode */
         @media (prefers-color-scheme: dark) {
-            body, .wrapper { background:#0b0f1a !important; }
-            .card { background:#111827 !important; color:#e5e7eb !important; }
-            .muted { color:#9ca3af !important; }
+
+            body,
+            .email-wrapper {
+                background-color: #0f172a !important;
+            }
+
+            .email-container {
+                background-color: #1e293b !important;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+            }
+
+            .email-body {
+                background-color: #1e293b !important;
+            }
+
+            .greeting-text {
+                color: #e2e8f0 !important;
+            }
+
+            .amount-box {
+                background: linear-gradient(135deg, #064e3b 0%, #065f46 100%) !important;
+                border-color: #10b981 !important;
+            }
+
+            .amount-label {
+                color: #6ee7b7 !important;
+            }
+
+            .amount-value {
+                color: #34d399 !important;
+            }
+
+            .details-section {
+                background-color: #334155 !important;
+            }
+
+            .details-title {
+                color: #f1f5f9 !important;
+            }
+
+            .detail-row {
+                border-color: #475569 !important;
+            }
+
+            .detail-label {
+                color: #94a3b8 !important;
+            }
+
+            .detail-value {
+                color: #f1f5f9 !important;
+            }
+
+            .pdf-notice {
+                background-color: #1e3a5f !important;
+            }
+
+            .pdf-notice-text {
+                color: #93c5fd !important;
+            }
+
+            .email-footer {
+                background-color: #0f172a !important;
+                border-color: #334155 !important;
+            }
+
+            .footer-text {
+                color: #64748b !important;
+            }
+        }
+
+        /* Responsive */
+        @media only screen and (max-width: 640px) {
+            .email-wrapper {
+                padding: 16px !important;
+            }
+
+            .email-container {
+                border-radius: 12px !important;
+            }
+
+            .email-header {
+                padding: 32px 24px !important;
+            }
+
+            .header-title {
+                font-size: 22px !important;
+            }
+
+            .email-body {
+                padding: 32px 24px !important;
+            }
+
+            .amount-value {
+                font-size: 28px !important;
+            }
+
+            .details-section {
+                padding: 16px !important;
+            }
+
+            .email-footer {
+                padding: 24px !important;
+            }
         }
     </style>
 </head>
-<body id="body" style="background:#f4f4f7; margin:0; padding:0;" th:inline="text">
-<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
-    Your payment receipt [[${receiptNumber}]] is attached.
-</div>
 
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="wrapper" style="background:#f4f4f7;">
-    <tr>
-        <td align="center" style="padding:24px;">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px; max-width:600px;">
-                <!-- Header -->
-                <tr>
-                    <td align="left" style="padding:12px 8px;">
-                        <span style="font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; font-size:16px; color:#111827; font-weight:700;">
-                            [[${appName}]]
-                        </span>
-                    </td>
-                </tr>
+<body id="body" style="margin: 0 !important; padding: 0 !important; background-color: #f8fafc;" th:inline="text">
+    <!-- Preheader Text -->
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+        Payment confirmed! Your receipt [[${receiptNumber}]] is attached to this email.
+    </div>
 
-                <!-- Card -->
-                <tr>
-                    <td>
-                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="card" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-                            <tr>
-                                <td class="p-sm" style="padding:32px; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#111827;">
-                                    <!-- Success Icon -->
-                                    <div style="text-align:center; padding-bottom:16px;">
-                                        <div style="display:inline-block; width:56px; height:56px; border-radius:50%; background:#22c55e; line-height:56px; text-align:center; color:#ffffff; font-size:28px;">
-                                            ✓
-                                        </div>
-                                    </div>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="email-wrapper"
+        style="background-color: #f8fafc; padding: 32px 16px;">
+        <tr>
+            <td align="center" valign="top">
+                <!--[if (gte mso 9)|(IE)]>
+                <table align="center" border="0" cellspacing="0" cellpadding="0" width="600">
+                    <tr>
+                        <td align="center" valign="top" width="600">
+                <![endif]-->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+                    class="email-container"
+                    style="background-color: #ffffff; border-radius: 16px; max-width: 600px; overflow: hidden;">
 
-                                    <!-- Title -->
-                                    <h1 class="h1" style="margin:16px 0 8px; font-size:24px; line-height:32px; font-weight:700; text-align:center;">
-                                        Payment Successful!
-                                    </h1>
+                    <!-- HEADER -->
+                    <tr>
+                        <td align="center" valign="top" class="email-header"
+                            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 32px;">
+                            <!-- Success Icon -->
+                            <div class="success-icon"
+                                style="background-color: rgba(255, 255, 255, 0.2); border: 3px solid rgba(255, 255, 255, 0.5); border-radius: 50%; color: #ffffff; display: inline-block; font-size: 36px; height: 72px; line-height: 66px; margin-bottom: 16px; text-align: center; width: 72px;">
+                                ✓
+                            </div>
+                            <h1 class="header-title"
+                                style="color: #ffffff; font-size: 26px; font-weight: 700; margin: 0 0 8px 0;">
+                                Payment Successful!
+                            </h1>
+                            <p class="header-subtitle"
+                                style="color: rgba(255, 255, 255, 0.9); font-size: 16px; font-weight: 400; margin: 0;">
+                                Thank you for your purchase
+                            </p>
+                        </td>
+                    </tr>
 
-                                    <!-- Subtitle -->
-                                    <p style="margin:0; text-align:center; color:#4b5563; font-size:15px; line-height:22px;">
-                                        Thank you for your payment, [[${customerName}]].
-                                    </p>
+                    <!-- BODY -->
+                    <tr>
+                        <td valign="top" class="email-body" style="padding: 40px 32px;">
+                            <!-- Greeting -->
+                            <p class="greeting-text"
+                                style="color: #1e293b; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+                                Hi <strong>[[${customerName}]]</strong>,<br><br>
+                                We've received your payment and your transaction has been processed successfully. 
+                                Your PDF receipt is attached to this email for your records.
+                            </p>
 
-                                    <!-- Amount Box -->
-                                    <div style="background:#eff6ff; border:1px solid #2563eb; border-radius:8px; padding:20px; margin:24px 0; text-align:center;">
-                                        <p style="margin:0; color:#6b7280; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Amount Paid</p>
-                                        <p style="margin:8px 0 0; font-size:28px; font-weight:700; color:#16a34a;">[[${amount}]]</p>
-                                    </div>
+                            <!-- Amount Box -->
+                            <div class="amount-box"
+                                style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;">
+                                <p class="amount-label"
+                                    style="color: #065f46; font-size: 12px; font-weight: 600; letter-spacing: 1px; margin: 0 0 8px 0; text-transform: uppercase;">
+                                    Amount Paid</p>
+                                <p class="amount-value"
+                                    style="color: #047857; font-size: 36px; font-weight: 700; margin: 0;">
+                                    [[${amount}]]</p>
+                            </div>
 
-                                    <!-- Receipt Details -->
-                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0;">
-                                        <tr>
-                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb;">
-                                                <span style="color:#6b7280; font-size:14px;">Receipt Number</span>
-                                            </td>
-                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb; text-align:right;">
-                                                <span style="color:#111827; font-size:14px; font-weight:500;">[[${receiptNumber}]]</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb;">
-                                                <span style="color:#6b7280; font-size:14px;">Date</span>
-                                            </td>
-                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb; text-align:right;">
-                                                <span style="color:#111827; font-size:14px; font-weight:500;">[[${paidAt}]]</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb;">
-                                                <span style="color:#6b7280; font-size:14px;">Payment Method</span>
-                                            </td>
-                                            <td style="padding:8px 0; border-bottom:1px solid #e5e7eb; text-align:right;">
-                                                <span style="color:#111827; font-size:14px; font-weight:500;">[[${paymentMethod}]]</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding:8px 0;">
-                                                <span style="color:#6b7280; font-size:14px;">Description</span>
-                                            </td>
-                                            <td style="padding:8px 0; text-align:right;">
-                                                <span style="color:#111827; font-size:14px; font-weight:500;">[[${description}]]</span>
-                                            </td>
-                                        </tr>
-                                    </table>
+                            <!-- Receipt Details -->
+                            <div class="details-section"
+                                style="background-color: #f8fafc; border-radius: 12px; margin: 24px 0; padding: 24px;">
+                                <p class="details-title"
+                                    style="color: #1e3a5f; font-size: 16px; font-weight: 700; margin: 0 0 16px 0;">
+                                    📋 Transaction Details
+                                </p>
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr class="detail-row">
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                                            <span class="detail-label"
+                                                style="color: #64748b; font-size: 14px;">Receipt Number</span>
+                                        </td>
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
+                                            <span class="detail-value"
+                                                style="color: #1e293b; font-size: 14px; font-weight: 600;">[[${receiptNumber}]]</span>
+                                        </td>
+                                    </tr>
+                                    <tr class="detail-row">
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                                            <span class="detail-label"
+                                                style="color: #64748b; font-size: 14px;">Payment Date</span>
+                                        </td>
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
+                                            <span class="detail-value"
+                                                style="color: #1e293b; font-size: 14px; font-weight: 600;">[[${paidAt}]]</span>
+                                        </td>
+                                    </tr>
+                                    <tr class="detail-row">
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0;">
+                                            <span class="detail-label"
+                                                style="color: #64748b; font-size: 14px;">Payment Method</span>
+                                        </td>
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; text-align: right;">
+                                            <span class="detail-value"
+                                                style="color: #1e293b; font-size: 14px; font-weight: 600;">[[${paymentMethod}]]</span>
+                                        </td>
+                                    </tr>
+                                    <tr class="detail-row">
+                                        <td style="padding: 12px 0;">
+                                            <span class="detail-label"
+                                                style="color: #64748b; font-size: 14px;">Description</span>
+                                        </td>
+                                        <td style="padding: 12px 0; text-align: right;">
+                                            <span class="detail-value"
+                                                style="color: #1e293b; font-size: 14px; font-weight: 600;">[[${description}]]</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
 
-                                    <!-- PDF Notice -->
-                                    <div style="background:#f9fafb; border-radius:8px; padding:16px; margin:24px 0; text-align:center;">
-                                        <p style="margin:0; color:#4b5563; font-size:14px;">
-                                            📎 Your PDF receipt is attached to this email.
-                                        </p>
-                                    </div>
+                            <!-- PDF Notice -->
+                            <div class="pdf-notice"
+                                style="background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; margin: 24px 0; padding: 16px;">
+                                <p class="pdf-notice-text"
+                                    style="color: #1e40af; font-size: 14px; line-height: 1.6; margin: 0;">
+                                    📎 <strong>PDF Receipt Attached</strong> - A detailed PDF receipt is attached to this 
+                                    email. Please save it for your records or for expense reporting.
+                                </p>
+                            </div>
 
-                                    <!-- Support -->
-                                    <p class="muted" style="margin:24px 0 0; color:#6b7280; font-size:13px; line-height:20px; text-align:center;">
-                                        Need help? Contact us at
-                                        <a th:href="${'mailto:' + supportEmail}" style="color:#2563eb;">[[${supportEmail}]]</a>
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
+                            <!-- CTA Button -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+                                style="margin: 32px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="https://unraveldocs.com/dashboard" target="_blank" class="btn-primary"
+                                            style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); border-radius: 10px; color: #ffffff; display: inline-block; font-size: 15px; font-weight: 600; padding: 14px 32px; text-decoration: none;">
+                                            View in Dashboard
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
 
-                <!-- Footer -->
-                <tr>
-                    <td align="center" style="padding:16px 8px 8px;">
-                        <p class="muted" style="margin:0; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#9ca3af; font-size:12px; line-height:18px;">
-                            © [[${#dates.format(#dates.createNow(), 'yyyy')}]] [[${appName}]]. All rights reserved.
-                        </p>
-                        <p class="muted" style="margin:4px 0 0; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; color:#9ca3af; font-size:12px; line-height:18px;">
-                            This is an automated receipt for your recent payment.
-                        </p>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+                            <!-- Support -->
+                            <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 24px 0 0; text-align: center;">
+                                Have questions about this transaction?<br>
+                                Contact us at <a th:href="${'mailto:' + supportEmail}" 
+                                    style="color: #2563eb; font-weight: 500;">[[${supportEmail}]]</a>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                        <td class="email-footer"
+                            style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px 32px; text-align: center;">
+                            <p class="footer-text"
+                                style="color: #94a3b8; font-size: 12px; line-height: 1.6; margin: 0 0 8px 0;">
+                                © [[${#dates.format(#dates.createNow(), 'yyyy')}]] [[${appName}]]. All rights reserved.
+                            </p>
+                            <p class="footer-text"
+                                style="color: #94a3b8; font-size: 12px; line-height: 1.6; margin: 0;">
+                                This is an automated receipt for your payment. Please do not reply to this email.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+                <!--[if (gte mso 9)|(IE)]>
+                        </td>
+                    </tr>
+                </table>
+                <![endif]-->
+            </td>
+        </tr>
+    </table>
 </body>
+
 </html>

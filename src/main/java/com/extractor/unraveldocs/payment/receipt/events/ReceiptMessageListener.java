@@ -1,9 +1,11 @@
 package com.extractor.unraveldocs.payment.receipt.events;
 
 import com.extractor.unraveldocs.brokers.kafka.config.KafkaTopicConfig;
+import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
 import com.extractor.unraveldocs.payment.receipt.model.Receipt;
 import com.extractor.unraveldocs.payment.receipt.service.ReceiptGenerationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -11,6 +13,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 /**
  * Kafka consumer for receipt generation events.
@@ -24,18 +28,24 @@ public class ReceiptMessageListener {
 
     private final ReceiptGenerationService receiptGenerationService;
     private final ReceiptEventMapper receiptEventMapper;
+    private final ObjectMapper objectMapper;
 
-    @KafkaListener(
-            topics = KafkaTopicConfig.TOPIC_RECEIPTS,
-            groupId = "unraveldocs-receipt-group",
-            containerFactory = "kafkaListenerContainerFactory"
-    )
+    @KafkaListener(topics = KafkaTopicConfig.TOPIC_RECEIPTS, groupId = "unraveldocs-receipt-group", containerFactory = "kafkaListenerContainerFactory")
+    @SuppressWarnings("unchecked")
     public void receiveReceiptRequestedEvent(
-            ConsumerRecord<String, ReceiptRequestedEvent> record,
-            Acknowledgment acknowledgment
-    ) {
-        ReceiptRequestedEvent payload = record.value();
-        String correlationId = record.key();
+            ConsumerRecord<String, BaseEvent<Object>> record,
+            Acknowledgment acknowledgment) {
+        BaseEvent<Object> event = record.value();
+
+        // Handle generic type erasure - payload may be a LinkedHashMap
+        ReceiptRequestedEvent payload;
+        if (event.getPayload() instanceof Map) {
+            payload = objectMapper.convertValue(event.getPayload(), ReceiptRequestedEvent.class);
+        } else {
+            payload = (ReceiptRequestedEvent) event.getPayload();
+        }
+
+        String correlationId = event.getMetadata() != null ? event.getMetadata().getCorrelationId() : record.key();
 
         log.info("Received receipt request via Kafka for payment: {}, provider: {}, correlationId: {}",
                 payload.getExternalPaymentId(),
@@ -74,4 +84,3 @@ public class ReceiptMessageListener {
         }
     }
 }
-

@@ -22,7 +22,7 @@ public class TestMockBeansConfig {
     @Bean
     @ConditionalOnMissingBean(ReceiptEventPublisher.class)
     public ReceiptEventPublisher receiptEventPublisher() {
-        return new ReceiptEventPublisher(null, null) {
+        return new ReceiptEventPublisher(null, null, null) {
             @Override
             public void publishReceiptRequest(ReceiptData receiptData) {
                 // No-op for tests

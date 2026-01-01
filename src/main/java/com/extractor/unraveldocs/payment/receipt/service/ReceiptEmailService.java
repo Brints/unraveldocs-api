@@ -37,8 +37,8 @@ public class ReceiptEmailService {
      * Send receipt email with PDF attachment
      *
      * @param receiptNumber Receipt number
-     * @param data Receipt data
-     * @param pdfContent PDF content
+     * @param data          Receipt data
+     * @param pdfContent    PDF content
      */
     @Async
     public void sendReceiptEmail(String receiptNumber, ReceiptData data, byte[] pdfContent) {
@@ -55,12 +55,11 @@ public class ReceiptEmailService {
 
             // Send email with attachment
             String subject = "Your Payment Receipt - " + receiptNumber;
-            mailgunEmailService.sendWithAttachment(
+            mailgunEmailService.sendHtmlWithAttachment(
                     data.getCustomerEmail(),
                     subject,
                     htmlBody,
-                    tempFile
-            );
+                    tempFile);
 
             log.info("Receipt email sent successfully to {} for receipt {}", data.getCustomerEmail(), receiptNumber);
 
@@ -80,7 +79,8 @@ public class ReceiptEmailService {
     }
 
     private File createTempPdfFile(String receiptNumber, byte[] pdfContent) throws IOException {
-        //File tempFile = File.createTempFile("receipt_" + receiptNumber + "_", ".pdf");
+        // File tempFile = File.createTempFile("receipt_" + receiptNumber + "_",
+        // ".pdf");
         File tempFile = Files.createTempFile("receipt_" + receiptNumber + "_", ".pdf").toFile();
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             fos.write(pdfContent);
@@ -94,12 +94,10 @@ public class ReceiptEmailService {
         model.put("customerName", data.getCustomerName());
         model.put("amount", formatCurrency(data.getAmount().doubleValue(), data.getCurrency()));
         model.put("currency", data.getCurrency());
-        model.put("paymentMethod", data.getPaymentMethodDetails() != null ?
-                data.getPaymentMethodDetails() : data.getPaymentMethod());
-        model.put("description", data.getDescription() != null ?
-                data.getDescription() : "Subscription Payment");
-        model.put("paidAt", data.getPaidAt() != null ?
-                data.getPaidAt().format(DATE_FORMATTER) : "N/A");
+        model.put("paymentMethod",
+                data.getPaymentMethodDetails() != null ? data.getPaymentMethodDetails() : data.getPaymentMethod());
+        model.put("description", data.getDescription() != null ? data.getDescription() : "Subscription Payment");
+        model.put("paidAt", data.getPaidAt() != null ? data.getPaidAt().format(DATE_FORMATTER) : "N/A");
         model.put("appName", receiptConfig.getCompanyName());
         model.put("supportEmail", receiptConfig.getCompanyEmail());
         return model;

@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
 import com.extractor.unraveldocs.brokers.core.Message;
 import com.extractor.unraveldocs.brokers.core.MessageResult;
 import com.extractor.unraveldocs.brokers.kafka.producer.KafkaMessageProducer;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
 import com.extractor.unraveldocs.payment.receipt.enums.PaymentProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,10 +35,13 @@ class ReceiptEventPublisherTest {
 
     private ReceiptEventPublisher receiptEventPublisher;
 
+    @Mock
+    private SanitizeLogging sanitizer;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        receiptEventPublisher = new ReceiptEventPublisher(kafkaMessageProducer, receiptEventMapper);
+        receiptEventPublisher = new ReceiptEventPublisher(kafkaMessageProducer, receiptEventMapper, sanitizer);
     }
 
     @Test
@@ -49,8 +53,7 @@ class ReceiptEventPublisherTest {
 
         when(receiptEventMapper.toReceiptRequestedEvent(any(ReceiptData.class))).thenReturn(event);
         when(kafkaMessageProducer.send(any())).thenReturn(
-                CompletableFuture.completedFuture(MessageResult.success("msg-id", "unraveldocs-receipts", 0, 0L))
-        );
+                CompletableFuture.completedFuture(MessageResult.success("msg-id", "unraveldocs-receipts", 0, 0L)));
 
         // When
         receiptEventPublisher.publishReceiptRequest(receiptData);
@@ -59,8 +62,8 @@ class ReceiptEventPublisherTest {
         verify(receiptEventMapper).toReceiptRequestedEvent(receiptData);
 
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<Message<BaseEvent<ReceiptRequestedEvent>>> messageCaptor =
-                ArgumentCaptor.forClass(Message.class);
+        ArgumentCaptor<Message<BaseEvent<ReceiptRequestedEvent>>> messageCaptor = ArgumentCaptor
+                .forClass(Message.class);
         verify(kafkaMessageProducer).send(messageCaptor.capture());
 
         Message<BaseEvent<ReceiptRequestedEvent>> capturedMessage = messageCaptor.getValue();
@@ -79,16 +82,15 @@ class ReceiptEventPublisherTest {
 
         when(receiptEventMapper.toReceiptRequestedEvent(any(ReceiptData.class))).thenReturn(event);
         when(kafkaMessageProducer.send(any())).thenReturn(
-                CompletableFuture.completedFuture(MessageResult.success("msg-id", "unraveldocs-receipts", 0, 0L))
-        );
+                CompletableFuture.completedFuture(MessageResult.success("msg-id", "unraveldocs-receipts", 0, 0L)));
 
         // When
         receiptEventPublisher.publishReceiptRequest(receiptData);
 
         // Then
         @SuppressWarnings("unchecked")
-        ArgumentCaptor<Message<BaseEvent<ReceiptRequestedEvent>>> messageCaptor =
-                ArgumentCaptor.forClass(Message.class);
+        ArgumentCaptor<Message<BaseEvent<ReceiptRequestedEvent>>> messageCaptor = ArgumentCaptor
+                .forClass(Message.class);
         verify(kafkaMessageProducer).send(messageCaptor.capture());
 
         assertThat(messageCaptor.getValue().key()).isEqualTo(receiptData.getExternalPaymentId());
@@ -126,4 +128,3 @@ class ReceiptEventPublisherTest {
                 .build();
     }
 }
-

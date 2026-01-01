@@ -16,6 +16,9 @@ public class ResponseData {
         data.setLastLogin(user.getLastLogin());
         data.setRole(user.getRole());
         data.setVerified(user.isVerified());
+        data.setCountry(user.getCountry());
+        data.setProfession(user.getProfession());
+        data.setOrganization(user.getOrganization());
         data.setCreatedAt(user.getCreatedAt());
         data.setUpdatedAt(user.getUpdatedAt());
 

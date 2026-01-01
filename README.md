@@ -435,6 +435,7 @@ Once the application is running, access the interactive API documentation:
 
 | Category | Base Path | Description |
 |----------|-----------|-------------|
+| Plans | `/api/v1/plans` | Plan pricing & currency conversion (public) |
 | Auth | `/api/v1/auth` | Authentication & registration |
 | Users | `/api/v1/users` | User management |
 | Teams | `/api/v1/teams` | Team subscriptions & member management |

@@ -14,6 +14,7 @@ import com.extractor.unraveldocs.payment.receipt.enums.PaymentProvider;
 import com.extractor.unraveldocs.payment.receipt.events.ReceiptEventPublisher;
 import com.extractor.unraveldocs.user.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ import java.util.Map;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class PaystackWebhookService {
 
     private static final String HMAC_SHA512 = "HmacSHA512";
@@ -46,22 +48,6 @@ public class PaystackWebhookService {
     private final SanitizeLogging sanitize;
 
     private ReceiptEventPublisher receiptEventPublisher;
-
-    @Autowired
-    public PaystackWebhookService(
-            PaystackConfig paystackConfig,
-            PaystackPaymentService paymentService,
-            PaystackSubscriptionService subscriptionService,
-            PaystackPaymentRepository paymentRepository,
-            ObjectMapper objectMapper,
-            SanitizeLogging sanitize) {
-        this.paystackConfig = paystackConfig;
-        this.paymentService = paymentService;
-        this.subscriptionService = subscriptionService;
-        this.paymentRepository = paymentRepository;
-        this.objectMapper = objectMapper;
-        this.sanitize = sanitize;
-    }
 
     @Autowired(required = false)
     public void setReceiptEventPublisher(ReceiptEventPublisher receiptEventPublisher) {

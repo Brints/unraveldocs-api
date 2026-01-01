@@ -9,20 +9,21 @@ This document provides a comprehensive overview of all API endpoints available i
 ## Table of Contents
 
 1. [Root](#root)
-2. [Authentication](#authentication)
-3. [User Management](#user-management)
-4. [Team Management](#team-management)
-5. [Organization Management](#organization-management)
-6. [Admin Management](#admin-management)
-7. [Documents](#documents)
-8. [OCR Processing](#ocr-processing)
-9. [Word Export](#word-export)
-10. [Payments - Stripe](#payments---stripe)
-11. [Payments - Paystack](#payments---paystack)
-12. [Receipts](#receipts)
-13. [Subscription Management](#subscription-management)
-14. [Search - Elasticsearch](#search---elasticsearch)
-15. [Webhooks](#webhooks)
+2. [Plan Pricing](#plan-pricing)
+3. [Authentication](#authentication)
+4. [User Management](#user-management)
+5. [Team Management](#team-management)
+6. [Organization Management](#organization-management)
+7. [Admin Management](#admin-management)
+8. [Documents](#documents)
+9. [OCR Processing](#ocr-processing)
+10. [Word Export](#word-export)
+11. [Payments - Stripe](#payments---stripe)
+12. [Payments - Paystack](#payments---paystack)
+13. [Receipts](#receipts)
+14. [Subscription Management](#subscription-management)
+15. [Search - Elasticsearch](#search---elasticsearch)
+16. [Webhooks](#webhooks)
 
 ---
 
@@ -42,6 +43,319 @@ This document provides a comprehensive overview of all API endpoints available i
   "status": "success",
   "message": "UnravelDocs API is running",
   "data": "Current server time: 2024-01-01T12:00:00Z"
+}
+```
+
+---
+
+## Plan Pricing
+
+Base path: `/api/v1/plans`
+
+> **Note:** These endpoints require authentication. They are designed for use on pricing pages to display subscription plan prices in the user's preferred currency.
+
+### Supported Currencies
+
+The system supports 69 currencies for price conversion including:
+
+| Region       | Currencies                                                 |
+|--------------|------------------------------------------------------------|
+| Americas     | USD, CAD, BRL, MXN, ARS, CLP, COP, PEN                     |
+| Europe       | EUR, GBP, CHF, SEK, NOK, DKK, PLN, CZK, HUF, RON           |
+| Asia Pacific | JPY, CNY, INR, KRW, SGD, HKD, TWD, THB, IDR, MYR, PHP, VND |
+| Middle East  | AED, TRY, ILS, QAR, KWD, BHD, JOD, OMR                     |
+| Africa       | NGN, ZAR, GHS, KES, EGP, MAD                               |
+
+### Get All Plans with Pricing
+
+| **Method** | **Endpoint** | **Auth Required** |
+|------------|--------------|-------------------|
+| `GET`      | `/plans`     | No                |
+
+**Query Parameters:**
+
+| Parameter  | Type   | Required | Default | Description                                              |
+|------------|--------|----------|---------|----------------------------------------------------------|
+| `currency` | String | No       | USD     | Currency code for price conversion (e.g., NGN, EUR, GBP) |
+
+**Response:**
+
+```json
+{
+  "individualPlans": [
+    {
+      "planId": "e543f7aa-0464-4347-b762-8b84e00d039a",
+      "planName": "FREE",
+      "displayName": "Free",
+      "billingInterval": "MONTH",
+      "price": {
+        "originalAmountUsd": 0.00,
+        "convertedAmount": 0.00,
+        "currency": "NGN",
+        "formattedPrice": "₦0.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "documentUploadLimit": 10,
+      "ocrPageLimit": 50,
+      "features": [
+        "Basic document processing",
+        "Limited OCR pages",
+        "Email support"
+      ],
+      "active": true
+    },
+    {
+      "planId": "d00889f8-136f-4da4-945c-4b58fadce44a",
+      "planName": "STARTER_MONTHLY",
+      "displayName": "Starter Monthly",
+      "billingInterval": "MONTH",
+      "price": {
+        "originalAmountUsd": 9.00,
+        "convertedAmount": 13950.00,
+        "currency": "NGN",
+        "formattedPrice": "₦13,950.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "documentUploadLimit": 30,
+      "ocrPageLimit": 150,
+      "features": [
+        "Standard document processing",
+        "Increased OCR pages",
+        "Priority email support",
+        "API access"
+      ],
+      "active": true
+    },
+    {
+      "planId": "1e4bbf4b-6ad3-4b05-bc5f-b584e5ef16e0",
+      "planName": "STARTER_YEARLY",
+      "displayName": "Starter Yearly",
+      "billingInterval": "YEAR",
+      "price": {
+        "originalAmountUsd": 90.00,
+        "convertedAmount": 139500.00,
+        "currency": "NGN",
+        "formattedPrice": "₦139,500.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "documentUploadLimit": 360,
+      "ocrPageLimit": 1800,
+      "features": [
+        "Standard document processing",
+        "Increased OCR pages",
+        "Priority email support",
+        "API access"
+      ],
+      "active": true
+    },
+    {
+      "planId": "31eccb32-62fa-4af6-89ff-64794e768342",
+      "planName": "PRO_MONTHLY",
+      "displayName": "Pro Monthly",
+      "billingInterval": "MONTH",
+      "price": {
+        "originalAmountUsd": 19.00,
+        "convertedAmount": 29450.00,
+        "currency": "NGN",
+        "formattedPrice": "₦29,450.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "documentUploadLimit": 100,
+      "ocrPageLimit": 500,
+      "features": [
+        "Advanced document processing",
+        "High OCR page limit",
+        "Priority support",
+        "Full API access",
+        "Custom integrations"
+      ],
+      "active": true
+    },
+    {
+      "planId": "f8f111c8-3aaa-4079-9158-f297493ecbfd",
+      "planName": "PRO_YEARLY",
+      "displayName": "Pro Yearly",
+      "billingInterval": "YEAR",
+      "price": {
+        "originalAmountUsd": 190.00,
+        "convertedAmount": 294500.00,
+        "currency": "NGN",
+        "formattedPrice": "₦294,500.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "documentUploadLimit": 1200,
+      "ocrPageLimit": 6000,
+      "features": [
+        "Advanced document processing",
+        "High OCR page limit",
+        "Priority support",
+        "Full API access",
+        "Custom integrations"
+      ],
+      "active": true
+    },
+    {
+      "planId": "650cac00-c5fc-4351-abfe-75dbe87f9a80",
+      "planName": "BUSINESS_MONTHLY",
+      "displayName": "Business Monthly",
+      "billingInterval": "MONTH",
+      "price": {
+        "originalAmountUsd": 49.00,
+        "convertedAmount": 75950.00,
+        "currency": "NGN",
+        "formattedPrice": "₦75,950.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "documentUploadLimit": 500,
+      "ocrPageLimit": 2500,
+      "features": [
+        "Unlimited document processing",
+        "Unlimited OCR pages",
+        "24/7 premium support",
+        "Full API access",
+        "Custom integrations",
+        "Dedicated account manager"
+      ],
+      "active": true
+    },
+    {
+      "planId": "8a75a1e2-c2e7-402a-a765-642419747662",
+      "planName": "BUSINESS_YEARLY",
+      "displayName": "Business Yearly",
+      "billingInterval": "YEAR",
+      "price": {
+        "originalAmountUsd": 490.00,
+        "convertedAmount": 759500.00,
+        "currency": "NGN",
+        "formattedPrice": "₦759,500.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "documentUploadLimit": 6000,
+      "ocrPageLimit": 30000,
+      "features": [
+        "Unlimited document processing",
+        "Unlimited OCR pages",
+        "24/7 premium support",
+        "Full API access",
+        "Custom integrations",
+        "Dedicated account manager"
+      ],
+      "active": true
+    }
+  ],
+  "teamPlans": [
+    {
+      "planId": "503abfde-4b6c-4b4e-969c-9a5bb7dcfe24",
+      "planName": "TEAM_PREMIUM",
+      "displayName": "Team Premium",
+      "description": "Perfect for small teams. Includes 200 documents per month with up to 10 members.",
+      "monthlyPrice": {
+        "originalAmountUsd": 29.00,
+        "convertedAmount": 44950.00,
+        "currency": "NGN",
+        "formattedPrice": "₦44,950.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "yearlyPrice": {
+        "originalAmountUsd": 290.00,
+        "convertedAmount": 449500.00,
+        "currency": "NGN",
+        "formattedPrice": "₦449,500.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "maxMembers": 10,
+      "monthlyDocumentLimit": 200,
+      "hasAdminPromotion": false,
+      "hasEmailInvitations": false,
+      "trialDays": 10,
+      "features": [
+        "Up to 10 team members",
+        "200 documents per month",
+        "10-day free trial",
+        "Team collaboration",
+        "Shared workspace"
+      ],
+      "active": true
+    },
+    {
+      "planId": "f2103611-9259-413c-a218-b54cb7533d4b",
+      "planName": "TEAM_ENTERPRISE",
+      "displayName": "Team Enterprise",
+      "description": "For larger teams that need unlimited documents, admin roles, and email invitations.",
+      "monthlyPrice": {
+        "originalAmountUsd": 79.00,
+        "convertedAmount": 122450.00,
+        "currency": "NGN",
+        "formattedPrice": "₦122,450.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "yearlyPrice": {
+        "originalAmountUsd": 790.00,
+        "convertedAmount": 1224500.00,
+        "currency": "NGN",
+        "formattedPrice": "₦1,224,500.00",
+        "exchangeRate": 1550.00,
+        "rateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+      },
+      "maxMembers": 15,
+      "monthlyDocumentLimit": null,
+      "hasAdminPromotion": true,
+      "hasEmailInvitations": true,
+      "trialDays": 10,
+      "features": [
+        "Up to 15 team members",
+        "Unlimited documents",
+        "Admin role promotion",
+        "Email invitations",
+        "10-day free trial",
+        "Team collaboration",
+        "Shared workspace"
+      ],
+      "active": true
+    }
+  ],
+  "displayCurrency": "NGN",
+  "exchangeRateTimestamp": "2026-01-01T12:17:58.8093467+01:00"
+}
+```
+
+---
+
+### Get Supported Currencies
+
+| **Method** | **Endpoint**        | **Auth Required** |
+|------------|---------------------|-------------------|
+| `GET`      | `/plans/currencies` | No                |
+
+Returns all supported currencies for the pricing dropdown.
+
+**Response:**
+
+```json
+{
+  "currencies": [
+    {
+      "code": "USD",
+      "symbol": "$",
+      "name": "United States Dollar"
+    },
+    {
+      "code": "NGN",
+      "symbol": "₦",
+      "name": "Nigerian Naira"
+    }
+  ],
+  "totalCount": 69
 }
 ```
 
@@ -294,7 +608,7 @@ Base path: `/api/v1/user`
 
 | **Method** | **Endpoint** | **Auth Required** |
 |------------|--------------|-------------------|
-| `GET`      | `/user/me`   | Yes               |
+| `GET`      | `/me`        | Yes               |
 
 **Response:**
 
@@ -304,15 +618,18 @@ Base path: `/api/v1/user`
   "status": "success",
   "message": "User profile retrieved successfully",
   "data": {
-    "id": "98c0ba52-69e0-4bfe-bb76-793431334e47",
-    "profilePicture": null,
+    "id": "30e08f7d-9821-49f8-b0b6-f0bbc98d0fa4",
+    "profilePicture": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/profile_pictures/eb296c46-e1b9-44e3-99f4-7a67213290eb-unnamed.png",
     "firstName": "John",
     "lastName": "Doe",
     "email": "john.doe@example.com",
     "role": "user",
-    "lastLogin": "2025-12-27T11:53:05.965182Z",
-    "createdAt": "2025-12-27T11:33:58.862233Z",
-    "updatedAt": "2025-12-27T11:53:05.972777Z",
+    "lastLogin": "2026-01-01T17:08:22.98912Z",
+    "country": "NG",
+    "profession": null,
+    "organization": null,
+    "createdAt": "2025-12-27T11:32:27.697829Z",
+    "updatedAt": "2026-01-01T17:08:23.003015Z",
     "verified": true
   }
 }

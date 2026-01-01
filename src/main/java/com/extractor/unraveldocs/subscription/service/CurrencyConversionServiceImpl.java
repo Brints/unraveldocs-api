@@ -80,7 +80,6 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
     }
 
     @Override
-    @Cacheable(value = "currencyConversion", key = "#amountUsd + '-' + #targetCurrency.code")
     public ConvertedPrice convert(BigDecimal amountUsd, SubscriptionCurrency targetCurrency) {
         if (targetCurrency == SubscriptionCurrency.USD) {
             return ConvertedPrice.builder()

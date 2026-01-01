@@ -21,18 +21,20 @@ public class GetUserProfileByAdmin implements GetUserProfileByAdminService {
     private final UserRepository userRepository;
 
     @Override
-    @Cacheable(value = "getProfileByAdmin", key = "#userId")
     public UnravelDocsResponse<UserData> getUserProfileByAdmin(String userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        UserData data = getResponseData(user, UserData::new);
+        UserData data = getCachedAdminUserData(userId);
 
         return responseBuilder.buildUserResponse(
                 data,
                 HttpStatus.OK,
-                "User profile retrieved successfully"
-        );
+                "User profile retrieved successfully");
+    }
+
+    @Cacheable(value = "adminUserProfileData", key = "#userId")
+    public UserData getCachedAdminUserData(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        return getResponseData(user, UserData::new);
     }
 }

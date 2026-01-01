@@ -5,6 +5,7 @@ import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
 import com.extractor.unraveldocs.brokers.core.Message;
 import com.extractor.unraveldocs.brokers.kafka.config.KafkaTopicConfig;
 import com.extractor.unraveldocs.brokers.kafka.producer.KafkaMessageProducer;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ public class ReceiptEventPublisher {
 
     private final KafkaMessageProducer<BaseEvent<ReceiptRequestedEvent>> kafkaMessageProducer;
     private final ReceiptEventMapper receiptEventMapper;
+    private final SanitizeLogging sanitizer;
 
     /**
      * Publish a receipt generation request to Kafka.
@@ -36,9 +38,9 @@ public class ReceiptEventPublisher {
         String correlationId = UUID.randomUUID().toString();
 
         log.info("Publishing receipt request for payment: {}, provider: {}, correlationId: {}",
-                receiptData.getExternalPaymentId(),
-                receiptData.getPaymentProvider(),
-                correlationId);
+                sanitizer.sanitizeLogging(receiptData.getExternalPaymentId()),
+                sanitizer.sanitizeLoggingObject(receiptData.getPaymentProvider()),
+                sanitizer.sanitizeLogging(correlationId));
 
         try {
             ReceiptRequestedEvent payload = receiptEventMapper.toReceiptRequestedEvent(receiptData);
@@ -65,16 +67,18 @@ public class ReceiptEventPublisher {
             kafkaMessageProducer.send(message)
                     .thenAccept(result -> log.info(
                             "Receipt request published successfully for payment: {}, correlationId: {}",
-                            receiptData.getExternalPaymentId(), correlationId))
+                            sanitizer.sanitizeLogging(receiptData.getExternalPaymentId()),
+                            sanitizer.sanitizeLogging(correlationId)))
                     .exceptionally(ex -> {
                         log.error("Failed to publish receipt request for payment: {}, correlationId: {}, error: {}",
-                                receiptData.getExternalPaymentId(), correlationId, ex.getMessage());
+                                sanitizer.sanitizeLogging(receiptData.getExternalPaymentId()),
+                                sanitizer.sanitizeLogging(correlationId), ex.getMessage());
                         return null;
                     });
 
         } catch (Exception e) {
             log.error("Error publishing receipt request for payment: {}, error: {}",
-                    receiptData.getExternalPaymentId(), e.getMessage(), e);
+                    sanitizer.sanitizeLogging(receiptData.getExternalPaymentId()), e.getMessage(), e);
             throw new RuntimeException("Failed to publish receipt request", e);
         }
     }

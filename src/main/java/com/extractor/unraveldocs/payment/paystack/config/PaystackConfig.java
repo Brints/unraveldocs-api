@@ -14,17 +14,17 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class PaystackConfig {
 
+    @Value("${paystack.base.url:https://api.paystack.co}")
+    private String baseUrl;
+
     @Value("${paystack.secret.key}")
     private String secretKey;
 
-    @Value("${paystack.initialize.url:https://api.paystack.co/transaction/initialize}")
+    @Value("${paystack.base.url}/transaction/initialize")
     private String initializeUrl;
 
-    @Value("${paystack.verify.url:https://api.paystack.co/transaction/verify/}")
+    @Value("${paystack.base.url}/transaction/verify/")
     private String verifyUrl;
-
-    @Value("${paystack.base.url:https://api.paystack.co}")
-    private String baseUrl;
 
     @Value("${paystack.webhook.secret:}")
     private String webhookSecret;

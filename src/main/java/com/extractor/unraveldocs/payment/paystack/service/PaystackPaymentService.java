@@ -48,27 +48,27 @@ public class PaystackPaymentService {
      */
     @Transactional
     public InitializeTransactionData initializeTransaction(
-            User user, InitializeTransactionRequest request
-    ) {
+            User user, InitializeTransactionRequest request) {
         try {
             // Get or create customer
             PaystackCustomer customer = customerService.getOrCreateCustomer(user);
 
             // Generate unique reference if not provided
-            String reference = request.getReference() != null ?
-                    request.getReference() : generateReference();
+            String reference = request.getReference() != null ? request.getReference() : generateReference();
+
+            // Convert amount to kobo for Paystack API (amount in Naira * 100)
+            long amountInKobo = request.getAmount() * 100;
 
             // Build request body
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("email", user.getEmail());
-            requestBody.put("amount", request.getAmount());
+            requestBody.put("amount", amountInKobo);
             requestBody.put("reference", reference);
-            requestBody.put("currency", request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency());
+            requestBody.put("currency",
+                    request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency());
             requestBody.put(
-                    "callback_url", request.getCallbackUrl() != null ?
-                            request.getCallbackUrl() :
-                            paystackConfig.getCallbackUrl()
-            );
+                    "callback_url",
+                    request.getCallbackUrl() != null ? request.getCallbackUrl() : paystackConfig.getCallbackUrl());
 
             if (request.getPlanCode() != null) {
                 requestBody.put("plan", request.getPlanCode());
@@ -97,8 +97,7 @@ public class PaystackPaymentService {
             PaystackResponse<InitializeTransactionData> response = objectMapper.readValue(
                     responseBody,
                     new TypeReference<>() {
-                    }
-            );
+                    });
 
             if (!response.isStatus()) {
                 throw new PaystackPaymentException(
@@ -107,9 +106,8 @@ public class PaystackPaymentService {
 
             InitializeTransactionData data = response.getData();
 
-            // Save payment record
+            // Save payment record - store original Naira amount (not kobo)
             PaymentType paymentType = request.getPlanCode() != null ? PaymentType.SUBSCRIPTION : PaymentType.ONE_TIME;
-            BigDecimal amount = BigDecimal.valueOf(request.getAmount()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
             PaystackPayment payment = PaystackPayment.builder()
                     .user(user)
@@ -119,8 +117,9 @@ public class PaystackPaymentService {
                     .authorizationUrl(data.getAuthorizationUrl())
                     .paymentType(paymentType)
                     .status(PaymentStatus.PENDING)
-                    .amount(amount)
-                    .currency(request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency())
+                    .amount(BigDecimal.valueOf(request.getAmount()))
+                    .currency(
+                            request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency())
                     .planCode(request.getPlanCode())
                     .build();
 
@@ -133,11 +132,13 @@ public class PaystackPaymentService {
             }
 
             paymentRepository.save(payment);
-            log.info("Initialized transaction {} for user {}", sanitize.sanitizeLogging(reference), sanitize.sanitizeLogging(user.getId()));
+            log.info("Initialized transaction {} for user {}", sanitize.sanitizeLogging(reference),
+                    sanitize.sanitizeLogging(user.getId()));
 
             return data;
         } catch (Exception e) {
-            log.error("Failed to initialize transaction for user {}: {}", sanitize.sanitizeLogging(user.getId()), e.getMessage());
+            log.error("Failed to initialize transaction for user {}: {}", sanitize.sanitizeLogging(user.getId()),
+                    e.getMessage());
             throw new PaystackPaymentException("Failed to initialize transaction", e);
         }
     }
@@ -156,8 +157,7 @@ public class PaystackPaymentService {
             PaystackResponse<TransactionData> response = objectMapper.readValue(
                     responseBody,
                     new TypeReference<>() {
-                    }
-            );
+                    });
 
             if (!response.isStatus()) {
                 throw new PaystackPaymentException("Failed to verify transaction: " + response.getMessage());
@@ -174,7 +174,8 @@ public class PaystackPaymentService {
                 payment.setIpAddress(data.getIpAddress());
 
                 if (data.getFees() != null) {
-                    payment.setFees(BigDecimal.valueOf(data.getFees()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
+                    payment.setFees(BigDecimal.valueOf(data.getFees()).divide(BigDecimal.valueOf(100), 2,
+                            RoundingMode.HALF_UP));
                 }
 
                 if (data.getAuthorization() != null) {
@@ -186,7 +187,8 @@ public class PaystackPaymentService {
                 }
 
                 paymentRepository.save(payment);
-                log.info("Updated payment {} with status {}", sanitize.sanitizeLogging(reference), sanitize.sanitizeLogging(data.getStatus()));
+                log.info("Updated payment {} with status {}", sanitize.sanitizeLogging(reference),
+                        sanitize.sanitizeLogging(data.getStatus()));
             });
 
             return data;
@@ -226,8 +228,7 @@ public class PaystackPaymentService {
             PaystackResponse<TransactionData> response = objectMapper.readValue(
                     responseBody,
                     new TypeReference<>() {
-                    }
-            );
+                    });
 
             if (!response.isStatus()) {
                 throw new PaystackPaymentException("Failed to charge authorization: " + response.getMessage());
@@ -236,7 +237,8 @@ public class PaystackPaymentService {
             TransactionData data = response.getData();
 
             // Save payment record
-            BigDecimal paymentAmount = BigDecimal.valueOf(amount).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal paymentAmount = BigDecimal.valueOf(amount).divide(BigDecimal.valueOf(100), 2,
+                    RoundingMode.HALF_UP);
 
             PaystackPayment payment = PaystackPayment.builder()
                     .user(user)
@@ -253,11 +255,13 @@ public class PaystackPaymentService {
                     .build();
 
             paymentRepository.save(payment);
-            log.info("Charged authorization {} for user {}, reference: {}", sanitize.sanitizeLogging(authorizationCode), sanitize.sanitizeLogging(user.getId()), sanitize.sanitizeLogging(reference));
+            log.info("Charged authorization {} for user {}, reference: {}", sanitize.sanitizeLogging(authorizationCode),
+                    sanitize.sanitizeLogging(user.getId()), sanitize.sanitizeLogging(reference));
 
             return data;
         } catch (Exception e) {
-            log.error("Failed to charge authorization for user {}: {}", sanitize.sanitizeLogging(user.getId()), e.getMessage());
+            log.error("Failed to charge authorization for user {}: {}", sanitize.sanitizeLogging(user.getId()),
+                    e.getMessage());
             throw new PaystackPaymentException("Failed to charge authorization", e);
         }
     }
@@ -301,7 +305,8 @@ public class PaystackPaymentService {
                 payment.setFailureMessage(failureMessage);
             }
             paymentRepository.save(payment);
-            log.info("Updated payment {} status to {}", sanitize.sanitizeLogging(reference), sanitize.sanitizeLogging(String.valueOf(status)));
+            log.info("Updated payment {} status to {}", sanitize.sanitizeLogging(reference),
+                    sanitize.sanitizeLogging(String.valueOf(status)));
         });
     }
 
@@ -311,7 +316,8 @@ public class PaystackPaymentService {
     @Transactional
     public void recordRefund(String reference, BigDecimal refundAmount) {
         paymentRepository.findByReference(reference).ifPresent(payment -> {
-            BigDecimal currentRefunded = payment.getAmountRefunded() != null ? payment.getAmountRefunded() : BigDecimal.ZERO;
+            BigDecimal currentRefunded = payment.getAmountRefunded() != null ? payment.getAmountRefunded()
+                    : BigDecimal.ZERO;
             payment.setAmountRefunded(currentRefunded.add(refundAmount));
 
             if (payment.getAmountRefunded().compareTo(payment.getAmount()) >= 0) {
@@ -321,7 +327,8 @@ public class PaystackPaymentService {
             }
 
             paymentRepository.save(payment);
-            log.info("Recorded refund of {} for payment {}", sanitize.sanitizeLogging(String.valueOf(refundAmount)), sanitize.sanitizeLogging(reference));
+            log.info("Recorded refund of {} for payment {}", sanitize.sanitizeLogging(String.valueOf(refundAmount)),
+                    sanitize.sanitizeLogging(reference));
         });
     }
 

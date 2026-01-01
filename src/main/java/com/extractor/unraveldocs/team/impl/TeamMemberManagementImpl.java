@@ -150,7 +150,7 @@ public class TeamMemberManagementImpl {
         // 8. Remove member
         teamMemberRepository.delete(memberToRemove);
 
-        log.info("Successfully removed member {} from team {}", memberId, teamId);
+        log.info("Successfully removed member {} from team {}", sanitizer.sanitizeLogging(memberId), sanitizer.sanitizeLogging(teamId));
 
         return responseBuilder.buildVoidResponse(HttpStatus.OK, "Member removed successfully");
     }

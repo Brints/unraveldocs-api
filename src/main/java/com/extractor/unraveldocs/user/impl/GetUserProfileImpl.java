@@ -21,18 +21,20 @@ public class GetUserProfileImpl implements GetUserProfileService {
     private final ResponseBuilderService responseBuilder;
 
     @Override
-    @Cacheable(value = "getProfileByUser", key = "#userId")
     public UnravelDocsResponse<UserData> getUserProfileByOwner(String userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        UserData data = getResponseData(user, UserData::new);
+        UserData data = getCachedUserData(userId);
 
         return responseBuilder.buildUserResponse(
                 data,
                 HttpStatus.OK,
-                "User profile retrieved successfully"
-        );
+                "User profile retrieved successfully");
+    }
+
+    @Cacheable(value = "userProfileData", key = "#userId")
+    public UserData getCachedUserData(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        return getResponseData(user, UserData::new);
     }
 }

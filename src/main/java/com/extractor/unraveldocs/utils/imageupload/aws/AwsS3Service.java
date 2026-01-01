@@ -27,10 +27,6 @@ public class AwsS3Service {
     private String bucketName;
 
     @Getter
-    @Value("${aws.s3.cloudfront.url}")
-    private String awsS3CloudFrontUrl;
-
-    @Getter
     private static final String PROFILE_PICTURE_FOLDER = FileFolder.PROFILE_PICTURE.getFolder();
 
     @Getter
@@ -45,10 +41,9 @@ public class AwsS3Service {
                     .build();
 
             s3Client.putObject(putObjectRequest,
-                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
-            );
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
-            return "https://" + awsS3CloudFrontUrl + "/" + fileName;
+            return s3Client.utilities().getUrl(builder -> builder.bucket(bucketName).key(fileName)).toString();
         } catch (IOException e) {
             throw new RuntimeException("Failed to upload file to S3", e);
         }
@@ -75,7 +70,7 @@ public class AwsS3Service {
         }
 
         try {
-            String key = fileUrl.substring(("https://" + awsS3CloudFrontUrl + "/").length());
+            String key = fileUrl.substring(fileUrl.indexOf(bucketName) + bucketName.length() + 1);
 
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName)

@@ -20,6 +20,9 @@ public class UserData implements UserDataProjection {
     private Role role;
     private OffsetDateTime lastLogin;
     private boolean isVerified;
+    private String country;
+    private String profession;
+    private String organization;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

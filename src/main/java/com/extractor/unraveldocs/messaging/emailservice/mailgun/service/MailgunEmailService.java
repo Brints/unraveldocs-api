@@ -39,6 +39,25 @@ public class MailgunEmailService {
         }
     }
 
+    /**
+     * Send HTML email with file attachment
+     */
+    public void sendHtmlWithAttachment(String to, String subject, String htmlBody, File attachment) {
+        Message message = Message.builder()
+                .from(mailgunConfig.getMailgunFromEmail())
+                .to(to)
+                .subject(subject)
+                .html(htmlBody)
+                .attachment(attachment)
+                .build();
+
+        try {
+            mailgunMessagesApi.sendMessage(mailgunConfig.getMailgunDomain(), message);
+        } catch (MailGunException e) {
+            throw new RuntimeException("Failed to send HTML email with attachment: " + e.getMessage(), e);
+        }
+    }
+
     public void sendHtmlEmail(String to, String subject, String htmlBody) {
         Message message = Message.builder()
                 .from(mailgunConfig.getMailgunFromEmail())

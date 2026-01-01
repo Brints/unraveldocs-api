@@ -13,6 +13,9 @@ public interface UserDataProjection {
     void setLastLogin(OffsetDateTime lastLogin);
     void setRole(Role role);
     void setVerified(boolean verified);
+    void setCountry(String country);
+    void setProfession(String profession);
+    void setOrganization(String organization);
     void setCreatedAt(OffsetDateTime createdAt);
     void setUpdatedAt(OffsetDateTime updatedAt);
 }

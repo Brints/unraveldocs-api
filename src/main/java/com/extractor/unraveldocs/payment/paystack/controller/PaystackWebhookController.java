@@ -24,7 +24,7 @@ public class PaystackWebhookController {
 
     private final PaystackWebhookService webhookService;
     private final ObjectMapper objectMapper;
-    private SanitizeLogging sanitize;
+    private final SanitizeLogging sanitize;
 
     /**
      * Handle Paystack webhook events

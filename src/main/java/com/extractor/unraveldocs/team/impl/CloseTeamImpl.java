@@ -47,7 +47,7 @@ public class CloseTeamImpl {
      */
     @Transactional
     public UnravelDocsResponse<Void> close(String teamId, User actingUser) {
-        log.info("Closing team {} by user {}", teamId, sanitizer.sanitizeLogging(actingUser.getId()));
+        log.info("Closing team {} by user {}", sanitizer.sanitizeLogging(teamId), sanitizer.sanitizeLogging(actingUser.getId()));
 
         // 1. Get team
         Team team = teamRepository.findById(teamId)

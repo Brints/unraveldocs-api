@@ -1,6 +1,5 @@
 package com.extractor.unraveldocs.config;
 
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -13,19 +12,20 @@ import java.time.Duration;
 
 @Configuration
 public class RedisConfig {
-    @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        GenericJacksonJsonRedisSerializer serializer = GenericJacksonJsonRedisSerializer.builder()
-                .build();
+        @Bean
+        public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+                GenericJacksonJsonRedisSerializer serializer = GenericJacksonJsonRedisSerializer.builder()
+                                .build();
 
-        RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration
-                .defaultCacheConfig()
-                .entryTtl(Duration.ofHours(1))
-                .disableCachingNullValues()
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
+                RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration
+                                .defaultCacheConfig()
+                                .entryTtl(Duration.ofHours(1))
+                                .disableCachingNullValues()
+                                .serializeValuesWith(
+                                                RedisSerializationContext.SerializationPair.fromSerializer(serializer));
 
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(redisCacheConfiguration)
-                .build();
-    }
+                return RedisCacheManager.builder(connectionFactory)
+                                .cacheDefaults(redisCacheConfiguration)
+                                .build();
+        }
 }

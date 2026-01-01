@@ -24,7 +24,7 @@ public class ProfilePictureImpl implements ProfilePictureService {
     @Override
     @Transactional
     public UnravelDocsResponse<String> uploadProfilePicture(User user, MultipartFile file) {
-        if (FileType.IMAGE.isValid(file.getContentType())) {
+        if (!FileType.IMAGE.isValid(file.getContentType())) {
             throw new BadRequestException("Invalid file type. Only image files are allowed.");
         }
 

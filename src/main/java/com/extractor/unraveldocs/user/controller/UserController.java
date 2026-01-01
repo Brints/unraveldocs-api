@@ -202,7 +202,7 @@ public class UserController {
     public ResponseEntity<@NonNull UnravelDocsResponse<String>> uploadProfilePicture(
             @AuthenticationPrincipal UserDetails authenticatedUser,
             @RequestParam("file") @NotNull MultipartFile file,
-            @PathVariable("userId") String userId
+            @PathVariable String userId
     ) {
         // Validate the authenticated user
         User user = getAuthenticatedUser(authenticatedUser);
