@@ -91,9 +91,4 @@
 
         <module name="SuppressionCommentFilter"/>
     </module>
-
-    <module name="SuppressionFilter">
-        <property name="file" value="${checkstyle.suppressions.file}" default=""/>
-        <property name="optional" value="true"/>
-    </module>
 </module>
