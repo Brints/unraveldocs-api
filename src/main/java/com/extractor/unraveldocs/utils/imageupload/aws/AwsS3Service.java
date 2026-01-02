@@ -70,7 +70,12 @@ public class AwsS3Service {
         }
 
         try {
-            String key = fileUrl.substring(fileUrl.indexOf(bucketName) + bucketName.length() + 1);
+            int bucketIndex = fileUrl.indexOf(bucketName);
+            if (bucketIndex == -1) {
+                log.error("Bucket name not found in file URL: {}", fileUrl);
+                throw new RuntimeException("Invalid file URL: Bucket name not found");
+            }
+            String key = fileUrl.substring(bucketIndex + bucketName.length() + 1);
 
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName)

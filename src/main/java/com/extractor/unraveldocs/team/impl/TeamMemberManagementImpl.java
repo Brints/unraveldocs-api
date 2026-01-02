@@ -74,7 +74,7 @@ public class TeamMemberManagementImpl {
 
         // 4. Find user to add by email
         User userToAdd = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new NotFoundException("User with email " + request.email() + " not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         // 5. Check user isn't already a member
         if (teamMemberRepository.findByTeamIdAndUserId(teamId, userToAdd.getId()).isPresent()) {
@@ -217,6 +217,8 @@ public class TeamMemberManagementImpl {
         return responseBuilder.buildVoidResponse(HttpStatus.OK,
                 removedCount + " member(s) removed successfully");
     }
+
+    //TODO: Implement leave team functionality
 
     // ========== Helper Methods ==========
 

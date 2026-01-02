@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.subscription.service;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.subscription.config.CurrencyApiConfig;
 import com.extractor.unraveldocs.subscription.datamodel.SubscriptionCurrency;
 import com.extractor.unraveldocs.subscription.dto.ConvertedPrice;
@@ -8,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -34,6 +34,7 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
     private final CurrencyApiConfig config;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final SanitizeLogging sanitizer;
 
     // In-memory cache of exchange rates
     private final Map<String, BigDecimal> ratesCache = new ConcurrentHashMap<>();
@@ -125,7 +126,7 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
     public void refreshRates() {
         log.info("Refreshing exchange rates from API...");
 
-        if (config.getKey() == null || config.getKey().isEmpty()) {
+        if (config.getKey() == null || config.getKey().trim().isEmpty()) {
             log.warn("No API key configured for exchange rate API, using fallback rates");
             return;
         }
@@ -143,8 +144,17 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
                     for (SubscriptionCurrency currency : SubscriptionCurrency.values()) {
                         String code = currency.getCode();
                         if (conversionRates.has(code)) {
-                            BigDecimal rate = new BigDecimal(conversionRates.get(code).asText());
-                            ratesCache.put(code, rate);
+                            try {
+                                String rateText = conversionRates.get(code).asText();
+                                BigDecimal rate = new BigDecimal(rateText);
+                                if (rate.compareTo(BigDecimal.ZERO) > 0) {
+                                    ratesCache.put(code, rate);
+                                } else {
+                                    log.warn("Invalid exchange rate for {}: {}", sanitizer.sanitizeLogging(code), sanitizer.sanitizeLogging(rateText));
+                                }
+                            } catch (NumberFormatException nfe) {
+                                log.warn("Failed to parse exchange rate for {}: {}", sanitizer.sanitizeLogging(code), nfe.getMessage());
+                            }
                         }
                     }
 

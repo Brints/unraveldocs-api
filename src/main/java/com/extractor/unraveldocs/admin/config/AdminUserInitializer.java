@@ -3,6 +3,7 @@ package com.extractor.unraveldocs.admin.config;
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.model.UserVerification;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;
 import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
 import com.extractor.unraveldocs.subscription.datamodel.SubscriptionCurrency;
@@ -14,6 +15,7 @@ import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +35,7 @@ public class AdminUserInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final SubscriptionPlanRepository planRepository;
+    private final SanitizeLogging sanitizer;
 
     @Value("${app.admin.email:#{null}}")
     private String adminEmail;
@@ -42,7 +45,7 @@ public class AdminUserInitializer implements CommandLineRunner {
 
     @Override
     @Transactional
-    public void run(String... args) throws Exception {
+    public void run(String @NonNull ... args) throws Exception {
         if (adminEmail == null || adminPassword == null) {
             log.warn("Admin email or password not set in application properties. Skipping admin user creation.");
             return;
@@ -64,7 +67,7 @@ public class AdminUserInitializer implements CommandLineRunner {
             var subscription = subscriptionService.assignDefaultSubscription(adminUser);
             adminUser.setSubscription(subscription);
             userRepository.save(adminUser);
-            log.info("Default subscription assigned to admin user: {}", adminEmail);
+            log.info("Default subscription assigned to admin user: {}", sanitizer.sanitizeLogging(adminEmail));
         }
     }
 
