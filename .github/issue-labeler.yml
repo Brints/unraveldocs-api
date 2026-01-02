@@ -1,0 +1,43 @@
+# Issue Labeler - labels issues based on title/body content
+
+bug:
+  - '(bug|fix|issue|error|crash|fail|broken)'
+
+enhancement:
+  - '(feature|enhancement|improve|add|new)'
+
+documentation:
+  - '(doc|docs|documentation|readme|guide)'
+
+question:
+  - '(question|how to|help|support|\?)'
+
+security:
+  - '(security|vulnerability|cve|exploit|auth)'
+
+performance:
+  - '(performance|slow|speed|optimize|memory)'
+
+api:
+  - '(api|endpoint|rest|controller)'
+
+database:
+  - '(database|db|sql|migration|flyway|postgres)'
+
+payment:
+  - '(payment|stripe|subscription|billing|invoice)'
+
+ocr:
+  - '(ocr|document|extract|scan|tesseract|vision)'
+
+email:
+  - '(email|mail|notification|template)'
+
+docker:
+  - '(docker|container|compose|image)'
+
+ci:
+  - '(ci|cd|github action|workflow|pipeline|build)'
+
+dependencies:
+  - '(dependency|dependencies|upgrade|update|version)'
