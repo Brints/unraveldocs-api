@@ -1,0 +1,82 @@
+# PR Labeler configuration - labels PRs based on files changed
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.md'
+          - 'docs/**/*'
+          - 'api_docs/**/*'
+
+java:
+  - changed-files:
+      - any-glob-to-any-file: 'src/main/java/**/*.java'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: 'src/test/**/*'
+
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/main/resources/**/*'
+          - '*.yml'
+          - '*.yaml'
+          - '*.properties'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**/*'
+          - 'pom.xml'
+          - 'Dockerfile'
+          - 'docker-compose*.yml'
+
+database:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/main/resources/db/**/*'
+          - '**/flyway/**/*'
+
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/security/**/*'
+          - '**/auth/**/*'
+          - '**/jwt/**/*'
+
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/controller/**/*'
+          - '**/controllers/**/*'
+
+payments:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/payment/**/*'
+          - '**/stripe/**/*'
+          - '**/subscription/**/*'
+
+users:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/user/**/*'
+          - '**/admin/**/*'
+
+notifications:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/email/**/*'
+          - '**/mail/**/*'
+          - '**/notification/**/*'
+          - 'src/main/resources/templates/**/*'
+
+ocr:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/ocr/**/*'
+          - '**/document/**/*'
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: 'pom.xml'

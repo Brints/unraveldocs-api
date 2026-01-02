@@ -104,6 +104,21 @@ jobs:
       - name: Build and Test
         run: mvn clean verify -Dspring.profiles.active=test
 
+      - name: Generate Code Coverage Report
+        run: mvn jacoco:report
+        if: success()
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: target/site/jacoco/jacoco.xml
+          flags: unittests
+          name: codecov-unraveldocs
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Upload Surefire Report
         if: always()
         uses: actions/upload-artifact@v4
