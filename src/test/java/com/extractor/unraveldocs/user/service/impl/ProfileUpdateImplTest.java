@@ -8,6 +8,7 @@ import com.extractor.unraveldocs.user.impl.ProfileUpdateImpl;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.elasticsearch.service.ElasticsearchIndexingService;
 import com.extractor.unraveldocs.utils.imageupload.cloudinary.CloudinaryService;
 import com.extractor.unraveldocs.utils.userlib.UserLibrary;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,8 @@ class ProfileUpdateImplTest {
     private ResponseBuilderService responseBuilder;
     @Mock
     private UserLibrary userLibrary;
+    @Mock
+    private ElasticsearchIndexingService elasticsearchIndexingService;
 
     @InjectMocks
     private ProfileUpdateImpl profileUpdateImpl;
@@ -40,6 +43,13 @@ class ProfileUpdateImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        // Manually set the Optional field since @InjectMocks doesn't handle Optional<T>
+        profileUpdateImpl = new ProfileUpdateImpl(
+                cloudinaryService,
+                responseBuilder,
+                userLibrary,
+                userRepository,
+                Optional.of(elasticsearchIndexingService));
     }
 
     @Test
@@ -104,8 +114,7 @@ class ProfileUpdateImplTest {
                 eq(mockFile),
                 anyString(),
                 eq("profile.jpg"),
-                anyString()
-        )).thenReturn("new-url");
+                anyString())).thenReturn("new-url");
 
         when(userLibrary.capitalizeFirstLetterOfName("John")).thenReturn("John");
         when(userLibrary.capitalizeFirstLetterOfName("Doe")).thenReturn("Doe");
@@ -122,8 +131,7 @@ class ProfileUpdateImplTest {
                 eq(mockFile),
                 anyString(),
                 eq("profile.jpg"),
-                anyString()
-        );
+                anyString());
     }
 
     @Test

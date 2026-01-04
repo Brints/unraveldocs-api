@@ -12,6 +12,8 @@ import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
 import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.elasticsearch.events.IndexAction;
+import com.extractor.unraveldocs.elasticsearch.service.ElasticsearchIndexingService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
@@ -34,6 +36,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -48,6 +51,7 @@ public class SignupUserImpl implements SignupUserService {
         private final ResponseBuilderService responseBuilder;
         private final UserLibrary userLibrary;
         private final UserRepository userRepository;
+        private final Optional<ElasticsearchIndexingService> elasticsearchIndexingService;
 
         @Override
         @Transactional
@@ -129,6 +133,10 @@ public class SignupUserImpl implements SignupUserService {
                                                 RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
                                                 RabbitMQQueueConfig.USER_REGISTERED_ROUTING_KEY,
                                                 event);
+
+                                // Index user in Elasticsearch
+                                elasticsearchIndexingService
+                                                .ifPresent(service -> service.indexUser(savedUser, IndexAction.CREATE));
                         }
                 });
 

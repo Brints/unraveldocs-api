@@ -16,7 +16,7 @@ public final class FileUploadValidationUtil {
         long totalSize = Arrays.stream(files)
                 .mapToLong(MultipartFile::getSize)
                 .sum();
-        if (FileSize.isValidFileSize(totalSize, true)) {
+        if (!FileSize.isValidFileSize(totalSize, true)) {
             throw new BadRequestException(FileSize.getFileSizeLimitMessage(true));
         }
     }

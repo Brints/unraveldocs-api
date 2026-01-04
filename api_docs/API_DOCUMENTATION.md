@@ -861,14 +861,14 @@ Sends OTP to user email to verify team creation.
 }
 ```
 
-| Field              | Type   | Required | Description                                      |
-|--------------------|--------|----------|--------------------------------------------------|
-| `name`             | String | Yes      | Team name (2-100 characters)                     |
-| `description`      | String | No       | Team description (max 500 characters)            |
-| `subscriptionType` | Enum   | Yes      | `PREMIUM` or `ENTERPRISE`                        |
-| `billingCycle`     | Enum   | Yes      | `MONTHLY` or `YEARLY`                            |
-| `paymentGateway`   | String | Yes      | `stripe` or `paystack`                           |
-| `paymentToken`     | String | No       | Payment token from gateway (for immediate charge)|
+| Field              | Type   | Required | Description                                       |
+|--------------------|--------|----------|---------------------------------------------------|
+| `name`             | String | Yes      | Team name (2-100 characters)                      |
+| `description`      | String | No       | Team description (max 500 characters)             |
+| `subscriptionType` | Enum   | Yes      | `PREMIUM` or `ENTERPRISE`                         |
+| `billingCycle`     | Enum   | Yes      | `MONTHLY` or `YEARLY`                             |
+| `paymentGateway`   | String | Yes      | `stripe` or `paystack`                            |
+| `paymentToken`     | String | No       | Payment token from gateway (for immediate charge) |
 
 **Response:**
 
@@ -1094,9 +1094,9 @@ Returns all teams the user belongs to.
 
 ### Batch Remove Members
 
-| **Method** | **Endpoint**                  | **Auth Required** | **Role**     |
-|------------|-------------------------------|-------------------|--------------|
-| `DELETE`   | `/teams/{teamId}/members/batch`| Yes               | ADMIN, OWNER |
+| **Method** | **Endpoint**                    | **Auth Required** | **Role**     |
+|------------|---------------------------------|-------------------|--------------|
+| `DELETE`   | `/teams/{teamId}/members/batch` | Yes               | ADMIN, OWNER |
 
 **Request Body:**
 
@@ -1206,9 +1206,9 @@ Returns all teams the user belongs to.
 
 ### Cancel Subscription
 
-| **Method** | **Endpoint**            | **Auth Required** | **Role** |
-|------------|-------------------------|-------------------|----------|
-| `POST`     | `/teams/{teamId}/cancel`| Yes               | OWNER    |
+| **Method** | **Endpoint**             | **Auth Required** | **Role** |
+|------------|--------------------------|-------------------|----------|
+| `POST`     | `/teams/{teamId}/cancel` | Yes               | OWNER    |
 
 Cancels the subscription but service continues until the current billing period ends.
 
@@ -1750,20 +1750,22 @@ Base path: `/api/v1/documents`
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "Documents uploaded successfully",
   "data": {
-    "collectionId": "uuid",
+    "collectionId": "77cde05e-7178-4930-8ed2-4a3888b8144c",
     "files": [
       {
-        "documentId": "uuid",
-        "fileName": "document.pdf",
-        "fileUrl": "https://...",
-        "status": "UPLOADED"
+        "documentId": "1e50bf3b-ad75-4b1e-b888-5309567e9487",
+        "originalFileName": "docs2.jpeg",
+        "fileSize": 180086,
+        "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/98f8c7e6-acaf-4cfd-a73b-9d5d6da095e8-docs2.jpeg",
+        "status": "success"
       }
-    ]
-  }
+    ],
+    "overallStatus": "completed"
+  },
+  "message": "All 1 document(s) uploaded successfully.",
+  "status": "success",
+  "statusCode": 200
 }
 ```
 
@@ -1779,21 +1781,33 @@ Base path: `/api/v1/documents`
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "Document collection retrieved successfully",
   "data": {
-    "collectionId": "uuid",
-    "createdAt": "2024-01-01T12:00:00Z",
+    "collectionStatus": "processed",
+    "createdAt": "2026-01-03T00:01:22.734172Z",
     "files": [
       {
-        "documentId": "uuid",
-        "fileName": "document.pdf",
-        "fileUrl": "https://...",
-        "ocrProcessed": true
+        "documentId": "427b799e-26e3-469f-bf0e-fddb8454722b",
+        "originalFileName": "docs1.jpeg",
+        "fileSize": 87367,
+        "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/727592e3-e884-4573-9845-226f11d1a4b7-docs1.jpeg",
+        "status": "success"
+      },
+      {
+        "documentId": "c57d2a24-79ba-47f8-9145-45d84ffafb9d",
+        "originalFileName": "docs2.jpeg",
+        "fileSize": 180086,
+        "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/a8b2d631-9e42-454a-b617-195ae61d0fc5-docs2.jpeg",
+        "status": "success"
       }
-    ]
-  }
+    ],
+    "id": "1d1c127c-47e1-4e59-bff7-3ea810d5ad89",
+    "updatedAt": "2026-01-03T00:01:37.549325Z",
+    "uploadTimestamp": "2026-01-03T00:01:22.520824Z",
+    "userId": "30e08f7d-9821-49f8-b0b6-f0bbc98d0fa4"
+  },
+  "message": "Document collection retrieved successfully.",
+  "status": "success",
+  "statusCode": 200
 }
 ```
 
@@ -1809,16 +1823,35 @@ Base path: `/api/v1/documents`
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "Document collections retrieved successfully",
   "data": [
     {
-      "collectionId": "uuid",
-      "fileCount": 5,
-      "createdAt": "2024-01-01T12:00:00Z"
+      "collectionStatus": "processed",
+      "createdAt": "2026-01-03T00:01:22.734172Z",
+      "fileCount": 2,
+      "id": "1d1c127c-47e1-4e59-bff7-3ea810d5ad89",
+      "updatedAt": "2026-01-03T00:01:37.549325Z",
+      "uploadTimestamp": "2026-01-03T00:01:22.520824Z"
+    },
+    {
+      "collectionStatus": "failed_ocr",
+      "createdAt": "2026-01-02T23:45:29.603412Z",
+      "fileCount": 2,
+      "id": "b5b9aef6-2537-42ee-b9e5-f6b38432f2c2",
+      "updatedAt": "2026-01-02T23:45:31.580341Z",
+      "uploadTimestamp": "2026-01-02T23:45:29.553583Z"
+    },
+    {
+      "collectionStatus": "completed",
+      "createdAt": "2026-01-02T22:19:28.534082Z",
+      "fileCount": 1,
+      "id": "77cde05e-7178-4930-8ed2-4a3888b8144c",
+      "updatedAt": "2026-01-02T22:19:28.534082Z",
+      "uploadTimestamp": "2026-01-02T22:19:28.491113Z"
     }
-  ]
+  ],
+  "message": "Document collections retrieved successfully.",
+  "status": "success",
+  "statusCode": 200
 }
 ```
 
@@ -1834,16 +1867,16 @@ Base path: `/api/v1/documents`
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "File retrieved successfully",
   "data": {
-    "documentId": "uuid",
-    "fileName": "document.pdf",
-    "fileUrl": "https://...",
-    "ocrProcessed": true,
-    "extractedText": "..."
-  }
+    "documentId": "427b799e-26e3-469f-bf0e-fddb8454722b",
+    "originalFileName": "docs1.jpeg",
+    "fileSize": 87367,
+    "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/727592e3-e884-4573-9845-226f11d1a4b7-docs1.jpeg",
+    "status": "success"
+  },
+  "message": "File retrieved successfully.",
+  "status": "success",
+  "statusCode": 200
 }
 ```
 
@@ -1893,15 +1926,18 @@ Base path: `/api/v1/collections`
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "Text extraction completed successfully",
   "data": {
-    "documentId": "uuid",
-    "extractedText": "The extracted text content...",
-    "confidence": 0.95,
-    "language": "en"
-  }
+    "id": "abc783c9-7aae-4ae7-b100-40d5bedb693a",
+    "documentId": "1e50bf3b-ad75-4b1e-b888-5309567e9487",
+    "status": "COMPLETED",
+    "extractedText": "& Samia Kousar @ - 2nd + Follow\n\nHR Ops Coordinator @ Rubik's Technologies,\n“-\" 1d-Edited-@\n\nHiring on behalf of colleague:\n& Position : Senior Backend Engineer (Java)\nBB Job Duties:\n+ Work as part of an agile software team to improve digital\nsales platforms and contribute new ideas.\n+ Take responsibility for delivery processes, perform code\nreviews, refactoring, and deployments using CI/CD.\n+ Oversee the full software development lifecycle, providing\nsolutions for risks, code quality, and process optimization.\n* Collaborate with Product Owners and advise stakeholders\non technical topics.\n+ Contribute to IT security, DevOps, and service optimization\nand stabilization.\n+ Help define test strategies and implement IT security\nmeasures.\nBB Your Profile:\n+ 3+ years of experience in agile backend software\ndevelopment (Scrum/Kanban).\n+ Proficient in Java, Spring Boot, JPA (Hibernate), REST &\nOpenAPI, and AWS.\n+ Experienced with CI/CD, Git, GitLab Cl, Docker, Kubernetes,\nand PostgreSQL.\nFamiliar with architecture principles, microservices, and test\nautomation in microservice environments.\n+ Knowledge of implementing security measures such as\noverload protection and OWASP Top 10.\n+ Fluent in German and proficient in English, both spoken and\nwritten.\nBB What's Important to Us:\nWe provide equal opportunities to all candidates and promote\ndiversity and inclusion within our teams. We value every\napplication regardless of gender, nationality, ethnic or social\norigin, religion, belief, disability, age, or sexual orientation.\n",
+    "errorMessage": null,
+    "createdAt": "2026-01-02T23:26:30.564011+01:00",
+    "updatedAt": "2026-01-02T23:26:30.575559+01:00"
+  },
+  "message": "Text extraction completed successfully.",
+  "status": "success",
+  "statusCode": 200
 }
 ```
 
@@ -1925,15 +1961,29 @@ Base path: `/api/v1/collections`
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "Documents uploaded and OCR extraction started",
   "data": {
-    "collectionId": "uuid",
+    "collectionId": "9a3a763b-2fd9-4f70-b01e-eb1582a8f927",
     "files": [
-      "..."
-    ]
-  }
+      {
+        "documentId": "8cfb0ef4-e1c6-46b4-b24b-7d4ce1100cb6",
+        "originalFileName": "docs1.jpeg",
+        "fileSize": 87367,
+        "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/8d85b26f-4cfe-4544-8922-748b57830e34-docs1.jpeg",
+        "status": "success"
+      },
+      {
+        "documentId": "d43d3ee3-1b56-48c3-bbfd-7090e17d05cc",
+        "originalFileName": "docs2.jpeg",
+        "fileSize": 180086,
+        "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/6e6d2211-9443-4373-b447-bbc633bfe4b2-docs2.jpeg",
+        "status": "success"
+      }
+    ],
+    "overallStatus": "processing"
+  },
+  "message": "2 document(s) uploaded successfully and queued for processing. 0 failed.",
+  "status": "processing",
+  "statusCode": 202
 }
 ```
 
@@ -1946,23 +1996,64 @@ Base path: `/api/v1/collections`
 | `GET`      | `/collections/{collectionId}/document/results` | Yes               |
 
 **Response:**
-
+### Example of Successful OCR Response
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "OCR results retrieved successfully",
   "data": {
-    "collectionId": "uuid",
-    "results": [
+    "collectionId": "1d1c127c-47e1-4e59-bff7-3ea810d5ad89",
+    "files": [
       {
-        "documentId": "uuid",
-        "fileName": "document.pdf",
-        "extractedText": "...",
-        "status": "COMPLETED"
+        "createdAt": "2026-01-03T00:01:22.918841Z",
+        "documentId": "427b799e-26e3-469f-bf0e-fddb8454722b",
+        "errorMessage": null,
+        "extractedText": "Siva @ @sivalabs - 5h 12)\nMy favorite @Tech Stack:\n\nLanguage: Java/Kotlin\n\nFrameworks: Spring Boot, Quarkus\n\nDesign & Architecture: Modular Monolith,\nPackage-by-Feature\n\nDatabase: PostgreSQL, Flyway Migrations\nTesting: Integration Tests with Testcontainers,\nUnit Tests with Mockito, API Stubbing with\nWireMock\n\nArchitecture Tests: Spring Modulith Tests, Arch\nUnit Tests with Taikai\n\nLibrary Upgrades: Renovate, Dependabot,\nOpenRewrite\n\nIDE: IntelliJ IDEA\n\nBuild Tool: Maven\n\nCode Formatting: Spotless Plugin with Palantir\nJava Format\n\nHava #Architecture #KISS\n",
+        "originalFileName": "docs1.jpeg",
+        "status": "completed"
+      },
+      {
+        "createdAt": "2026-01-03T00:01:22.928132Z",
+        "documentId": "c57d2a24-79ba-47f8-9145-45d84ffafb9d",
+        "errorMessage": null,
+        "extractedText": "Samia Kousar © - 2nd + Follow\nHR Ops Coordinator @ Rubik's Technologies.\n\n« 1d+ Edited + @\n\nHiring on behalf of colleague:\n& Position : Senior Backend Engineer (Java)\n\nBB Job Duties:\n\n+ Work as part of an agile software team to improve digital\nsales platforms and contribute new ideas.\n\n+ Take responsibility for delivery processes, perform code\nreviews, refactoring, and deployments using CI/CD.\n\n+ Oversee the full software development lifecycle, providing\nsolutions for risks, code quality, and process optimization.\n* Collaborate with Product Owners and advise stakeholders\non technical topics.\n\n+ Contribute to IT security, DevOps, and service optimization\nand stabilization.\n\n+ Help define test strategies and implement IT security\nmeasures.\n\nBB Your Profile:\n\n+ 3+ years of experience in agile backend software\ndevelopment (Scrum/Kanban).\n\n+ Proficient in Java, Spring Boot, JPA (Hibernate), REST &\nOpenAPI, and AWS.\n\n+ Experienced with CI/CD, Git, GitLab Cl, Docker, Kubernetes,\nand PostgreSQL.\n\nFamiliar with architecture principles, microservices, and test\nautomation in microservice environments.\n\n+ Knowledge of implementing security measures such as\noverload protection and OWASP Top 10.\n\n+ Fluent in German and proficient in English, both spoken and\nwritten.\n\nBB What's Important to Us:\n\nWe provide equal opportunities to all candidates and promote\ndiversity and inclusion within our teams. We value every\napplication regardless of gender, nationality, ethnic or social\norigin, religion, belief, disability, age, or sexual orientation.\n",
+        "originalFileName": "docs2.jpeg",
+        "status": "completed"
       }
-    ]
-  }
+    ],
+    "overallStatus": "processed"
+  },
+  "message": "OCR results retrieved successfully.",
+  "status": "success",
+  "statusCode": 200
+}
+```
+### Example of Failed OCR Response
+```json
+{
+    "data": {
+        "collectionId": "b5b9aef6-2537-42ee-b9e5-f6b38432f2c2",
+        "files": [
+            {
+                "createdAt": "2026-01-02T23:45:29.672077Z",
+                "documentId": "0a6cc6ff-8218-4719-9cc7-174f7e7c5bdb",
+                "errorMessage": "OCR provider is not available: Local Tesseract OCR",
+                "extractedText": null,
+                "originalFileName": "docs1.jpeg",
+                "status": "failed"
+            },
+            {
+                "createdAt": "2026-01-02T23:45:29.683818Z",
+                "documentId": "a3eb06f7-a90d-4515-868e-ba0dc1e67fce",
+                "errorMessage": "OCR provider is not available: Local Tesseract OCR",
+                "extractedText": null,
+                "originalFileName": "docs2.jpeg",
+                "status": "failed"
+            }
+        ],
+        "overallStatus": "failed_ocr"
+    },
+    "message": "OCR results retrieved successfully.",
+    "status": "success",
+    "statusCode": 200
 }
 ```
 
@@ -2780,13 +2871,135 @@ Base path: `/api/v1/search/documents`
 
 ```json
 {
-  "content": [
-    "..."
+  "results": [
+    {
+      "id": "4c88ccae-07ba-4862-9cc7-833c8c10a4b7",
+      "collectionId": "82da1cd8-05f9-4101-9b12-f529bc1f5971",
+      "fileName": "docs1.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 87367,
+      "status": "PROCESSED",
+      "ocrStatus": "COMPLETED",
+      "textPreview": "Siva @ @sivalabs - 5h 12)\nMy favorite @Tech Stack:\n\nLanguage: Java/Kotlin\n\nFrameworks: Spring Boot, Quarkus\n\nDesign & Architecture: Modular Monolith,\nPackage-by-Feature\n\nDatabase: PostgreSQL, Flyway M...",
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/a71de614-0e57-4911-9261-3af48dad9f2d-docs1.jpeg",
+      "uploadTimestamp": "2026-01-03T06:58:11.403Z",
+      "createdAt": "2026-01-03T06:58:11.403Z",
+      "score": null
+    },
+    {
+      "id": "192edc1d-291d-481b-9533-139f3aa87106",
+      "collectionId": "ab3d5e4e-4dd2-44ec-a61a-279c7e1fbc9c",
+      "fileName": "docs2.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 180086,
+      "status": "PROCESSED",
+      "ocrStatus": "COMPLETED",
+      "textPreview": "Samia Kousar © - 2nd + Follow\nHR Ops Coordinator @ Rubik's Technologies.\n\n« 1d+ Edited + @\n\nHiring on behalf of colleague:\n& Position : Senior Backend Engineer (Java)\n\nBB Job Duties:\n\n+ Work as part o...",
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/2988c6e2-6f88-4dcc-b3d6-aeb1b6bb26c5-docs2.jpeg",
+      "uploadTimestamp": "2026-01-03T01:05:19.199Z",
+      "createdAt": "2026-01-03T01:05:19.199Z",
+      "score": null
+    },
+    {
+      "id": "f757c584-7a1b-4433-9dc6-720d1a4b6cb9",
+      "collectionId": "ab3d5e4e-4dd2-44ec-a61a-279c7e1fbc9c",
+      "fileName": "docs1.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 87367,
+      "status": "PROCESSED",
+      "ocrStatus": "COMPLETED",
+      "textPreview": "Siva @ @sivalabs - 5h 12)\nMy favorite @Tech Stack:\n\nLanguage: Java/Kotlin\n\nFrameworks: Spring Boot, Quarkus\n\nDesign & Architecture: Modular Monolith,\nPackage-by-Feature\n\nDatabase: PostgreSQL, Flyway M...",
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/f584f3dd-2a04-4d46-9afb-c01dcc12c062-docs1.jpeg",
+      "uploadTimestamp": "2026-01-03T01:05:19.199Z",
+      "createdAt": "2026-01-03T01:05:18.615Z",
+      "score": null
+    },
+    {
+      "id": "c57d2a24-79ba-47f8-9145-45d84ffafb9d",
+      "collectionId": "1d1c127c-47e1-4e59-bff7-3ea810d5ad89",
+      "fileName": "docs2.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 180086,
+      "status": "PROCESSED",
+      "ocrStatus": "COMPLETED",
+      "textPreview": "Samia Kousar © - 2nd + Follow\nHR Ops Coordinator @ Rubik's Technologies.\n\n« 1d+ Edited + @\n\nHiring on behalf of colleague:\n& Position : Senior Backend Engineer (Java)\n\nBB Job Duties:\n\n+ Work as part o...",
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/a8b2d631-9e42-454a-b617-195ae61d0fc5-docs2.jpeg",
+      "uploadTimestamp": "2026-01-03T00:01:22.52Z",
+      "createdAt": "2026-01-03T00:01:22.52Z",
+      "score": null
+    },
+    {
+      "id": "427b799e-26e3-469f-bf0e-fddb8454722b",
+      "collectionId": "1d1c127c-47e1-4e59-bff7-3ea810d5ad89",
+      "fileName": "docs1.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 87367,
+      "status": "PROCESSED",
+      "ocrStatus": "COMPLETED",
+      "textPreview": "Siva @ @sivalabs - 5h 12)\nMy favorite @Tech Stack:\n\nLanguage: Java/Kotlin\n\nFrameworks: Spring Boot, Quarkus\n\nDesign & Architecture: Modular Monolith,\nPackage-by-Feature\n\nDatabase: PostgreSQL, Flyway M...",
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/727592e3-e884-4573-9845-226f11d1a4b7-docs1.jpeg",
+      "uploadTimestamp": "2026-01-03T00:01:22.52Z",
+      "createdAt": "2026-01-03T00:01:21.629Z",
+      "score": null
+    },
+    {
+      "id": "a3eb06f7-a90d-4515-868e-ba0dc1e67fce",
+      "collectionId": "b5b9aef6-2537-42ee-b9e5-f6b38432f2c2",
+      "fileName": "docs2.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 180086,
+      "status": "FAILED_OCR",
+      "ocrStatus": "FAILED",
+      "textPreview": null,
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/33112830-09f6-41fb-89d0-a2e7c74c8329-docs2.jpeg",
+      "uploadTimestamp": "2026-01-02T23:45:29.553Z",
+      "createdAt": "2026-01-02T23:45:29.553Z",
+      "score": null
+    },
+    {
+      "id": "0a6cc6ff-8218-4719-9cc7-174f7e7c5bdb",
+      "collectionId": "b5b9aef6-2537-42ee-b9e5-f6b38432f2c2",
+      "fileName": "docs1.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 87367,
+      "status": "FAILED_OCR",
+      "ocrStatus": "FAILED",
+      "textPreview": null,
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/d164ab9d-cfc7-4865-893e-e673119fbcb1-docs1.jpeg",
+      "uploadTimestamp": "2026-01-02T23:45:29.553Z",
+      "createdAt": "2026-01-02T23:45:28.98Z",
+      "score": null
+    },
+    {
+      "id": "1e50bf3b-ad75-4b1e-b888-5309567e9487",
+      "collectionId": "77cde05e-7178-4930-8ed2-4a3888b8144c",
+      "fileName": "docs2.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 180086,
+      "status": "COMPLETED",
+      "ocrStatus": "COMPLETED",
+      "textPreview": "& Samia Kousar @ - 2nd + Follow\n\nHR Ops Coordinator @ Rubik's Technologies,\n“-\" 1d-Edited-@\n\nHiring on behalf of colleague:\n& Position : Senior Backend Engineer (Java)\nBB Job Duties:\n+ Work as part of...",
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/98f8c7e6-acaf-4cfd-a73b-9d5d6da095e8-docs2.jpeg",
+      "uploadTimestamp": "2026-01-02T22:19:28.491Z",
+      "createdAt": "2026-01-02T22:19:28.491Z",
+      "score": null
+    }
   ],
-  "totalElements": 100,
-  "totalPages": 10,
+  "totalHits": 8,
   "page": 0,
-  "size": 10
+  "size": 10,
+  "totalPages": 1,
+  "took": null,
+  "highlights": {},
+  "facets": {}
 }
 ```
 
@@ -2806,6 +3019,70 @@ Base path: `/api/v1/search/documents`
 | `page`    | int    | No       | Page number (default: 0) |
 | `size`    | int    | No       | Page size (default: 10)  |
 
+### Sample Request:
+
+```GET /api/v1/search/documents/content?query=invoice&page=0&size=5```
+
+**Response:**
+
+```json
+{
+  "results": [
+    {
+      "id": "427b799e-26e3-469f-bf0e-fddb8454722b",
+      "collectionId": "1d1c127c-47e1-4e59-bff7-3ea810d5ad89",
+      "fileName": "docs1.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 87367,
+      "status": "PROCESSED",
+      "ocrStatus": "COMPLETED",
+      "textPreview": "Siva @ @sivalabs - 5h 12)\nMy favorite @Tech Stack:\n\nLanguage: Java/Kotlin\n\nFrameworks: Spring Boot, Quarkus\n\nDesign & Architecture: Modular Monolith,\nPackage-by-Feature\n\nDatabase: PostgreSQL, Flyway M...",
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/727592e3-e884-4573-9845-226f11d1a4b7-docs1.jpeg",
+      "uploadTimestamp": "2026-01-03T00:01:22.52Z",
+      "createdAt": "2026-01-03T00:01:21.629Z",
+      "score": null
+    },
+    {
+      "id": "f757c584-7a1b-4433-9dc6-720d1a4b6cb9",
+      "collectionId": "ab3d5e4e-4dd2-44ec-a61a-279c7e1fbc9c",
+      "fileName": "docs1.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 87367,
+      "status": "PROCESSED",
+      "ocrStatus": "COMPLETED",
+      "textPreview": "Siva @ @sivalabs - 5h 12)\nMy favorite @Tech Stack:\n\nLanguage: Java/Kotlin\n\nFrameworks: Spring Boot, Quarkus\n\nDesign & Architecture: Modular Monolith,\nPackage-by-Feature\n\nDatabase: PostgreSQL, Flyway M...",
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/f584f3dd-2a04-4d46-9afb-c01dcc12c062-docs1.jpeg",
+      "uploadTimestamp": "2026-01-03T01:05:19.199Z",
+      "createdAt": "2026-01-03T01:05:18.615Z",
+      "score": null
+    },
+    {
+      "id": "4c88ccae-07ba-4862-9cc7-833c8c10a4b7",
+      "collectionId": "82da1cd8-05f9-4101-9b12-f529bc1f5971",
+      "fileName": "docs1.jpeg",
+      "fileType": "image/jpeg",
+      "fileSize": 87367,
+      "status": "PROCESSED",
+      "ocrStatus": "COMPLETED",
+      "textPreview": "Siva @ @sivalabs - 5h 12)\nMy favorite @Tech Stack:\n\nLanguage: Java/Kotlin\n\nFrameworks: Spring Boot, Quarkus\n\nDesign & Architecture: Modular Monolith,\nPackage-by-Feature\n\nDatabase: PostgreSQL, Flyway M...",
+      "highlights": [],
+      "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/a71de614-0e57-4911-9261-3af48dad9f2d-docs1.jpeg",
+      "uploadTimestamp": "2026-01-03T06:58:11.403Z",
+      "createdAt": "2026-01-03T06:58:11.403Z",
+      "score": null
+    }
+  ],
+  "totalHits": 3,
+  "page": 0,
+  "size": 5,
+  "totalPages": 1,
+  "took": null,
+  "highlights": {},
+  "facets": {}
+}
+```
 ---
 
 #### Quick Document Search
@@ -2852,6 +3129,64 @@ Base path: `/api/v1/admin/search`
 }
 ```
 
+**Response:**
+
+```json
+{
+    "results": [
+        {
+            "id": "5ee41e38-56ca-4912-ae5b-b7427e966189",
+            "firstName": "Michael",
+            "lastName": "Wyte",
+            "email": "afiaaniebiet0@gmail.com",
+            "role": "USER",
+            "isActive": true,
+            "isVerified": true,
+            "isPlatformAdmin": false,
+            "isOrganizationAdmin": false,
+            "country": "US",
+            "profession": "Software engineer",
+            "organization": "Globe Tech",
+            "profilePicture": null,
+            "subscriptionPlan": "FREE",
+            "subscriptionStatus": "Active",
+            "lastLogin": "2026-01-01T15:30:41.028Z",
+            "createdAt": "2025-12-28T13:01:36.752Z",
+            "updatedAt": "2026-01-01T15:30:41.033Z",
+            "documentCount": 0
+        },
+        {
+            "id": "98c0ba52-69e0-4bfe-bb76-793431334e47",
+            "firstName": "Aniebiet",
+            "lastName": "Afia",
+            "email": "aniebietafia87@gmail.com",
+            "role": "USER",
+            "isActive": true,
+            "isVerified": true,
+            "isPlatformAdmin": false,
+            "isOrganizationAdmin": false,
+            "country": "NG",
+            "profession": "Data Analyst",
+            "organization": "Brints Tech",
+            "profilePicture": null,
+            "subscriptionPlan": "FREE",
+            "subscriptionStatus": "Active",
+            "lastLogin": "2025-12-27T11:53:05.965Z",
+            "createdAt": "2025-12-27T11:33:58.862Z",
+            "updatedAt": "2025-12-27T11:53:05.972Z",
+            "documentCount": 0
+        }
+    ],
+    "totalHits": 2,
+    "page": 0,
+    "size": 10,
+    "totalPages": 1,
+    "took": null,
+    "highlights": {},
+    "facets": {}
+}
+```
+
 ---
 
 #### Quick User Search
@@ -2892,6 +3227,44 @@ Base path: `/api/v1/admin/search`
     "paymentProvider": "STRIPE",
     "status": "success"
   }
+}
+```
+
+**Response:**
+
+```json
+{
+  "results": [
+    {
+      "id": "550e6312-250c-450c-b71e-64db0dd25533",
+      "userId": "5ee41e38-56ca-4912-ae5b-b7427e966189",
+      "userEmail": "afiaaniebiet0@gmail.com",
+      "userName": "Michael Wyte",
+      "receiptNumber": "RCP-20260101-336640",
+      "paymentProvider": "PAYSTACK",
+      "externalPaymentId": "PAY_34213CB8D9FB4DEE",
+      "paymentType": null,
+      "status": "COMPLETED",
+      "amount": 1395000.0,
+      "currency": "NGN",
+      "paymentMethod": "card",
+      "paymentMethodDetails": "**** 4081 (VISA )",
+      "description": null,
+      "subscriptionPlan": null,
+      "receiptUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/receipts/RCP-20260101-336640.pdf",
+      "emailSent": true,
+      "paidAt": "2026-01-01T15:31:38.993Z",
+      "createdAt": "2026-01-01T15:31:41.743Z",
+      "updatedAt": "2026-01-01T15:31:41.75Z"
+    }
+  ],
+  "totalHits": 1,
+  "page": 0,
+  "size": 10,
+  "totalPages": 1,
+  "took": null,
+  "highlights": {},
+  "facets": {}
 }
 ```
 

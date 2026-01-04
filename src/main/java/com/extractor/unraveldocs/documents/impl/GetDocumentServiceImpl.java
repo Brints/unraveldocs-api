@@ -20,99 +20,117 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class GetDocumentServiceImpl implements GetDocumentService {
 
-    private final DocumentCollectionRepository documentCollectionRepository;
+        private final DocumentCollectionRepository documentCollectionRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "documentCollection", key = "#collectionId")
-    public DocumentCollectionResponse<GetDocumentCollectionData> getDocumentCollectionById(String collectionId, String userId) {
-        DocumentCollection collection = documentCollectionRepository.findById(collectionId)
-                .orElseThrow(() -> new NotFoundException("Document collection not found with ID: " + collectionId));
+        @Override
+        @Transactional(readOnly = true)
+        public DocumentCollectionResponse<GetDocumentCollectionData> getDocumentCollectionById(String collectionId,
+                        String userId) {
+                GetDocumentCollectionData responseData = getCachedDocumentCollectionData(collectionId, userId);
 
-        if (!collection.getUser().getId().equals(userId)) {
-            throw new ForbiddenException("You are not authorized to view this document collection.");
+                return DocumentCollectionResponse.<GetDocumentCollectionData>builder()
+                                .statusCode(HttpStatus.OK.value())
+                                .status("success")
+                                .message("Document collection retrieved successfully.")
+                                .data(responseData)
+                                .build();
         }
 
-        List<FileEntryData> fileEntryDataList = collection.getFiles().stream()
-                .map(this::mapToFileEntryData)
-                .collect(Collectors.toList());
+        @Cacheable(value = "documentCollection", key = "#collectionId")
+        public GetDocumentCollectionData getCachedDocumentCollectionData(String collectionId, String userId) {
+                DocumentCollection collection = documentCollectionRepository.findById(collectionId)
+                                .orElseThrow(() -> new NotFoundException(
+                                                "Document collection not found with ID: " + collectionId));
 
-        GetDocumentCollectionData responseData = GetDocumentCollectionData.builder()
-                .id(collection.getId())
-                .userId(collection.getUser().getId())
-                .collectionStatus(collection.getCollectionStatus())
-                .uploadTimestamp(collection.getUploadTimestamp())
-                .createdAt(collection.getCreatedAt())
-                .updatedAt(collection.getUpdatedAt())
-                .files(fileEntryDataList)
-                .build();
+                if (!collection.getUser().getId().equals(userId)) {
+                        throw new ForbiddenException("You are not authorized to view this document collection.");
+                }
 
-        return DocumentCollectionResponse.<GetDocumentCollectionData>builder()
-                .statusCode(HttpStatus.OK.value())
-                .status("success")
-                .message("Document collection retrieved successfully.")
-                .data(responseData)
-                .build();
-    }
+                List<FileEntryData> fileEntryDataList = collection.getFiles().stream()
+                                .map(this::mapToFileEntryData)
+                                .collect(Collectors.toList());
 
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "documentCollections", key = "#userId")
-    public DocumentCollectionResponse<List<DocumentCollectionSummary>> getAllDocumentCollectionsByUser(String userId) {
-        List<DocumentCollection> collections = documentCollectionRepository.findAllByUserId(userId);
-
-        List<DocumentCollectionSummary> summaries = collections.stream()
-                .map(collection -> DocumentCollectionSummary.builder()
-                        .id(collection.getId())
-                        .collectionStatus(collection.getCollectionStatus())
-                        .fileCount(collection.getFiles().size())
-                        .uploadTimestamp(collection.getUploadTimestamp())
-                        .createdAt(collection.getCreatedAt())
-                        .updatedAt(collection.getUpdatedAt())
-                        .build())
-                .collect(Collectors.toList());
-
-        return DocumentCollectionResponse.<List<DocumentCollectionSummary>>builder()
-                .statusCode(HttpStatus.OK.value())
-                .status("success")
-                .message("Document collections retrieved successfully.")
-                .data(summaries)
-                .build();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "fileEntry", key = "#collectionId + '-' + #documentId")
-    public DocumentCollectionResponse<FileEntryData> getFileFromCollection(String collectionId, String documentId, String userId) {
-        DocumentCollection collection = documentCollectionRepository.findById(collectionId)
-                .orElseThrow(() -> new NotFoundException("Document collection not found with ID: " + collectionId));
-
-        if (!collection.getUser().getId().equals(userId)) {
-            throw new ForbiddenException("You are not authorized to access this document collection.");
+                return GetDocumentCollectionData.builder()
+                                .id(collection.getId())
+                                .userId(collection.getUser().getId())
+                                .collectionStatus(collection.getCollectionStatus())
+                                .uploadTimestamp(collection.getUploadTimestamp())
+                                .createdAt(collection.getCreatedAt())
+                                .updatedAt(collection.getUpdatedAt())
+                                .files(fileEntryDataList)
+                                .build();
         }
 
-        FileEntry fileEntry = collection.getFiles().stream()
-                .filter(file -> file.getDocumentId().equals(documentId))
-                .findFirst()
-                .orElseThrow(() -> new NotFoundException("File with document ID: " + documentId + " not found in collection: " + collectionId));
+        @Override
+        @Transactional(readOnly = true)
+        public DocumentCollectionResponse<List<DocumentCollectionSummary>> getAllDocumentCollectionsByUser(
+                        String userId) {
+                List<DocumentCollectionSummary> summaries = getCachedDocumentCollectionSummaries(userId);
 
-        FileEntryData fileEntryData = mapToFileEntryData(fileEntry);
+                return DocumentCollectionResponse.<List<DocumentCollectionSummary>>builder()
+                                .statusCode(HttpStatus.OK.value())
+                                .status("success")
+                                .message("Document collections retrieved successfully.")
+                                .data(summaries)
+                                .build();
+        }
 
-        return DocumentCollectionResponse.<FileEntryData>builder()
-                .statusCode(HttpStatus.OK.value())
-                .status("success")
-                .message("File retrieved successfully.")
-                .data(fileEntryData)
-                .build();
-    }
+        @Cacheable(value = "documentCollections", key = "#userId")
+        public List<DocumentCollectionSummary> getCachedDocumentCollectionSummaries(String userId) {
+                List<DocumentCollection> collections = documentCollectionRepository.findAllByUserId(userId);
 
-    private FileEntryData mapToFileEntryData(FileEntry fileEntry) {
-        return FileEntryData.builder()
-                .documentId(fileEntry.getDocumentId())
-                .originalFileName(fileEntry.getOriginalFileName())
-                .fileSize(fileEntry.getFileSize())
-                .fileUrl(fileEntry.getFileUrl())
-                .status(fileEntry.getUploadStatus())
-                .build();
-    }
+                return collections.stream()
+                                .map(collection -> DocumentCollectionSummary.builder()
+                                                .id(collection.getId())
+                                                .collectionStatus(collection.getCollectionStatus())
+                                                .fileCount(collection.getFiles().size())
+                                                .uploadTimestamp(collection.getUploadTimestamp())
+                                                .createdAt(collection.getCreatedAt())
+                                                .updatedAt(collection.getUpdatedAt())
+                                                .build())
+                                .collect(Collectors.toList());
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public DocumentCollectionResponse<FileEntryData> getFileFromCollection(String collectionId, String documentId,
+                        String userId) {
+                FileEntryData fileEntryData = getCachedFileEntryData(collectionId, documentId, userId);
+
+                return DocumentCollectionResponse.<FileEntryData>builder()
+                                .statusCode(HttpStatus.OK.value())
+                                .status("success")
+                                .message("File retrieved successfully.")
+                                .data(fileEntryData)
+                                .build();
+        }
+
+        @Cacheable(value = "fileEntry", key = "#collectionId + '-' + #documentId")
+        public FileEntryData getCachedFileEntryData(String collectionId, String documentId, String userId) {
+                DocumentCollection collection = documentCollectionRepository.findById(collectionId)
+                                .orElseThrow(() -> new NotFoundException(
+                                                "Document collection not found with ID: " + collectionId));
+
+                if (!collection.getUser().getId().equals(userId)) {
+                        throw new ForbiddenException("You are not authorized to access this document collection.");
+                }
+
+                FileEntry fileEntry = collection.getFiles().stream()
+                                .filter(file -> file.getDocumentId().equals(documentId))
+                                .findFirst()
+                                .orElseThrow(() -> new NotFoundException("File with document ID: " + documentId
+                                                + " not found in collection: " + collectionId));
+
+                return mapToFileEntryData(fileEntry);
+        }
+
+        private FileEntryData mapToFileEntryData(FileEntry fileEntry) {
+                return FileEntryData.builder()
+                                .documentId(fileEntry.getDocumentId())
+                                .originalFileName(fileEntry.getOriginalFileName())
+                                .fileSize(fileEntry.getFileSize())
+                                .fileUrl(fileEntry.getFileUrl())
+                                .status(fileEntry.getUploadStatus())
+                                .build();
+        }
 }

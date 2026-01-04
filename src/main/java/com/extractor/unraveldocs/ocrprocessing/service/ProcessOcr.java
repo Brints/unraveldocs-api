@@ -12,6 +12,8 @@ import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.provider.OcrRequest;
 import com.extractor.unraveldocs.ocrprocessing.provider.OcrResult;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
+import com.extractor.unraveldocs.elasticsearch.events.IndexAction;
+import com.extractor.unraveldocs.elasticsearch.service.ElasticsearchIndexingService;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +38,7 @@ public class ProcessOcr implements ProcessOcrService {
     private final OcrDataRepository ocrDataRepository;
     private final OcrProcessingService ocrProcessingService;
     private final UserRepository userRepository;
+    private final Optional<ElasticsearchIndexingService> elasticsearchIndexingService;
 
     @Override
     @Transactional
@@ -88,6 +92,12 @@ public class ProcessOcr implements ProcessOcrService {
             updateCollectionStatus(collection);
             ocrDataRepository.save(ocrData);
             documentCollectionRepository.save(collection);
+
+            // Index document in Elasticsearch after OCR completion
+            if (ocrData.getStatus() == OcrStatus.COMPLETED) {
+                elasticsearchIndexingService.ifPresent(
+                        service -> service.indexDocument(collection, fileEntry, ocrData, IndexAction.CREATE));
+            }
         }
     }
 

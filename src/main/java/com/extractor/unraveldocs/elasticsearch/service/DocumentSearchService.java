@@ -45,7 +45,8 @@ public class DocumentSearchService {
      * @return Search response with matching documents
      */
     public SearchResponse<DocumentSearchResult> searchDocuments(String userId, SearchRequest request) {
-        log.debug("Searching documents for user {}: query='{}'", sanitizer.sanitizeLogging(userId), sanitizer.sanitizeLogging(request.getQuery()));
+        log.debug("Searching documents for user {}: query='{}'", sanitizer.sanitizeLogging(userId),
+                sanitizer.sanitizeLogging(request.getQuery()));
 
         Pageable pageable = createPageable(request);
         Page<DocumentSearchIndex> page;
@@ -79,7 +80,8 @@ public class DocumentSearchService {
      * @return Search response with matching documents
      */
     public SearchResponse<DocumentSearchResult> searchByContent(String userId, String query, int page, int size) {
-        log.debug("Searching document content for user {}: query='{}'", sanitizer.sanitizeLogging(userId), sanitizer.sanitizeLogging(query));
+        log.debug("Searching document content for user {}: query='{}'", sanitizer.sanitizeLogging(userId),
+                sanitizer.sanitizeLogging(query));
 
         Pageable pageable = PageRequest.of(page, size);
         Page<DocumentSearchIndex> results = documentSearchRepository
@@ -170,12 +172,17 @@ public class DocumentSearchService {
     }
 
     private Pageable createPageable(SearchRequest request) {
+        String sortBy = request.getSortBy() != null ? request.getSortBy() : "createdAt";
+        String sortDirection = request.getSortDirection() != null ? request.getSortDirection() : "desc";
+        int page = request.getPage() != null ? request.getPage() : 0;
+        int size = request.getSize() != null ? request.getSize() : 10;
+
         Sort sort = Sort.by(
-                request.getSortDirection().equalsIgnoreCase("asc")
+                sortDirection.equalsIgnoreCase("asc")
                         ? Sort.Direction.ASC
                         : Sort.Direction.DESC,
-                request.getSortBy());
-        return PageRequest.of(request.getPage(), request.getSize(), sort);
+                sortBy);
+        return PageRequest.of(page, size, sort);
     }
 
     private DocumentSearchResult toSearchResult(DocumentSearchIndex doc) {

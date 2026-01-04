@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin/search")
 @RequiredArgsConstructor
 @Tag(name = "Admin Search", description = "Admin search endpoints for users and payments")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
 @ConditionalOnProperty(name = "spring.elasticsearch.uris")
 public class AdminSearchController {
 

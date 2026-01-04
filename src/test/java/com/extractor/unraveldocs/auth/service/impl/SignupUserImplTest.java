@@ -20,6 +20,7 @@ import com.extractor.unraveldocs.user.repository.UserRepository;
 import com.extractor.unraveldocs.utils.generatetoken.GenerateVerificationToken;
 import com.extractor.unraveldocs.utils.userlib.DateHelper;
 import com.extractor.unraveldocs.utils.userlib.UserLibrary;
+import com.extractor.unraveldocs.elasticsearch.service.ElasticsearchIndexingService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -58,12 +60,14 @@ class SignupUserImplTest {
         private UserLibrary userLibrary;
         @Mock
         private EventPublisherService eventPublisherService;
+        @Mock
+        private ElasticsearchIndexingService elasticsearchIndexingService;
 
         @InjectMocks
         private SignupUserImpl signupUserService;
 
         private SignupRequestDto request;
-    private OffsetDateTime expiryDate;
+        private OffsetDateTime expiryDate;
 
         @BeforeEach
         void setUp() {
@@ -72,6 +76,19 @@ class SignupUserImplTest {
                 }
                 OffsetDateTime now = OffsetDateTime.now();
                 expiryDate = now.plusHours(3);
+
+                // Manually construct with Optional since @InjectMocks doesn't handle
+                // Optional<T>
+                signupUserService = new SignupUserImpl(
+                                assignSubscriptionService,
+                                dateHelper,
+                                eventPublisherService,
+                                verificationToken,
+                                passwordEncoder,
+                                responseBuilder,
+                                userLibrary,
+                                userRepository,
+                                Optional.of(elasticsearchIndexingService));
 
                 request = new SignupRequestDto(
                                 "john",
@@ -85,7 +102,7 @@ class SignupUserImplTest {
                                 "Tech Company",
                                 "USA");
 
-            User user = new User();
+                User user = new User();
                 user.setId("1");
                 user.setFirstName("John");
                 user.setLastName("Doe");
@@ -93,7 +110,7 @@ class SignupUserImplTest {
                 user.setVerified(false);
                 user.setActive(false);
 
-            UserVerification userVerification = new UserVerification();
+                UserVerification userVerification = new UserVerification();
                 userVerification.setUser(user);
         }
 

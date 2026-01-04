@@ -6,6 +6,8 @@ import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
 import com.extractor.unraveldocs.payment.receipt.enums.PaymentProvider;
 import com.extractor.unraveldocs.payment.receipt.model.Receipt;
 import com.extractor.unraveldocs.payment.receipt.repository.ReceiptRepository;
+import com.extractor.unraveldocs.elasticsearch.events.IndexAction;
+import com.extractor.unraveldocs.elasticsearch.service.ElasticsearchIndexingService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class ReceiptGenerationService {
     private final ReceiptStorageService receiptStorageService;
     private final ReceiptEmailService receiptEmailService;
     private final ReceiptConfig receiptConfig;
+    private final Optional<ElasticsearchIndexingService> elasticsearchIndexingService;
 
     private static final AtomicLong receiptCounter = new AtomicLong(System.currentTimeMillis());
 
@@ -54,8 +57,7 @@ public class ReceiptGenerationService {
         if (receiptExists(data.getExternalPaymentId(), data.getPaymentProvider())) {
             log.info("Receipt already exists for payment: {}", data.getExternalPaymentId());
             return receiptRepository.findByExternalPaymentIdAndPaymentProvider(
-                    data.getExternalPaymentId(), data.getPaymentProvider()
-            ).orElse(null);
+                    data.getExternalPaymentId(), data.getPaymentProvider()).orElse(null);
         }
 
         try {
@@ -88,13 +90,16 @@ public class ReceiptGenerationService {
                     .emailSent(false)
                     .build();
 
-            receipt = receiptRepository.save(receipt);
+            final Receipt savedReceipt = receiptRepository.save(receipt);
             log.info("Receipt saved: {}", receiptNumber);
 
-            // Send email (async)
-            sendReceiptEmailAsync(receipt, data, pdfContent);
+            // Index payment in Elasticsearch
+            elasticsearchIndexingService.ifPresent(service -> service.indexPayment(savedReceipt, IndexAction.CREATE));
 
-            return receipt;
+            // Send email (async)
+            sendReceiptEmailAsync(savedReceipt, data, pdfContent);
+
+            return savedReceipt;
 
         } catch (Exception e) {
             log.error("Failed to generate receipt for payment {}: {}",

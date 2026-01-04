@@ -21,7 +21,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/admin/elasticsearch")
 @RequiredArgsConstructor
 @Tag(name = "Elasticsearch Sync", description = "Admin endpoints for Elasticsearch synchronization")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
 @ConditionalOnProperty(name = "spring.elasticsearch.uris")
 public class ElasticsearchSyncController {
 

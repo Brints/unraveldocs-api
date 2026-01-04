@@ -165,11 +165,16 @@ public class UserSearchService {
     }
 
     private Pageable createPageable(SearchRequest request) {
+        String sortBy = request.getSortBy() != null ? request.getSortBy() : "createdAt";
+        String sortDirection = request.getSortDirection() != null ? request.getSortDirection() : "desc";
+        int page = request.getPage() != null ? request.getPage() : 0;
+        int size = request.getSize() != null ? request.getSize() : 10;
+
         Sort sort = Sort.by(
-                request.getSortDirection().equalsIgnoreCase("asc")
+                sortDirection.equalsIgnoreCase("asc")
                         ? Sort.Direction.ASC
                         : Sort.Direction.DESC,
-                request.getSortBy());
-        return PageRequest.of(request.getPage(), request.getSize(), sort);
+                sortBy);
+        return PageRequest.of(page, size, sort);
     }
 }

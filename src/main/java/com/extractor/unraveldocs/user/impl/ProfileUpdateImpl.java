@@ -8,6 +8,8 @@ import com.extractor.unraveldocs.user.interfaces.userimpl.ProfileUpdateService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
+import com.extractor.unraveldocs.elasticsearch.events.IndexAction;
+import com.extractor.unraveldocs.elasticsearch.service.ElasticsearchIndexingService;
 import com.extractor.unraveldocs.utils.imageupload.cloudinary.CloudinaryService;
 import com.extractor.unraveldocs.utils.userlib.UserLibrary;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +29,11 @@ public class ProfileUpdateImpl implements ProfileUpdateService {
     private final ResponseBuilderService responseBuilder;
     private final UserLibrary userLibrary;
     private final UserRepository userRepository;
+    private final Optional<ElasticsearchIndexingService> elasticsearchIndexingService;
 
     @Override
     @Transactional
-    @CachePut(value = {"getProfileByUser", "getProfileByAdmin"}, key = "#userId")
+    @CachePut(value = { "getProfileByUser", "getProfileByAdmin" }, key = "#userId")
     public UnravelDocsResponse<UserData> updateProfile(ProfileUpdateRequestDto request, String userId) {
         Optional<User> optionalUser = userRepository.findById(userId);
 
@@ -40,12 +43,14 @@ public class ProfileUpdateImpl implements ProfileUpdateService {
 
         User user = optionalUser.get();
 
-        if (request.firstName() != null && !request.firstName().isEmpty() && !request.firstName().equalsIgnoreCase(user.getFirstName())) {
+        if (request.firstName() != null && !request.firstName().isEmpty()
+                && !request.firstName().equalsIgnoreCase(user.getFirstName())) {
             String capitalizedFirstName = userLibrary.capitalizeFirstLetterOfName(request.firstName());
             user.setFirstName(capitalizedFirstName);
         }
 
-        if (request.lastName() != null && !request.lastName().isEmpty() && !request.lastName().equalsIgnoreCase(user.getLastName())) {
+        if (request.lastName() != null && !request.lastName().isEmpty()
+                && !request.lastName().equalsIgnoreCase(user.getLastName())) {
             String capitalizedLastName = userLibrary.capitalizeFirstLetterOfName(request.lastName());
             user.setLastName(capitalizedLastName);
         }
@@ -70,6 +75,9 @@ public class ProfileUpdateImpl implements ProfileUpdateService {
         }
 
         User updatedUser = userRepository.save(user);
+
+        // Index updated user in Elasticsearch
+        elasticsearchIndexingService.ifPresent(service -> service.indexUser(updatedUser, IndexAction.UPDATE));
 
         UserData data = getResponseData(updatedUser, UserData::new);
 
