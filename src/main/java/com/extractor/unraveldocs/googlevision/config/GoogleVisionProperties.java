@@ -64,6 +64,20 @@ public class GoogleVisionProperties {
     private long maxFileSizeBytes = 20 * 1024 * 1024;
 
     /**
+     * Path to Google Cloud credentials JSON file.
+     * Supports:
+     * - classpath: prefix for classpath resources (e.g.,
+     * classpath:google-credentials.json)
+     * - file: prefix for file system paths (e.g., file:/path/to/credentials.json)
+     * - Absolute paths (e.g., /path/to/credentials.json or
+     * C:\path\to\credentials.json)
+     * 
+     * If not set, falls back to GOOGLE_APPLICATION_CREDENTIALS environment variable
+     * or Application Default Credentials (ADC).
+     */
+    private String credentialsLocation;
+
+    /**
      * Feature types to use for text detection.
      */
     private FeatureConfig features = new FeatureConfig();

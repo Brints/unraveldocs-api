@@ -33,6 +33,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService.getStorageFailures;
 
@@ -42,7 +43,7 @@ import static com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService.g
 public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtractionService {
     private final DocumentCollectionRepository documentCollectionRepository;
     private final OcrDataRepository ocrDataRepository;
-    private final OcrEventPublisher ocrEventPublisher;
+    private final Optional<OcrEventPublisher> ocrEventPublisher;
     private final OcrEventMapper ocrEventMapper;
     private final SanitizeLogging s;
     private final FileStorageService fileStorageService;
@@ -137,10 +138,12 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    successfulFiles.forEach(fileEntry -> {
-                        OcrRequestedEvent event = ocrEventMapper.toOcrRequestedEvent(fileEntry,
-                                finalSavedCollectionId);
-                        ocrEventPublisher.publishOcrRequest(event);
+                    ocrEventPublisher.ifPresent(publisher -> {
+                        successfulFiles.forEach(fileEntry -> {
+                            OcrRequestedEvent event = ocrEventMapper.toOcrRequestedEvent(fileEntry,
+                                    finalSavedCollectionId);
+                            publisher.publishOcrRequest(event);
+                        });
                     });
                 }
             });

@@ -45,11 +45,14 @@ public class AdminUserInitializer implements CommandLineRunner {
 
     @Override
     @Transactional
-    public void run(String @NonNull ... args) throws Exception {
+    public void run(String @NonNull... args) throws Exception {
         if (adminEmail == null || adminPassword == null) {
             log.warn("Admin email or password not set in application properties. Skipping admin user creation.");
             return;
         }
+
+        // Create plans FIRST so they exist when assigning subscriptions
+        createDefaultSubscriptionPlans();
 
         User adminUser = null;
         if (userRepository.existsByEmail(adminEmail)) {
@@ -60,8 +63,6 @@ public class AdminUserInitializer implements CommandLineRunner {
             userRepository.save(adminUser);
             log.info("Admin user has been created: {}", adminUser);
         }
-
-        createDefaultSubscriptionPlans();
 
         if (adminUser != null && adminUser.getSubscription() == null) {
             var subscription = subscriptionService.assignDefaultSubscription(adminUser);
