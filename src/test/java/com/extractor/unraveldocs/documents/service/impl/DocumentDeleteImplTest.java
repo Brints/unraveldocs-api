@@ -10,6 +10,7 @@ import com.extractor.unraveldocs.documents.repository.DocumentCollectionReposito
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
+import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.utils.imageupload.aws.AwsS3Service;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,11 +42,13 @@ public class DocumentDeleteImplTest {
     @Mock
     private SanitizeLogging s;
 
+    @Mock
+    private StorageAllocationService storageAllocationService;
+
     @InjectMocks
     private DocumentDeleteImpl documentDeleteService;
 
     private User testUser;
-
 
     @BeforeEach
     void setUp() {
@@ -70,7 +73,8 @@ public class DocumentDeleteImplTest {
         String file1DocumentId = UUID.randomUUID().toString();
         String file1Url = "https://s3.amazonaws.com/bucket/storageId1";
 
-        FileEntry fileEntry1 = FileEntry.builder().documentId(file1DocumentId).storageId(file1StorageId).fileUrl(file1Url).uploadStatus("SUCCESS").build();
+        FileEntry fileEntry1 = FileEntry.builder().documentId(file1DocumentId).storageId(file1StorageId)
+                .fileUrl(file1Url).uploadStatus("SUCCESS").build();
         DocumentCollection collection = DocumentCollection.builder()
                 .id(collectionId)
                 .user(testUser)
@@ -116,13 +120,13 @@ public class DocumentDeleteImplTest {
         User anotherUser = new User();
         anotherUser.setId(UUID.randomUUID().toString());
 
-
-        DocumentCollection collection = DocumentCollection.builder().id(collectionId).user(anotherUser).files(new ArrayList<>()).build();
+        DocumentCollection collection = DocumentCollection.builder().id(collectionId).user(anotherUser)
+                .files(new ArrayList<>()).build();
         when(documentCollectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
 
         // Act & Assert
-        ForbiddenException exception = assertThrows(ForbiddenException.class, () ->
-                documentDeleteService.deleteDocument(collectionId, testUser.getId()));
+        ForbiddenException exception = assertThrows(ForbiddenException.class,
+                () -> documentDeleteService.deleteDocument(collectionId, testUser.getId()));
 
         assertEquals("You are not authorized to delete this document collection.", exception.getMessage());
         verify(awsS3Service, never()).deleteFile(anyString());
@@ -140,8 +144,11 @@ public class DocumentDeleteImplTest {
         String storageIdToRemove = "storageIdToRemove";
         String urlToRemove = "https://s3.amazonaws.com/bucket/storageIdToRemove";
 
-        FileEntry fileToRemove = FileEntry.builder().documentId(documentIdToRemove).storageId(storageIdToRemove).fileUrl(urlToRemove).uploadStatus(DocumentUploadState.SUCCESS.toString()).build();
-        FileEntry remainingFile = FileEntry.builder().documentId(UUID.randomUUID().toString()).storageId("otherStorageId").fileUrl("https://s3.amazonaws.com/bucket/otherStorageId").uploadStatus(DocumentUploadState.SUCCESS.toString()).build();
+        FileEntry fileToRemove = FileEntry.builder().documentId(documentIdToRemove).storageId(storageIdToRemove)
+                .fileUrl(urlToRemove).uploadStatus(DocumentUploadState.SUCCESS.toString()).build();
+        FileEntry remainingFile = FileEntry.builder().documentId(UUID.randomUUID().toString())
+                .storageId("otherStorageId").fileUrl("https://s3.amazonaws.com/bucket/otherStorageId")
+                .uploadStatus(DocumentUploadState.SUCCESS.toString()).build();
         List<FileEntry> files = new ArrayList<>(List.of(fileToRemove, remainingFile));
 
         DocumentCollection collection = DocumentCollection.builder()
@@ -153,8 +160,8 @@ public class DocumentDeleteImplTest {
 
         when(documentCollectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
         doNothing().when(awsS3Service).deleteFile(urlToRemove);
-        when(documentCollectionRepository.save(any(DocumentCollection.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
+        when(documentCollectionRepository.save(any(DocumentCollection.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
         documentDeleteService.deleteFileFromCollection(collectionId, documentIdToRemove, testUser.getId());
@@ -186,7 +193,8 @@ public class DocumentDeleteImplTest {
         String storageIdToRemove = "storageIdToRemove";
         String urlToRemove = "https://s3.amazonaws.com/bucket/storageIdToRemove";
 
-        FileEntry fileToRemove = FileEntry.builder().documentId(documentIdToRemove).storageId(storageIdToRemove).fileUrl(urlToRemove).uploadStatus(DocumentUploadState.SUCCESS.toString()).build();
+        FileEntry fileToRemove = FileEntry.builder().documentId(documentIdToRemove).storageId(storageIdToRemove)
+                .fileUrl(urlToRemove).uploadStatus(DocumentUploadState.SUCCESS.toString()).build();
         List<FileEntry> files = new ArrayList<>(List.of(fileToRemove));
 
         DocumentCollection collection = DocumentCollection.builder()
@@ -199,7 +207,6 @@ public class DocumentDeleteImplTest {
         when(documentCollectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
         doNothing().when(awsS3Service).deleteFile(urlToRemove);
         doNothing().when(documentCollectionRepository).delete(any(DocumentCollection.class));
-
 
         // Act
         documentDeleteService.deleteFileFromCollection(collectionId, documentIdToRemove, testUser.getId());
@@ -220,14 +227,16 @@ public class DocumentDeleteImplTest {
         // Arrange
         String collectionId = UUID.randomUUID().toString();
         String nonExistentDocumentId = UUID.randomUUID().toString();
-        DocumentCollection collection = DocumentCollection.builder().id(collectionId).user(testUser).files(new ArrayList<>()).build();
+        DocumentCollection collection = DocumentCollection.builder().id(collectionId).user(testUser)
+                .files(new ArrayList<>()).build();
         when(documentCollectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
 
         // Act & Assert
-        NotFoundException exception = assertThrows(NotFoundException.class, () ->
-                documentDeleteService.deleteFileFromCollection(collectionId, nonExistentDocumentId, testUser.getId()));
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> documentDeleteService
+                .deleteFileFromCollection(collectionId, nonExistentDocumentId, testUser.getId()));
 
-        assertEquals("File with document ID: " + nonExistentDocumentId + " not found in collection: " + collectionId, exception.getMessage());
+        assertEquals("File with document ID: " + nonExistentDocumentId + " not found in collection: " + collectionId,
+                exception.getMessage());
         verify(awsS3Service, never()).deleteFile(anyString());
         verifyNoInteractions(s);
     }
@@ -240,8 +249,8 @@ public class DocumentDeleteImplTest {
         when(documentCollectionRepository.findById(collectionId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        NotFoundException exception = assertThrows(NotFoundException.class, () ->
-                documentDeleteService.deleteFileFromCollection(collectionId, documentId, testUser.getId()));
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> documentDeleteService.deleteFileFromCollection(collectionId, documentId, testUser.getId()));
 
         assertEquals("Document collection not found with ID: " + collectionId, exception.getMessage());
         verifyNoInteractions(s);
@@ -255,8 +264,8 @@ public class DocumentDeleteImplTest {
         User anotherUser = new User();
         anotherUser.setId(UUID.randomUUID().toString());
 
-
-        FileEntry existingFile = FileEntry.builder().documentId(documentId).storageId("someStorageId").fileUrl("https://s3.amazonaws.com/bucket/someStorageId").build();
+        FileEntry existingFile = FileEntry.builder().documentId(documentId).storageId("someStorageId")
+                .fileUrl("https://s3.amazonaws.com/bucket/someStorageId").build();
         DocumentCollection collection = DocumentCollection.builder()
                 .id(collectionId)
                 .user(anotherUser)
@@ -265,8 +274,8 @@ public class DocumentDeleteImplTest {
         when(documentCollectionRepository.findById(collectionId)).thenReturn(Optional.of(collection));
 
         // Act & Assert
-        ForbiddenException exception = assertThrows(ForbiddenException.class, () ->
-                documentDeleteService.deleteFileFromCollection(collectionId, documentId, testUser.getId()));
+        ForbiddenException exception = assertThrows(ForbiddenException.class,
+                () -> documentDeleteService.deleteFileFromCollection(collectionId, documentId, testUser.getId()));
 
         assertEquals("You are not authorized to modify this document collection.", exception.getMessage());
         verify(awsS3Service, never()).deleteFile(anyString());

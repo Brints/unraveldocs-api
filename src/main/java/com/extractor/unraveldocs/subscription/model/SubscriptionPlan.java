@@ -57,6 +57,9 @@ public class SubscriptionPlan {
     @Column(name = "stripe_price_id")
     private String stripePriceId;
 
+    @Column(name = "paypal_plan_code")
+    private String paypalPlanCode;
+
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Discount> discounts;
 
@@ -67,4 +70,7 @@ public class SubscriptionPlan {
     @UpdateTimestamp
     @Column(nullable = false, name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @Column(name = "storage_limit", nullable = false)
+    private Long storageLimit; // Storage limit in bytes
 }

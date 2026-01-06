@@ -3,22 +3,42 @@ package com.extractor.unraveldocs.payment.paypal.adapter;
 import com.extractor.unraveldocs.payment.common.dto.*;
 import com.extractor.unraveldocs.payment.common.enums.PaymentGateway;
 import com.extractor.unraveldocs.payment.common.service.PaymentGatewayService;
+import com.extractor.unraveldocs.payment.enums.PaymentStatus;
+import com.extractor.unraveldocs.payment.enums.SubscriptionStatus;
+import com.extractor.unraveldocs.payment.paypal.dto.request.CreateOrderRequest;
+import com.extractor.unraveldocs.payment.paypal.dto.request.CreateSubscriptionRequest;
+import com.extractor.unraveldocs.payment.paypal.dto.request.RefundOrderRequest;
+import com.extractor.unraveldocs.payment.paypal.dto.response.PayPalCaptureResponse;
+import com.extractor.unraveldocs.payment.paypal.dto.response.PayPalOrderResponse;
+import com.extractor.unraveldocs.payment.paypal.dto.response.PayPalRefundResponse;
+import com.extractor.unraveldocs.payment.paypal.dto.response.PayPalSubscriptionResponse;
+import com.extractor.unraveldocs.payment.paypal.model.PayPalCustomer;
+import com.extractor.unraveldocs.payment.paypal.model.PayPalPayment;
+import com.extractor.unraveldocs.payment.paypal.service.PayPalCustomerService;
+import com.extractor.unraveldocs.payment.paypal.service.PayPalPaymentService;
+import com.extractor.unraveldocs.payment.paypal.service.PayPalSubscriptionService;
 import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.user.model.User;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Optional;
+
 /**
- * Stub implementation of PaymentGatewayService for PayPal.
- * This is a placeholder for future implementation of PayPal payment integration.
- * 
- * PayPal is a global payment gateway with worldwide coverage.
+ * Implementation of PaymentGatewayService for PayPal.
+ * Provides a unified interface for PayPal payment operations.
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class PayPalPaymentGateway implements PaymentGatewayService {
 
-    private static final String NOT_IMPLEMENTED_MSG = "PayPal payment gateway is not yet implemented";
+    private final PayPalPaymentService paymentService;
+    private final PayPalCustomerService customerService;
+    private final PayPalSubscriptionService subscriptionService;
 
     @Override
     public PaymentGateway getProvider() {
@@ -26,62 +46,311 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
     }
 
     @Override
-    public InitializePaymentResponse initializeSubscriptionPayment(User user, SubscriptionPlan plan, InitializePaymentRequest request) {
-        log.warn(NOT_IMPLEMENTED_MSG);
-        return InitializePaymentResponse.builder()
-                .gateway(PaymentGateway.PAYPAL)
-                .success(false)
-                .errorMessage(NOT_IMPLEMENTED_MSG)
-                .build();
+    public InitializePaymentResponse initializeSubscriptionPayment(User user, SubscriptionPlan plan,
+            InitializePaymentRequest request) {
+        try {
+            log.info("Initializing PayPal subscription payment for user: {}, plan: {}",
+                    user.getId(), plan.getName());
+
+            CreateSubscriptionRequest subRequest = CreateSubscriptionRequest.builder()
+                    .planId(plan.getPaypalPlanCode())
+                    .returnUrl(request.getCallbackUrl())
+                    .cancelUrl(request.getCancelUrl())
+                    .customId(user.getId())
+                    .build();
+
+            PayPalSubscriptionResponse subscription = subscriptionService.createSubscription(user, subRequest);
+
+            return InitializePaymentResponse.builder()
+                    .gateway(PaymentGateway.PAYPAL)
+                    .success(true)
+                    .paymentUrl(subscription.getApprovalLink())
+                    .reference(subscription.getId())
+                    .accessCode(subscription.getId())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to initialize PayPal subscription payment: {}", e.getMessage(), e);
+            return InitializePaymentResponse.builder()
+                    .gateway(PaymentGateway.PAYPAL)
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .build();
+        }
     }
 
     @Override
     public PaymentResponse createPayment(User user, PaymentRequest request) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        try {
+            log.info("Creating PayPal payment for user: {}, amount: {}", user.getId(), request.getAmount());
+
+            // Convert cents to dollars
+            BigDecimal amountInDollars = BigDecimal.valueOf(request.getAmount())
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+            CreateOrderRequest orderRequest = CreateOrderRequest.builder()
+                    .amount(amountInDollars)
+                    .currency(request.getCurrency())
+                    .description(request.getDescription())
+                    .metadata(request.getMetadata())
+                    .build();
+
+            PayPalOrderResponse order = paymentService.createOrder(user, orderRequest);
+
+            return PaymentResponse.builder()
+                    .success(true)
+                    .providerPaymentId(order.getId())
+                    .status(mapOrderStatus(order.getStatus()))
+                    .amount(order.getAmount())
+                    .currency(order.getCurrency())
+                    .paymentUrl(order.getApprovalLink())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to create PayPal payment: {}", e.getMessage(), e);
+            return PaymentResponse.builder()
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .build();
+        }
     }
 
     @Override
     public PaymentResponse getPayment(String providerPaymentId) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        try {
+            PayPalOrderResponse order = paymentService.getOrderDetails(providerPaymentId);
+
+            return PaymentResponse.builder()
+                    .success(true)
+                    .providerPaymentId(order.getId())
+                    .status(mapOrderStatus(order.getStatus()))
+                    .amount(order.getAmount())
+                    .currency(order.getCurrency())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to get PayPal payment: {}", e.getMessage(), e);
+            return PaymentResponse.builder()
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .build();
+        }
     }
 
     @Override
     public RefundResponse refundPayment(RefundRequest request) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        try {
+            log.info("Processing PayPal refund for payment: {}", request.getPaymentId());
+
+            // Get the capture ID from the payment
+            Optional<PayPalPayment> paymentOpt = paymentService.getPaymentByOrderId(request.getPaymentId());
+            if (paymentOpt.isEmpty()) {
+                paymentOpt = paymentService.getPaymentByCaptureId(request.getPaymentId());
+            }
+
+            if (paymentOpt.isEmpty()) {
+                return RefundResponse.builder()
+                        .success(false)
+                        .errorMessage("Payment not found")
+                        .build();
+            }
+
+            PayPalPayment payment = paymentOpt.get();
+            String captureId = payment.getCaptureId() != null ? payment.getCaptureId() : request.getPaymentId();
+
+            // Convert cents to dollars if amount is provided
+            BigDecimal refundAmount = null;
+            if (request.getAmount() != null) {
+                refundAmount = BigDecimal.valueOf(request.getAmount())
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            }
+
+            RefundOrderRequest refundRequest = RefundOrderRequest.builder()
+                    .captureId(captureId)
+                    .amount(refundAmount)
+                    .reason(request.getReason())
+                    .build();
+
+            PayPalRefundResponse refund = paymentService.refundPayment(refundRequest);
+
+            return RefundResponse.builder()
+                    .success(refund.isSuccessful())
+                    .providerRefundId(refund.getId())
+                    .amount(refund.getAmount())
+                    .status(refund.getStatus())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to process PayPal refund: {}", e.getMessage(), e);
+            return RefundResponse.builder()
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .build();
+        }
     }
 
     @Override
     public SubscriptionResponse createSubscription(User user, SubscriptionRequest request) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        try {
+            log.info("Creating PayPal subscription for user: {}", user.getId());
+
+            CreateSubscriptionRequest subRequest = CreateSubscriptionRequest.builder()
+                    .planId(request.getPriceId())
+                    .returnUrl(request.getSuccessUrl())
+                    .cancelUrl(request.getCancelUrl())
+                    .build();
+
+            PayPalSubscriptionResponse subscription = subscriptionService.createSubscription(user, subRequest);
+
+            return SubscriptionResponse.builder()
+                    .success(true)
+                    .providerSubscriptionId(subscription.getId())
+                    .status(mapSubscriptionStatus(subscription.getStatus()))
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to create PayPal subscription: {}", e.getMessage(), e);
+            return SubscriptionResponse.builder()
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .build();
+        }
     }
 
     @Override
     public SubscriptionResponse getSubscription(String providerSubscriptionId) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        try {
+            PayPalSubscriptionResponse subscription = subscriptionService
+                    .getSubscriptionDetails(providerSubscriptionId);
+
+            return SubscriptionResponse.builder()
+                    .success(true)
+                    .providerSubscriptionId(subscription.getId())
+                    .status(mapSubscriptionStatus(subscription.getStatus()))
+                    .currentPeriodStart(subscription.getStartTime())
+                    .currentPeriodEnd(subscription.getBillingInfo() != null
+                            ? subscription.getBillingInfo().getNextBillingTime()
+                            : null)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to get PayPal subscription: {}", e.getMessage(), e);
+            return SubscriptionResponse.builder()
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .build();
+        }
     }
 
     @Override
     public SubscriptionResponse cancelSubscription(String providerSubscriptionId, boolean immediately) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        try {
+            log.info("Cancelling PayPal subscription: {}", providerSubscriptionId);
+
+            PayPalSubscriptionResponse subscription = subscriptionService.cancelSubscription(
+                    providerSubscriptionId,
+                    immediately ? "Immediate cancellation requested" : "Cancellation at period end");
+
+            return SubscriptionResponse.builder()
+                    .success(true)
+                    .providerSubscriptionId(subscription.getId())
+                    .status(mapSubscriptionStatus(subscription.getStatus()))
+                    .canceledAt(java.time.OffsetDateTime.now())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to cancel PayPal subscription: {}", e.getMessage(), e);
+            return SubscriptionResponse.builder()
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .build();
+        }
     }
 
     @Override
     public SubscriptionResponse changePlan(String providerSubscriptionId, String newPriceId) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        // PayPal subscription plan changes require creating a new subscription
+        // This is a limitation of PayPal's subscription API
+        log.warn("PayPal subscription plan change not directly supported. " +
+                "Cancel existing and create new subscription.");
+
+        return SubscriptionResponse.builder()
+                .success(false)
+                .errorMessage("Plan change requires cancelling and creating a new subscription")
+                .build();
     }
 
     @Override
     public CustomerResponse getOrCreateCustomer(User user) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        try {
+            PayPalCustomer customer = customerService.getOrCreateCustomer(user);
+
+            return CustomerResponse.builder()
+                    .success(true)
+                    .providerCustomerId(customer.getPayerId() != null ? customer.getPayerId() : customer.getId())
+                    .email(customer.getEmail())
+                    .name(customer.getFirstName() + " " + customer.getLastName())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to get/create PayPal customer: {}", e.getMessage(), e);
+            return CustomerResponse.builder()
+                    .success(false)
+                    .errorMessage(e.getMessage())
+                    .build();
+        }
     }
 
     @Override
     public boolean verifyPayment(String reference) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        try {
+            PayPalOrderResponse order = paymentService.getOrderDetails(reference);
+            return order.isCompleted();
+
+        } catch (Exception e) {
+            log.error("Failed to verify PayPal payment: {}", e.getMessage(), e);
+            return false;
+        }
     }
 
     @Override
     public String ensurePlanExists(SubscriptionPlan plan) {
-        throw new UnsupportedOperationException(NOT_IMPLEMENTED_MSG);
+        // PayPal plans need to be created via the PayPal dashboard or API
+        // Return the existing plan code if set
+        if (plan.getPaypalPlanCode() != null && !plan.getPaypalPlanCode().isEmpty()) {
+            return plan.getPaypalPlanCode();
+        }
+
+        log.warn("PayPal plan code not set for subscription plan: {}. " +
+                "Please create the plan in PayPal and update the subscription_plans table.", plan.getName());
+        return null;
+    }
+
+    // ==================== Helper Methods ====================
+
+    private PaymentStatus mapOrderStatus(String paypalStatus) {
+        if (paypalStatus == null)
+            return PaymentStatus.PENDING;
+
+        return switch (paypalStatus.toUpperCase()) {
+            case "CREATED", "SAVED", "PAYER_ACTION_REQUIRED" -> PaymentStatus.PENDING;
+            case "APPROVED" -> PaymentStatus.PROCESSING;
+            case "COMPLETED" -> PaymentStatus.SUCCEEDED;
+            case "VOIDED" -> PaymentStatus.CANCELED;
+            default -> PaymentStatus.PENDING;
+        };
+    }
+
+    private SubscriptionStatus mapSubscriptionStatus(String paypalStatus) {
+        if (paypalStatus == null)
+            return SubscriptionStatus.INCOMPLETE;
+
+        return switch (paypalStatus.toUpperCase()) {
+            case "APPROVAL_PENDING" -> SubscriptionStatus.INCOMPLETE;
+            case "APPROVED", "ACTIVE" -> SubscriptionStatus.ACTIVE;
+            case "SUSPENDED" -> SubscriptionStatus.PAUSED;
+            case "CANCELLED", "EXPIRED" -> SubscriptionStatus.CANCELED;
+            default -> SubscriptionStatus.INCOMPLETE;
+        };
     }
 }

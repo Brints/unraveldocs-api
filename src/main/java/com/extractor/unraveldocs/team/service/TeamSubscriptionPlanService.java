@@ -34,8 +34,9 @@ public class TeamSubscriptionPlanService {
 
     /**
      * Get a plan by name.
+     * Note: Not cached to avoid Redis deserialization issues with entity objects.
+     * The database lookup is fast and this method is not called frequently.
      */
-    @Cacheable(value = "teamPlans", key = "#planName")
     public TeamSubscriptionPlan getPlanByName(String planName) {
         return planRepository.findActiveByName(planName)
                 .orElseThrow(() -> new NotFoundException("Team subscription plan not found: " + planName));
@@ -43,8 +44,8 @@ public class TeamSubscriptionPlanService {
 
     /**
      * Get all active plans.
+     * Note: Not cached to avoid Redis deserialization issues with entity objects.
      */
-    @Cacheable(value = "teamPlans", key = "'all-active'")
     public List<TeamSubscriptionPlan> getAllActivePlans() {
         return planRepository.findAllActive();
     }

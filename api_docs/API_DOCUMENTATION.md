@@ -20,10 +20,12 @@ This document provides a comprehensive overview of all API endpoints available i
 10. [Word Export](#word-export)
 11. [Payments - Stripe](#payments---stripe)
 12. [Payments - Paystack](#payments---paystack)
-13. [Receipts](#receipts)
-14. [Subscription Management](#subscription-management)
-15. [Search - Elasticsearch](#search---elasticsearch)
-16. [Webhooks](#webhooks)
+13. [Payments - PayPal](#payments---paypal)
+14. [Receipts](#receipts)
+15. [Subscription Management](#subscription-management)
+16. [Storage](#storage)
+17. [Search - Elasticsearch](#search---elasticsearch)
+18. [Webhooks](#webhooks)
 
 ---
 
@@ -505,7 +507,7 @@ Base path: `/api/v1/auth`
 ```json
 {
   "email": "john.doe@example.com",
-  "token": "verification_token"
+  "token": "648c4568833e7de2664a8cdc9d8272a053523f5b6b68325c3b7f5f1d1d563258dfe101b7c8abb797"
 }
 ```
 
@@ -726,16 +728,29 @@ Base path: `/api/v1/user`
 |------------|--------------------------|-------------------|--------------------|
 | `PUT`      | `/user/profile/{userId}` | Yes               | 20 requests/minute |
 
-**Content-Type:** `multipart/form-data` or `application/json`
+**Content-Type:** `application/json`
+
+> **Note:** For profile picture uploads, use the separate `POST /user/profile/{userId}/upload` endpoint.
 
 **Request Body:**
+
+| Field          | Type   | Required | Description                  |
+|----------------|--------|----------|------------------------------|
+| `firstName`    | String | No       | First name (2-80 characters) |
+| `lastName`     | String | No       | Last name (2-80 characters)  |
+| `country`      | String | No       | Country code or name         |
+| `profession`   | String | No       | User's profession            |
+| `organization` | String | No       | User's organization/company  |
+
+**Example Request (JSON):**
 
 ```json
 {
   "firstName": "John",
   "lastName": "Updated",
-  "phoneNumber": "+1234567891",
-  "country": "Canada"
+  "country": "Canada",
+  "profession": "Software Engineer",
+  "organization": "Acme Inc."
 }
 ```
 
@@ -747,10 +762,19 @@ Base path: `/api/v1/user`
   "status": "success",
   "message": "Profile updated successfully",
   "data": {
-    "id": "uuid",
-    "email": "john.doe@example.com",
-    "firstName": "John",
-    "lastName": "Updated"
+    "id": "3e3c6fc7-e48b-4682-ab54-0e9375a039b8",
+    "profilePicture": null,
+    "firstName": "Aniebiet",
+    "lastName": "Whyte",
+    "email": "afiaaniebiet0@gmail.com",
+    "role": "user",
+    "lastLogin": "2026-01-06T01:48:44.930213Z",
+    "country": "US",
+    "profession": "Software engineer",
+    "organization": "Times",
+    "createdAt": "2026-01-06T01:41:44.92849Z",
+    "updatedAt": "2026-01-06T01:48:44.944396Z",
+    "verified": true
   }
 }
 ```
@@ -854,10 +878,9 @@ Sends OTP to user email to verify team creation.
 {
   "name": "Acme Corporation",
   "description": "Our company team",
-  "subscriptionType": "PREMIUM",
+  "subscriptionType": "TEAM_PREMIUM",
   "billingCycle": "MONTHLY",
-  "paymentGateway": "stripe",
-  "paymentToken": "tok_visa"
+  "paymentGateway": "paystack"
 }
 ```
 
@@ -875,7 +898,7 @@ Sends OTP to user email to verify team creation.
 ```json
 {
   "statusCode": 200,
-  "status": "success",
+  "status": "Success",
   "message": "OTP has been sent to your email. Please verify to complete team creation.",
   "data": null
 }
@@ -903,30 +926,30 @@ Sends OTP to user email to verify team creation.
 {
   "statusCode": 201,
   "status": "success",
-  "message": "Team created successfully. You have a 10-day free trial.",
+  "message": "Team created successfully",
   "data": {
-    "id": "uuid",
-    "name": "Acme Corporation",
-    "description": "Our company team",
-    "teamCode": "ACM12345",
-    "subscriptionType": "PREMIUM",
-    "billingCycle": "MONTHLY",
-    "subscriptionStatus": "TRIALING",
-    "subscriptionPrice": 29.00,
-    "currency": "USD",
-    "isActive": true,
-    "isVerified": true,
-    "isClosed": false,
+    "active": true,
     "autoRenew": true,
-    "trialEndsAt": "2025-01-08T12:00:00Z",
-    "nextBillingDate": "2025-01-08T12:00:00Z",
-    "subscriptionEndsAt": null,
+    "billingCycle": "Monthly",
     "cancellationRequestedAt": null,
-    "createdAt": "2024-12-29T12:00:00Z",
+    "closed": false,
+    "createdAt": null,
+    "currency": "USD",
     "currentMemberCount": 1,
+    "description": "Our company team",
+    "id": "55e54bc9-4319-41db-a5cc-686a31752ad2",
     "maxMembers": 10,
     "monthlyDocumentLimit": 200,
-    "isOwner": true
+    "name": "Acme Corporation",
+    "nextBillingDate": null,
+    "owner": true,
+    "subscriptionEndsAt": null,
+    "subscriptionPrice": 29.00,
+    "subscriptionStatus": "Trial",
+    "subscriptionType": "Team Premium",
+    "teamCode": "C97640E3",
+    "trialEndsAt": "2026-01-16T03:24:58.2561064+01:00",
+    "verified": true
   }
 }
 ```
@@ -989,17 +1012,31 @@ Returns all teams the user belongs to.
 {
   "statusCode": 200,
   "status": "success",
-  "message": "Teams retrieved successfully",
+  "message": "1 team(s) found",
   "data": [
     {
-      "id": "uuid",
-      "name": "Acme Corporation",
-      "teamCode": "ACM12345",
-      "subscriptionType": "PREMIUM",
-      "subscriptionStatus": "ACTIVE",
-      "currentMemberCount": 5,
+      "active": true,
+      "autoRenew": true,
+      "billingCycle": "Monthly",
+      "cancellationRequestedAt": null,
+      "closed": false,
+      "createdAt": "2026-01-06T02:25:01.042135Z",
+      "currency": "USD",
+      "currentMemberCount": 1,
+      "description": "Our company team",
+      "id": "55e54bc9-4319-41db-a5cc-686a31752ad2",
       "maxMembers": 10,
-      "isOwner": true
+      "monthlyDocumentLimit": 200,
+      "name": "Acme Corporation",
+      "nextBillingDate": null,
+      "owner": true,
+      "subscriptionEndsAt": null,
+      "subscriptionPrice": 29.00,
+      "subscriptionStatus": "Trial",
+      "subscriptionType": "Team Premium",
+      "teamCode": "C97640E3",
+      "trialEndsAt": "2026-01-16T02:24:58.256106Z",
+      "verified": true
     }
   ]
 }
@@ -1009,9 +1046,9 @@ Returns all teams the user belongs to.
 
 ### Get Team Members
 
-| **Method** | **Endpoint**             | **Auth Required** |
-|------------|--------------------------|-------------------|
-| `GET`      | `/teams/{teamId}/members`| Yes (Member)      |
+| **Method** | **Endpoint**              | **Auth Required** |
+|------------|---------------------------|-------------------|
+| `GET`      | `/teams/{teamId}/members` | Yes (Member)      |
 
 > **Note:** Email addresses are masked for non-owners (except own email).
 
@@ -1021,16 +1058,25 @@ Returns all teams the user belongs to.
 {
   "statusCode": 200,
   "status": "success",
-  "message": "Team members retrieved successfully",
+  "message": "2 member(s) found",
   "data": [
     {
-      "id": "member-uuid",
-      "userId": "user-uuid",
-      "firstName": "John",
-      "lastName": "Doe",
-      "email": "j***e@e***e.com",
+      "email": "af***@gmail.com",
+      "firstName": "Aniebiet",
+      "id": "a368785f-800b-4e54-b9bb-7192422d1fa7",
+      "joinedAt": "2026-01-06T02:25:01.096031Z",
+      "lastName": "Whyte",
+      "role": "OWNER",
+      "userId": "3e3c6fc7-e48b-4682-ab54-0e9375a039b8"
+    },
+    {
+      "email": "goldenlee87@gmail.com",
+      "firstName": "William",
+      "id": "51b0ec2b-b811-4b74-9e38-90c00d53bb96",
+      "joinedAt": "2026-01-06T02:34:38.065886Z",
+      "lastName": "French",
       "role": "MEMBER",
-      "joinedAt": "2024-12-27T12:00:00Z"
+      "userId": "37182e20-ed95-40aa-acdd-3afb1f8d0a5a"
     }
   ]
 }
@@ -1060,13 +1106,13 @@ Returns all teams the user belongs to.
   "status": "success",
   "message": "Member added successfully",
   "data": {
-    "id": "member-uuid",
-    "userId": "user-uuid",
-    "firstName": "Jane",
-    "lastName": "Smith",
-    "email": "newmember@example.com",
+    "email": "goldenlee87@gmail.com",
+    "firstName": "William",
+    "id": "51b0ec2b-b811-4b74-9e38-90c00d53bb96",
+    "joinedAt": null,
+    "lastName": "French",
     "role": "MEMBER",
-    "joinedAt": "2024-12-29T12:00:00Z"
+    "userId": "37182e20-ed95-40aa-acdd-3afb1f8d0a5a"
   }
 }
 ```
@@ -2596,7 +2642,7 @@ Base path: `/api/v1/paystack`
   "status": true,
   "message": "Subscription enabled successfully",
   "data": {
-    "..."
+    
   }
 }
 ```
@@ -2622,7 +2668,7 @@ Base path: `/api/v1/paystack`
   "status": true,
   "message": "Subscription disabled successfully",
   "data": {
-    "..."
+
   }
 }
 ```
@@ -2649,12 +2695,372 @@ Base path: `/api/v1/paystack`
   "status": true,
   "message": "Payment success",
   "data": {
-    "..."
+    
   }
 }
 ```
 
 ---
+
+## Payments - PayPal
+
+Base path: `/api/v1/paypal`
+
+> [!IMPORTANT]
+> **PayPal Account Required for Subscriptions**
+> 
+> - **Subscriptions (recurring payments):** Users **must have a PayPal account** because PayPal manages the recurring billing agreement.
+> - **One-time payments:** Users can use PayPal Guest Checkout (pay with card without a PayPal account) in supported countries.
+> 
+> **Recommendation:** For users who prefer not to create a PayPal account:
+> - Use **Stripe** for international card payments
+> - Use **Paystack** for Nigerian/African users
+
+### One-Time Payments
+
+#### Create PayPal Order
+
+| **Method** | **Endpoint**      | **Auth Required** |
+|------------|-------------------|-------------------|
+| `POST`     | `/paypal/orders`  | Yes               |
+
+**Request Body:**
+
+```json
+{
+  "amount": 29.99,
+  "currency": "USD",
+  "description": "One-time payment",
+  "metadata": {},
+  "intent": "CAPTURE"
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": true,
+  "message": "Order created successfully",
+  "data": {
+    "orderId": "ORDER-XXX",
+    "status": "CREATED",
+    "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=XXX",
+    "links": ["..."]
+  }
+}
+```
+
+---
+
+#### Capture PayPal Order
+
+| **Method** | **Endpoint**                       | **Auth Required** |
+|------------|------------------------------------|-------------------|
+| `POST`     | `/paypal/orders/{orderId}/capture` | Yes               |
+
+**Response:**
+
+```json
+{
+  "status": true,
+  "message": "Payment captured successfully",
+  "data": {
+    "captureId": "CAPTURE-XXX",
+    "orderId": "ORDER-XXX",
+    "status": "COMPLETED",
+    "amount": 29.99,
+    "currency": "USD"
+  }
+}
+```
+
+---
+
+#### Get Order Details
+
+| **Method** | **Endpoint**               | **Auth Required** |
+|------------|----------------------------|-------------------|
+| `GET`      | `/paypal/orders/{orderId}` | Yes               |
+
+**Response:** PayPal order details with status and links.
+
+---
+
+#### Process Refund
+
+| **Method** | **Endpoint**     | **Auth Required** |
+|------------|------------------|-------------------|
+| `POST`     | `/paypal/refund` | Yes               |
+
+**Request Body:**
+
+```json
+{
+  "captureId": "CAPTURE-XXX",
+  "amount": 10.00,
+  "currency": "USD",
+  "reason": "Customer request"
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": true,
+  "message": "Refund processed successfully",
+  "data": {
+    "refundId": "REFUND-XXX",
+    "captureId": "CAPTURE-XXX",
+    "status": "COMPLETED",
+    "amount": 10.00,
+    "currency": "USD"
+  }
+}
+```
+
+---
+
+#### Get Payment History
+
+| **Method** | **Endpoint**               | **Auth Required** |
+|------------|----------------------------|-------------------|
+| `GET`      | `/paypal/payments/history` | Yes               |
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page`    | int  | 0       | Page number |
+| `size`    | int  | 20      | Page size   |
+
+**Response:** Paginated list of `PayPalPayment` objects.
+
+---
+
+### Subscriptions
+
+#### Create Subscription
+
+| **Method** | **Endpoint**            | **Auth Required** |
+|------------|-------------------------|-------------------|
+| `POST`     | `/paypal/subscriptions` | Yes               |
+
+**Request Body:**
+
+```json
+{
+  "planId": "P-XXXXXXXX",
+  "returnUrl": "https://example.com/success",
+  "cancelUrl": "https://example.com/cancel"
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": true,
+  "message": "Subscription created successfully",
+  "data": {
+    "subscriptionId": "I-XXXXXXXX",
+    "status": "APPROVAL_PENDING",
+    "approvalUrl": "https://www.sandbox.paypal.com/..."
+  }
+}
+```
+
+---
+
+#### Get Subscription Details
+
+| **Method** | **Endpoint**                             | **Auth Required** |
+|------------|------------------------------------------|-------------------|
+| `GET`      | `/paypal/subscriptions/{subscriptionId}` | Yes               |
+
+**Response:** PayPal subscription details with billing info.
+
+---
+
+#### Get Active Subscription
+
+| **Method** | **Endpoint**                   | **Auth Required** |
+|------------|--------------------------------|-------------------|
+| `GET`      | `/paypal/subscriptions/active` | Yes               |
+
+**Response:** Active subscription for authenticated user or `404 Not Found`.
+
+---
+
+#### Cancel Subscription
+
+| **Method** | **Endpoint**                                     | **Auth Required** |
+|------------|--------------------------------------------------|-------------------|
+| `POST`     | `/paypal/subscriptions/{subscriptionId}/cancel`  | Yes               |
+
+**Query Parameters:**
+
+| Parameter | Type   | Required | Description             |
+|-----------|--------|----------|-------------------------|
+| `reason`  | string | No       | Reason for cancellation |
+
+**Response:**
+
+```json
+{
+  "status": true,
+  "message": "Subscription cancelled successfully",
+  "data": {
+    "subscriptionId": "I-XXXXXXXX",
+    "status": "CANCELLED"
+  }
+}
+```
+
+---
+
+#### Suspend Subscription
+
+| **Method** | **Endpoint**                                     | **Auth Required** |
+|------------|--------------------------------------------------|-------------------|
+| `POST`     | `/paypal/subscriptions/{subscriptionId}/suspend` | Yes               |
+
+**Response:** Subscription suspended successfully.
+
+---
+
+#### Activate Subscription
+
+| **Method** | **Endpoint**                                      | **Auth Required** |
+|------------|---------------------------------------------------|-------------------|
+| `POST`     | `/paypal/subscriptions/{subscriptionId}/activate` | Yes               |
+
+**Response:** Subscription activated successfully.
+
+---
+
+### Webhooks
+
+| **Method** | **Endpoint**       | **Auth Required** |
+|------------|--------------------|-------------------|
+| `POST`     | `/paypal/webhook`  | No (PayPal IPN)   |
+
+**Supported Events:**
+
+- `PAYMENT.CAPTURE.COMPLETED` - Payment captured successfully
+- `PAYMENT.CAPTURE.DENIED` - Payment capture failed
+- `BILLING.SUBSCRIPTION.ACTIVATED` - Subscription activated
+- `BILLING.SUBSCRIPTION.CANCELLED` - Subscription cancelled
+- `BILLING.SUBSCRIPTION.SUSPENDED` - Subscription suspended
+- `BILLING.SUBSCRIPTION.PAYMENT.FAILED` - Subscription payment failed
+
+---
+
+### PayPal Admin (SUPER_ADMIN Only)
+
+Base path: `/api/v1/admin/paypal`
+
+> These endpoints are for initial setup and plan management. They require SUPER_ADMIN role.
+
+#### Set Up All PayPal Plans
+
+| **Method** | **Endpoint**     | **Auth Required**      |
+|------------|------------------|------------------------|
+| `POST`     | `/plans/setup`   | Yes (SUPER_ADMIN role) |
+
+Creates a PayPal Product and billing plans for all subscription tiers. Run once during initial setup.
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "PayPal plans setup completed successfully",
+  "data": {
+    "productId": "PROD-XXXXXXXXXXXXXXXX",
+    "createdPlans": [
+      {
+        "planName": "STARTER_MONTHLY",
+        "paypalPlanId": "P-XXXXXXXXXXXXXXXX",
+        "price": "9.00",
+        "interval": "MONTH"
+      },
+      {
+        "planName": "PRO_MONTHLY",
+        "paypalPlanId": "P-XXXXXXXXXXXXXXXX",
+        "price": "19.00",
+        "interval": "MONTH"
+      },
+      {
+        "planName": "BUSINESS_MONTHLY",
+        "paypalPlanId": "P-XXXXXXXXXXXXXXXX",
+        "price": "49.00",
+        "interval": "MONTH"
+      }
+    ],
+    "planCount": 6,
+    "errors": [],
+    "success": true
+  }
+}
+```
+
+---
+
+#### List Existing PayPal Plans
+
+| **Method** | **Endpoint** | **Auth Required**      |
+|------------|--------------|------------------------|
+| `GET`      | `/plans`     | Yes (SUPER_ADMIN role) |
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "PayPal plans retrieved successfully",
+  "data": {
+    "plans": [
+      {
+        "id": "P-XXXXXXXXXXXXXXXX",
+        "name": "Starter Monthly",
+        "status": "ACTIVE",
+        "productId": "PROD-XXXXXXXXXXXXXXXX"
+      }
+    ],
+    "count": 6
+  }
+}
+```
+
+---
+
+#### Deactivate a PayPal Plan
+
+| **Method** | **Endpoint**              | **Auth Required**      |
+|------------|---------------------------|------------------------|
+| `POST`     | `/plans/{planId}/deactivate` | Yes (SUPER_ADMIN role) |
+
+Deactivates a PayPal billing plan. Existing subscriptions will continue until cancelled.
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "PayPal plan deactivated successfully",
+  "data": {
+    "planId": "P-XXXXXXXXXXXXXXXX"
+  }
+}
+```
+
+---
+
 
 ## Receipts
 
@@ -2812,7 +3218,7 @@ Base path: `/api/v1/admin/subscriptions`
   "status": "success",
   "message": "Subscription plan updated successfully",
   "data": {
-    "..."
+
   }
 }
 ```
@@ -2833,7 +3239,7 @@ Base path: `/api/v1/admin/subscriptions`
   "status": "success",
   "message": "Subscriptions assigned successfully",
   "data": {
-    "..."
+
   }
 }
 ```
@@ -3566,3 +3972,102 @@ Paginated responses include:
   "empty": false
 }
 ```
+
+---
+
+## Storage
+
+Base path: `/api/v1/storage`
+
+Storage allocation allows tracking document storage usage and limits based on subscription plans.
+
+### Storage Limits by Plan
+
+| Plan            | Storage Limit |
+|-----------------|---------------|
+| Free            | 120 MB        |
+| Starter         | 2.6 GB        |
+| Pro             | 12.3 GB       |
+| Business        | 30 GB         |
+| Team Premium    | 200 GB        |
+| Team Enterprise | Unlimited     |
+
+### Get Storage Info
+
+| **Method** | **Endpoint**      | **Auth Required** |
+|------------|-------------------|-------------------|
+| `GET`      | `/storage`        | Yes               |
+
+Returns current storage usage and limits for the authenticated user.
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Storage information retrieved successfully",
+  "data": {
+    "storageUsed": 267453,
+    "storageLimit": 214748364800,
+    "storageUsedFormatted": "261.18 KB",
+    "storageLimitFormatted": "200.00 GB",
+    "percentageUsed": 0.0,
+    "quotaExceeded": false,
+    "remainingStorage": 214748097347,
+    "unlimited": false
+  }
+}
+```
+
+**Response Fields:**
+
+| Field                   | Type    | Description                                           |
+|-------------------------|---------|-------------------------------------------------------|
+| `storageUsed`           | Long    | Current storage used in bytes                         |
+| `storageLimit`          | Long    | Maximum storage allowed in bytes (null for unlimited) |
+| `storageUsedFormatted`  | String  | Human-readable storage used                           |
+| `storageLimitFormatted` | String  | Human-readable storage limit                          |
+| `percentageUsed`        | Double  | Percentage of storage used                            |
+| `isUnlimited`           | Boolean | True if plan has unlimited storage                    |
+
+---
+
+### Run Storage Migration (Admin)
+
+| **Method** | **Endpoint**             | **Auth Required**      |
+|------------|--------------------------|------------------------|
+| `POST`     | `/admin/storage/migrate` | Yes (SUPER_ADMIN role) |
+
+Calculates and updates storage usage for all users based on existing documents. Run once after deploying the storage feature to backfill historical data.
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Migration completed: 1 users updated, 0 teams updated, 783.55 KB total storage calculated",
+  "data": {
+    "usersUpdated": 1,
+    "teamsUpdated": 0,
+    "totalBytesCalculated": 802359,
+    "summary": "Migration completed: 1 users updated, 0 teams updated, 783.55 KB total storage calculated"
+  }
+}
+```
+
+---
+
+### Storage Quota Exceeded Error
+
+When uploading documents that would exceed the storage limit:
+
+```json
+{
+  "statusCode": 400,
+  "status": "error",
+  "message": "Storage quota exceeded. Required: 50.00 MB, Available: 20.00 MB, Limit: 120.00 MB. Please upgrade your plan or delete some files."
+}
+```
+

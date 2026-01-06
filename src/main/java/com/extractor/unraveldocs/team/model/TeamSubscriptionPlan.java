@@ -65,6 +65,9 @@ public class TeamSubscriptionPlan {
     @Column(name = "trial_days", nullable = false)
     private Integer trialDays = 10;
 
+    @Column(name = "storage_limit")
+    private Long storageLimit; // Storage limit in bytes, NULL = unlimited (Enterprise)
+
     // Payment Gateway Integration
     @Column(name = "stripe_price_id_monthly")
     private String stripePriceIdMonthly;

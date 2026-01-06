@@ -9,6 +9,7 @@ import com.extractor.unraveldocs.documents.repository.DocumentCollectionReposito
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
+import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import com.extractor.unraveldocs.utils.imageupload.aws.AwsS3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,15 +28,14 @@ public class DocumentDeleteImpl implements DocumentDeleteService {
     private final AwsS3Service awsS3Service;
     private final DocumentCollectionRepository documentCollectionRepository;
     private final SanitizeLogging s;
+    private final StorageAllocationService storageAllocationService;
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(value = "documentCollection", key = "#collectionId"),
-                    @CacheEvict(value = "documentCollections", key = "#userId")
-            }
-    )
+    @Caching(evict = {
+            @CacheEvict(value = "documentCollection", key = "#collectionId"),
+            @CacheEvict(value = "documentCollections", key = "#userId")
+    })
     public void deleteDocument(String collectionId, String userId) {
         DocumentCollection collection = documentCollectionRepository.findById(collectionId)
                 .orElseThrow(() -> new NotFoundException("Document collection not found with ID: " + collectionId));
@@ -43,6 +43,12 @@ public class DocumentDeleteImpl implements DocumentDeleteService {
         if (!collection.getUser().getId().equals(userId)) {
             throw new ForbiddenException("You are not authorized to delete this document collection.");
         }
+
+        // Calculate storage to reclaim before deleting
+        long storageToReclaim = collection.getFiles().stream()
+                .filter(fe -> "SUCCESS".equals(fe.getUploadStatus()))
+                .mapToLong(FileEntry::getFileSize)
+                .sum();
 
         for (FileEntry fileEntry : new ArrayList<>(collection.getFiles())) {
             if ("SUCCESS".equals(fileEntry.getUploadStatus()) && fileEntry.getStorageId() != null) {
@@ -53,7 +59,8 @@ public class DocumentDeleteImpl implements DocumentDeleteService {
                             s.sanitizeLogging(fileEntry.getDocumentId()),
                             s.sanitizeLogging(collectionId));
                 } catch (Exception e) {
-                    log.error("Failed to delete file with storage ID {} (document ID {}) from Cloudinary for collection {}: {}",
+                    log.error(
+                            "Failed to delete file with storage ID {} (document ID {}) from Cloudinary for collection {}: {}",
                             s.sanitizeLogging(fileEntry.getStorageId()),
                             s.sanitizeLogging(fileEntry.getDocumentId()),
                             s.sanitizeLogging(collectionId), s.sanitizeLogging(e.getMessage()));
@@ -61,18 +68,22 @@ public class DocumentDeleteImpl implements DocumentDeleteService {
             }
         }
         documentCollectionRepository.delete(collection);
+
+        // Reclaim storage after successful deletion
+        if (storageToReclaim > 0) {
+            storageAllocationService.updateStorageUsed(collection.getUser(), -storageToReclaim);
+        }
+
         log.info("Document collection {} deleted successfully.", s.sanitizeLogging(collectionId));
     }
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(value = "documentCollection", key = "#collectionId"),
-                    @CacheEvict(value = "documentCollections", key = "#userId"),
-                    @CacheEvict(value = "fileEntry", key = "#collectionId + '-' + #documentId")
-            }
-    )
+    @Caching(evict = {
+            @CacheEvict(value = "documentCollection", key = "#collectionId"),
+            @CacheEvict(value = "documentCollections", key = "#userId"),
+            @CacheEvict(value = "fileEntry", key = "#collectionId + '-' + #documentId")
+    })
     public void deleteFileFromCollection(String collectionId, String documentId, String userId) {
         DocumentCollection collection = documentCollectionRepository.findById(collectionId)
                 .orElseThrow(() -> new NotFoundException("Document collection not found with ID: " + collectionId));
@@ -86,32 +97,41 @@ public class DocumentDeleteImpl implements DocumentDeleteService {
                 .findFirst();
 
         if (fileToRemoveOpt.isEmpty()) {
-            throw new NotFoundException("File with document ID: " + documentId + " not found in collection: " + collectionId);
+            throw new NotFoundException(
+                    "File with document ID: " + documentId + " not found in collection: " + collectionId);
         }
 
         FileEntry entryToRemove = fileToRemoveOpt.get();
 
-        if (
-                DocumentUploadState.SUCCESS.toString().equals(entryToRemove.getUploadStatus()) &&
+        if (DocumentUploadState.SUCCESS.toString().equals(entryToRemove.getUploadStatus()) &&
                 entryToRemove.getStorageId() != null) {
             try {
                 awsS3Service.deleteFile(entryToRemove.getFileUrl());
                 log.info("Successfully deleted file with storage ID {} (document ID {}) from Cloudinary.",
-                        s.sanitizeLogging(entryToRemove.getStorageId()), s.sanitizeLogging(entryToRemove.getDocumentId()));
+                        s.sanitizeLogging(entryToRemove.getStorageId()),
+                        s.sanitizeLogging(entryToRemove.getDocumentId()));
             } catch (Exception e) {
-                log.error("Failed to delete file with storage ID {} (document ID {}) from Cloudinary. It will still be removed from the database. Error: {}",
+                log.error(
+                        "Failed to delete file with storage ID {} (document ID {}) from Cloudinary. It will still be removed from the database. Error: {}",
                         s.sanitizeLogging(entryToRemove.getStorageId()),
                         s.sanitizeLogging(entryToRemove.getDocumentId()),
                         s.sanitizeLogging(e.getMessage()));
             }
         }
 
+        // Capture file size before removal for storage reclamation
+        long fileSizeToReclaim = DocumentUploadState.SUCCESS.toString().equals(entryToRemove.getUploadStatus())
+                ? entryToRemove.getFileSize()
+                : 0L;
+
         boolean removed = collection.getFiles().remove(entryToRemove);
         if (!removed) {
             log.warn("FileEntry with document ID {} was found but not removed from the collection's list. Collection " +
                     "ID: {}", s.sanitizeLogging(documentId), s.sanitizeLogging(collectionId));
+        } else if (fileSizeToReclaim > 0) {
+            // Reclaim storage after successful removal
+            storageAllocationService.updateStorageUsed(collection.getUser(), -fileSizeToReclaim);
         }
-
 
         if (collection.getFiles().isEmpty()) {
             documentCollectionRepository.delete(collection);
@@ -131,7 +151,8 @@ public class DocumentDeleteImpl implements DocumentDeleteService {
                 collection.setCollectionStatus(DocumentStatus.FAILED_UPLOAD);
             }
             documentCollectionRepository.save(collection);
-            log.info("File with document ID {} removed from collection {}. Collection updated. New status: {}. Remaining files: {}",
+            log.info(
+                    "File with document ID {} removed from collection {}. Collection updated. New status: {}. Remaining files: {}",
                     s.sanitizeLogging(documentId),
                     s.sanitizeLogging(collectionId),
                     collection.getCollectionStatus(),

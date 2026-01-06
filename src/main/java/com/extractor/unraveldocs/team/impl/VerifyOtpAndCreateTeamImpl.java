@@ -117,7 +117,8 @@ public class VerifyOtpAndCreateTeamImpl {
         // 7. Send confirmation email
         sendTeamCreatedEmail(user, team);
 
-        log.info("Team created successfully: {} (Code: {})", sanitizer.sanitizeLogging(team.getId()), sanitizer.sanitizeLogging(teamCode));
+        log.info("Team created successfully: {} (Code: {})", sanitizer.sanitizeLogging(team.getId()),
+                sanitizer.sanitizeLogging(teamCode));
 
         // 8. Build response
         TeamResponse response = buildTeamResponse(team, 1, true);
@@ -130,7 +131,10 @@ public class VerifyOtpAndCreateTeamImpl {
         int maxAttempts = 10;
 
         do {
-            code = tokenGenerator.generateOtp(TEAM_CODE_LENGTH).toUpperCase();
+            // Use generateToken for team codes as they can be longer than 6 characters
+            // Generate a token and take first TEAM_CODE_LENGTH characters
+            String rawToken = tokenGenerator.generateToken(TEAM_CODE_LENGTH);
+            code = rawToken.substring(0, Math.min(rawToken.length(), TEAM_CODE_LENGTH)).toUpperCase();
             attempts++;
         } while (teamRepository.existsByTeamCode(code) && attempts < maxAttempts);
 

@@ -125,6 +125,7 @@ public class AdminUserInitializer implements CommandLineRunner {
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(5);
                 plan.setOcrPageLimit(25);
+                plan.setStorageLimit(120L * 1024 * 1024); // 120 MB
                 break;
             case STARTER_MONTHLY:
                 // Starter tier - for individual light users ($9/mo)
@@ -133,6 +134,7 @@ public class AdminUserInitializer implements CommandLineRunner {
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(30);
                 plan.setOcrPageLimit(150);
+                plan.setStorageLimit((long) (2.6 * 1024 * 1024 * 1024)); // 2.6 GB
                 break;
             case STARTER_YEARLY:
                 // Starter yearly - 17% savings ($90/year = $7.50/mo)
@@ -141,6 +143,7 @@ public class AdminUserInitializer implements CommandLineRunner {
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(360);
                 plan.setOcrPageLimit(1800);
+                plan.setStorageLimit((long) (2.6 * 1024 * 1024 * 1024)); // 2.6 GB
                 break;
             case PRO_MONTHLY:
                 // Pro tier - for power users ($19/mo)
@@ -149,6 +152,7 @@ public class AdminUserInitializer implements CommandLineRunner {
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(100);
                 plan.setOcrPageLimit(500);
+                plan.setStorageLimit((long) (12.3 * 1024 * 1024 * 1024)); // 12.3 GB
                 break;
             case PRO_YEARLY:
                 // Pro yearly - 17% savings ($190/year = $15.83/mo)
@@ -157,6 +161,7 @@ public class AdminUserInitializer implements CommandLineRunner {
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(1200);
                 plan.setOcrPageLimit(6000);
+                plan.setStorageLimit((long) (12.3 * 1024 * 1024 * 1024)); // 12.3 GB
                 break;
             case BUSINESS_MONTHLY:
                 // Business tier - for heavy users ($49/mo)
@@ -165,6 +170,7 @@ public class AdminUserInitializer implements CommandLineRunner {
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(500);
                 plan.setOcrPageLimit(2500);
+                plan.setStorageLimit(30L * 1024 * 1024 * 1024); // 30 GB
                 break;
             case BUSINESS_YEARLY:
                 // Business yearly - 17% savings ($490/year = $40.83/mo)
@@ -173,6 +179,7 @@ public class AdminUserInitializer implements CommandLineRunner {
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(6000);
                 plan.setOcrPageLimit(30000);
+                plan.setStorageLimit(30L * 1024 * 1024 * 1024); // 30 GB
                 break;
         }
         return plan;

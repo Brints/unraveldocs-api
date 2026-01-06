@@ -9,7 +9,6 @@ import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.elasticsearch.service.ElasticsearchIndexingService;
-import com.extractor.unraveldocs.utils.imageupload.cloudinary.CloudinaryService;
 import com.extractor.unraveldocs.utils.userlib.UserLibrary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
 
@@ -28,8 +26,6 @@ class ProfileUpdateImplTest {
 
     @Mock
     private UserRepository userRepository;
-    @Mock
-    private CloudinaryService cloudinaryService;
     @Mock
     private ResponseBuilderService responseBuilder;
     @Mock
@@ -45,7 +41,6 @@ class ProfileUpdateImplTest {
         MockitoAnnotations.openMocks(this);
         // Manually set the Optional field since @InjectMocks doesn't handle Optional<T>
         profileUpdateImpl = new ProfileUpdateImpl(
-                cloudinaryService,
                 responseBuilder,
                 userLibrary,
                 userRepository,
@@ -59,11 +54,14 @@ class ProfileUpdateImplTest {
         user.setId(userId);
         user.setFirstName("John");
         user.setLastName("Doe");
+        user.setCountry("US");
 
         ProfileUpdateRequestDto request = mock(ProfileUpdateRequestDto.class);
         when(request.firstName()).thenReturn("Jane");
         when(request.lastName()).thenReturn("Smith");
-        when(request.profilePicture()).thenReturn(null);
+        when(request.country()).thenReturn(null);
+        when(request.profession()).thenReturn(null);
+        when(request.organization()).thenReturn(null);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userLibrary.capitalizeFirstLetterOfName("Jane")).thenReturn("Jane");
@@ -91,33 +89,26 @@ class ProfileUpdateImplTest {
     }
 
     @Test
-    void updateProfile_shouldUpdateProfilePicture() throws Exception {
+    void updateProfile_shouldUpdateAllFields() {
         String userId = "user123";
         User user = new User();
         user.setId(userId);
         user.setFirstName("John");
         user.setLastName("Doe");
-        user.setProfilePicture("old-url");
-
-        MultipartFile mockFile = mock(MultipartFile.class);
-        when(mockFile.isEmpty()).thenReturn(false);
-        when(mockFile.getOriginalFilename()).thenReturn("profile.jpg");
+        user.setCountry("US");
+        user.setProfession("Developer");
+        user.setOrganization("OldCorp");
 
         ProfileUpdateRequestDto request = mock(ProfileUpdateRequestDto.class);
-        when(request.firstName()).thenReturn("John");
-        when(request.lastName()).thenReturn("Doe");
-        when(request.profilePicture()).thenReturn(mockFile);
+        when(request.firstName()).thenReturn("Jane");
+        when(request.lastName()).thenReturn("Smith");
+        when(request.country()).thenReturn("Canada");
+        when(request.profession()).thenReturn("Engineer");
+        when(request.organization()).thenReturn("NewCorp");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        doNothing().when(cloudinaryService).deleteFile("old-url");
-        when(cloudinaryService.uploadFile(
-                eq(mockFile),
-                anyString(),
-                eq("profile.jpg"),
-                anyString())).thenReturn("new-url");
-
-        when(userLibrary.capitalizeFirstLetterOfName("John")).thenReturn("John");
-        when(userLibrary.capitalizeFirstLetterOfName("Doe")).thenReturn("Doe");
+        when(userLibrary.capitalizeFirstLetterOfName("Jane")).thenReturn("Jane");
+        when(userLibrary.capitalizeFirstLetterOfName("Smith")).thenReturn("Smith");
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         when(responseBuilder.buildUserResponse(any(UserData.class), eq(HttpStatus.OK), anyString()))
                 .thenReturn(new UnravelDocsResponse<>());
@@ -125,13 +116,12 @@ class ProfileUpdateImplTest {
         UnravelDocsResponse<UserData> response = profileUpdateImpl.updateProfile(request, userId);
 
         assertNotNull(response);
-        assertEquals("new-url", user.getProfilePicture());
-        verify(cloudinaryService).deleteFile("old-url");
-        verify(cloudinaryService).uploadFile(
-                eq(mockFile),
-                anyString(),
-                eq("profile.jpg"),
-                anyString());
+        assertEquals("Jane", user.getFirstName());
+        assertEquals("Smith", user.getLastName());
+        assertEquals("Canada", user.getCountry());
+        assertEquals("Engineer", user.getProfession());
+        assertEquals("NewCorp", user.getOrganization());
+        verify(userRepository).save(user);
     }
 
     @Test
@@ -141,14 +131,16 @@ class ProfileUpdateImplTest {
         user.setId(userId);
         user.setFirstName("John");
         user.setLastName("Doe");
+        user.setCountry("US");
 
         ProfileUpdateRequestDto request = mock(ProfileUpdateRequestDto.class);
         when(request.firstName()).thenReturn("John");
         when(request.lastName()).thenReturn("Doe");
-        when(request.profilePicture()).thenReturn(null);
+        when(request.country()).thenReturn(null);
+        when(request.profession()).thenReturn(null);
+        when(request.organization()).thenReturn(null);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
         when(responseBuilder.buildUserResponse(any(UserData.class), eq(HttpStatus.OK), anyString()))
                 .thenReturn(new UnravelDocsResponse<>());
 
@@ -157,6 +149,7 @@ class ProfileUpdateImplTest {
         assertNotNull(response);
         assertEquals("John", user.getFirstName());
         assertEquals("Doe", user.getLastName());
-        verify(userRepository).save(user);
+        // No save should occur since there are no changes
+        verify(userRepository, never()).save(any(User.class));
     }
 }

@@ -12,6 +12,7 @@ import com.extractor.unraveldocs.documents.repository.DocumentCollectionReposito
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService;
+import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.utils.imageupload.FileUploadValidationUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,6 +38,7 @@ public class DocumentUploadImpl implements DocumentUploadService {
     private final DocumentCollectionRepository documentCollectionRepository;
     private final SanitizeLogging s;
     private final FileStorageService fileStorageService;
+    private final StorageAllocationService storageAllocationService;
 
     @Override
     @Transactional
@@ -50,6 +53,10 @@ public class DocumentUploadImpl implements DocumentUploadService {
         int storageFailures = 0;
 
         FileUploadValidationUtil.validateTotalFileSize(files);
+
+        // Check storage availability before processing uploads
+        long totalUploadSize = Arrays.stream(files).mapToLong(MultipartFile::getSize).sum();
+        storageAllocationService.checkStorageAvailable(user, totalUploadSize);
 
         for (MultipartFile file : files) {
             String originalFilename = Objects.requireNonNullElse(file.getOriginalFilename(), "unnamed_file");
@@ -71,12 +78,11 @@ public class DocumentUploadImpl implements DocumentUploadService {
                             .status(DocumentUploadState.SUCCESS.toString());
                     successfulUploads++;
                 } catch (Exception storageEx) {
-                    storageFailures =
-                            getStorageFailures(
-                                    processedFileEntries,
-                                    storageFailures,
-                                    originalFilename,
-                                    storageEx, log, s);
+                    storageFailures = getStorageFailures(
+                            processedFileEntries,
+                            storageFailures,
+                            originalFilename,
+                            storageEx, log, s);
                     fileEntryDataBuilder.status(DocumentUploadState.FAILED_STORAGE_UPLOAD.toString());
                 }
             } catch (BadRequestException | IllegalArgumentException validationEx) {
@@ -115,6 +121,16 @@ public class DocumentUploadImpl implements DocumentUploadService {
 
             DocumentCollection savedCollection = documentCollectionRepository.save(documentCollection);
             savedCollectionId = savedCollection.getId();
+
+            // Update storage used for successfully uploaded files
+            long successfulUploadSize = processedFileEntries.stream()
+                    .filter(fe -> DocumentUploadState.SUCCESS.toString().equals(fe.getUploadStatus()))
+                    .mapToLong(FileEntry::getFileSize)
+                    .sum();
+            if (successfulUploadSize > 0) {
+                storageAllocationService.updateStorageUsed(user, successfulUploadSize);
+            }
+
             log.info("Document collection {} created with {} processed files for user {}. Status: {}",
                     s.sanitizeLogging(savedCollectionId),
                     processedFileEntries.size(),
@@ -144,16 +160,18 @@ public class DocumentUploadImpl implements DocumentUploadService {
             apiResponseMessage = "All " + totalFiles + " document(s) uploaded successfully.";
         } else if (successfulUploads > 0) {
             apiResponseStatusString = "partial_success";
-            apiResponseMessage = String.format("%d document(s) uploaded successfully. %d failed validation. %d failed storage. Check individual statuses.",
+            apiResponseMessage = String.format(
+                    "%d document(s) uploaded successfully. %d failed validation. %d failed storage. Check individual statuses.",
                     successfulUploads, validationFailures, storageFailures);
         } else {
             apiResponseStatusString = "failure";
             if (totalFiles > 0 && validationFailures == totalFiles) {
-                apiResponseMessage = "All " + totalFiles + " document(s) failed validation. No documents were uploaded.";
+                apiResponseMessage = "All " + totalFiles
+                        + " document(s) failed validation. No documents were uploaded.";
             } else if (totalFiles > 0) {
-                apiResponseMessage =
-                        String.format("No documents were successfully uploaded. %d failed validation. %d failed storage. Check individual statuses.",
-                                validationFailures, storageFailures);
+                apiResponseMessage = String.format(
+                        "No documents were successfully uploaded. %d failed validation. %d failed storage. Check individual statuses.",
+                        validationFailures, storageFailures);
             } else {
                 apiResponseMessage = "No files provided for upload.";
             }

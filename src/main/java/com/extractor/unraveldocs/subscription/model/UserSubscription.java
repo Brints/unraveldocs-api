@@ -49,6 +49,9 @@ public class UserSubscription {
     @Column(nullable = false, name = "has_used_trial")
     private boolean hasUsedTrial = false;
 
+    @Column(name = "storage_used", nullable = false)
+    private Long storageUsed = 0L; // Current storage usage in bytes
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false, name = "created_at")
     private OffsetDateTime createdAt;

@@ -77,6 +77,19 @@
 
 > Yearly plans include 17% savings
 
+### Storage Allocation
+
+| Plan | Storage Limit |
+|------|---------------|
+| Free | 120 MB |
+| Starter | 2.6 GB |
+| Pro | 12.3 GB |
+| Business | 30 GB |
+| Team Premium | 200 GB |
+| Team Enterprise | Unlimited |
+
+> Storage is automatically tracked when documents are uploaded and reclaimed when deleted.
+
 ### Currency Conversion
 - **Real-time Exchange Rates**: Prices displayed in user's local currency
 - **60+ Supported Currencies**: USD, EUR, GBP, NGN, INR, JPY, AUD, CAD, and more
@@ -446,6 +459,7 @@ Once the application is running, access the interactive API documentation:
 | Stripe | `/api/v1/stripe` | Stripe-specific endpoints |
 | Paystack | `/api/v1/paystack` | Paystack-specific endpoints |
 | Subscriptions | `/api/v1/subscriptions` | Individual subscription management |
+| Storage | `/api/v1/storage` | Storage usage and limits |
 | Admin | `/api/v1/admin` | Administrative operations |
 | Search | `/api/v1/search` | Elasticsearch queries |
 
@@ -551,6 +565,7 @@ unraveldocs-api/
 │   │   │   ├── pushnotification/ # Push notification services
 │   │   │   ├── security/         # Security configurations
 │   │   │   ├── shared/           # Shared utilities & DTOs
+│   │   │   ├── storage/          # Storage allocation tracking
 │   │   │   ├── subscription/     # Subscription management
 │   │   │   ├── user/             # User management
 │   │   │   ├── utils/            # Common utilities

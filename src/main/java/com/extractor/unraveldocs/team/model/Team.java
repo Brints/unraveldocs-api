@@ -142,6 +142,9 @@ public class Team {
     @Column(name = "document_count_reset_at")
     private OffsetDateTime documentCountResetAt;
 
+    @Column(name = "storage_used", nullable = false)
+    private Long storageUsed = 0L; // Current storage usage in bytes
+
     // Members relationship
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<TeamMember> members = new HashSet<>();
