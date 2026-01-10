@@ -7,11 +7,10 @@ import com.extractor.unraveldocs.admin.interfaces.CreateAdminService;
 import com.extractor.unraveldocs.admin.repository.OtpRepository;
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.kafka.events.EventMetadata;
+import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.kafka.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;
@@ -141,11 +140,7 @@ public class CreateAdminUserImpl implements CreateAdminService {
 
                 BaseEvent<AdminCreatedEvent> event = new BaseEvent<>(metadata, payload);
 
-                eventPublisher.publishEvent(
-                        RabbitMQQueueConfig.ADMIN_EVENTS_EXCHANGE,
-                        RabbitMQQueueConfig.ADMIN_CREATED_ROUTING_KEY,
-                        event
-                );
+                eventPublisher.publishAdminEvent(event);
             }
         });
 

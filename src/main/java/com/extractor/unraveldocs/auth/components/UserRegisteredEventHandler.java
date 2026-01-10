@@ -1,24 +1,22 @@
 package com.extractor.unraveldocs.auth.components;
 
 import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
+import com.extractor.unraveldocs.brokers.service.EmailMessageProducerService;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventHandler;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
-import com.extractor.unraveldocs.messaging.dto.EmailMessage;
-import com.extractor.unraveldocs.messaging.emailtemplates.AuthEmailTemplateService;
+import com.extractor.unraveldocs.brokers.kafka.events.EventHandler;
+import com.extractor.unraveldocs.brokers.kafka.events.EventTypes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class UserRegisteredEventHandler implements EventHandler<UserRegisteredEvent> {
 
-    private final AuthEmailTemplateService authEmailTemplateService;
-    private final RabbitTemplate rabbitTemplate;
+    private final EmailMessageProducerService emailMessageProducerService;
     private final SanitizeLogging sanitizeLogging;
 
     @Override
@@ -26,20 +24,21 @@ public class UserRegisteredEventHandler implements EventHandler<UserRegisteredEv
         log.info("Processing UserRegisteredEvent for email: {}", sanitizeLogging.sanitizeLogging(event.getEmail()));
 
         try {
-            EmailMessage emailMessage = authEmailTemplateService.prepareVerificationEmail(
-                    event.getEmail(),
-                    event.getFirstName(),
-                    event.getLastName(),
-                    event.getVerificationToken(),
-                    event.getExpiration());
+            Map<String, Object> templateVariables = Map.of(
+                    "firstName", event.getFirstName(),
+                    "lastName", event.getLastName(),
+                    "verificationToken", event.getVerificationToken(),
+                    "expiration", event.getExpiration());
 
-            rabbitTemplate.convertAndSend(
-                    RabbitMQQueueConfig.EMAIL_EXCHANGE,
-                    RabbitMQQueueConfig.EMAIL_ROUTING_KEY,
-                    emailMessage);
+            emailMessageProducerService.queueEmail(
+                    event.getEmail(),
+                    "Verify your email address",
+                    "emailVerificationToken",
+                    templateVariables);
             log.info("Sent verification email to: {}", sanitizeLogging.sanitizeLogging(event.getEmail()));
         } catch (Exception e) {
-            log.error("Failed to send verification email to {}: {}", sanitizeLogging.sanitizeLogging(event.getEmail()),
+            log.error("Failed to send verification email to {}: {}",
+                    sanitizeLogging.sanitizeLogging(event.getEmail()),
                     e.getMessage(), e);
         }
     }

@@ -1,6 +1,6 @@
 package com.extractor.unraveldocs.elasticsearch.consumer;
 
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
+import com.extractor.unraveldocs.brokers.kafka.config.KafkaTopicConfig;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.elasticsearch.document.DocumentSearchIndex;
 import com.extractor.unraveldocs.elasticsearch.document.PaymentSearchIndex;
@@ -13,13 +13,14 @@ import com.extractor.unraveldocs.elasticsearch.repository.UserSearchRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 
 /**
- * RabbitMQ consumer for processing Elasticsearch indexing events.
- * Listens to the Elasticsearch index queue and performs indexing operations.
+ * Kafka consumer for processing Elasticsearch indexing events.
+ * Listens to the Elasticsearch topic and performs indexing operations.
  */
 @Slf4j
 @Service
@@ -34,12 +35,19 @@ public class ElasticsearchIndexConsumer {
     private final SanitizeLogging sanitize;
 
     /**
-     * Processes incoming Elasticsearch indexing events.
+     * Processes incoming Elasticsearch indexing events from Kafka.
      *
-     * @param event The indexing event to process
+     * @param event          The indexing event to process
+     * @param acknowledgment Kafka acknowledgment for manual commit
      */
-    @RabbitListener(queues = RabbitMQQueueConfig.ES_INDEX_QUEUE)
-    public void handleIndexEvent(ElasticsearchIndexEvent event) {
+    @KafkaListener(topics = KafkaTopicConfig.TOPIC_ELASTICSEARCH, groupId = "elasticsearch-consumer-group", containerFactory = "kafkaListenerContainerFactory")
+    public void handleIndexEvent(ElasticsearchIndexEvent event, Acknowledgment acknowledgment) {
+        if (event == null) {
+            log.warn("Received null ElasticsearchIndexEvent, acknowledging and skipping");
+            acknowledgment.acknowledge();
+            return;
+        }
+
         log.info("Received Elasticsearch index event: type={}, action={}, documentId={}",
                 sanitize.sanitizeLogging(String.valueOf(event.getIndexType())),
                 sanitize.sanitizeLogging(String.valueOf(event.getAction())),
@@ -54,9 +62,10 @@ public class ElasticsearchIndexConsumer {
             }
             log.info("Successfully processed Elasticsearch index event for document ID: {}",
                     sanitize.sanitizeLogging(event.getDocumentId()));
+            acknowledgment.acknowledge();
         } catch (Exception e) {
             log.error("Failed to process Elasticsearch index event: {}", e.getMessage(), e);
-            throw e; // Let RabbitMQ retry mechanism handle it
+            throw e; // Rethrow to trigger retry/DLQ handling
         }
     }
 

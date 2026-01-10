@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.user.components;
 
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventHandler;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.kafka.events.EventHandler;
+import com.extractor.unraveldocs.brokers.kafka.events.EventTypes;
 import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
 import com.extractor.unraveldocs.auth.events.WelcomeEvent;
 import lombok.RequiredArgsConstructor;

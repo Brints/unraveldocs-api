@@ -2,11 +2,10 @@ package com.extractor.unraveldocs.user.impl;
 
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.kafka.events.EventMetadata;
+import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.kafka.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
@@ -155,10 +154,7 @@ public class PasswordResetImpl implements PasswordResetService {
                 .build();
         BaseEvent<PasswordResetEvent> event = new BaseEvent<>(metadata, payload);
 
-        eventPublisherService.publishEvent(
-                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
-                "user.password.reset.requested",
-                event);
+        eventPublisherService.publishUserEvent(event);
     }
 
     private void publishPasswordResetSuccessfulEvent(User user) {
@@ -175,9 +171,6 @@ public class PasswordResetImpl implements PasswordResetService {
                 .build();
         BaseEvent<PasswordResetSuccessfulEvent> event = new BaseEvent<>(metadata, payload);
 
-        eventPublisherService.publishEvent(
-                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
-                "user.password.reset.successful",
-                event);
+        eventPublisherService.publishUserEvent(event);
     }
 }

@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.payment.receipt.events;
 
 import com.extractor.unraveldocs.brokers.kafka.config.KafkaTopicConfig;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
 import com.extractor.unraveldocs.payment.receipt.model.Receipt;
 import com.extractor.unraveldocs.payment.receipt.service.ReceiptGenerationService;

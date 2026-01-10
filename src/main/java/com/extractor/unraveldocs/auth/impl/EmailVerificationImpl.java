@@ -6,11 +6,10 @@ import com.extractor.unraveldocs.auth.events.UserRegisteredEvent;
 import com.extractor.unraveldocs.auth.events.WelcomeEvent;
 import com.extractor.unraveldocs.auth.interfaces.EmailVerificationService;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.kafka.events.EventMetadata;
+import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.kafka.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
@@ -97,10 +96,7 @@ public class EmailVerificationImpl implements EmailVerificationService {
                 .build();
         BaseEvent<UserRegisteredEvent> event = new BaseEvent<>(metadata, payload);
 
-        eventPublisherService.publishEvent(
-                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
-                "user.verification.resent",
-                event);
+        eventPublisherService.publishUserEvent(event);
     }
 
     @Override
@@ -150,10 +146,7 @@ public class EmailVerificationImpl implements EmailVerificationService {
                         .correlationId(UUID.randomUUID().toString())
                         .build();
                 BaseEvent<WelcomeEvent> event = new BaseEvent<>(metadata, welcomeEvent);
-                eventPublisherService.publishEvent(
-                        RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
-                        "user.welcome",
-                        event);
+                eventPublisherService.publishUserEvent(event);
             }
         });
 

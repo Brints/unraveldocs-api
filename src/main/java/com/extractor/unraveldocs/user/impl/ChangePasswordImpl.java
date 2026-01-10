@@ -1,10 +1,9 @@
 package com.extractor.unraveldocs.user.impl;
 
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.kafka.events.EventMetadata;
+import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.kafka.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
@@ -99,9 +98,6 @@ public class ChangePasswordImpl implements ChangePasswordService {
                 .build();
         BaseEvent<PasswordChangedEvent> event = new BaseEvent<>(metadata, payload);
 
-        eventPublisherService.publishEvent(
-                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
-                "user.password.changed",
-                event);
+        eventPublisherService.publishUserEvent(event);
     }
 }

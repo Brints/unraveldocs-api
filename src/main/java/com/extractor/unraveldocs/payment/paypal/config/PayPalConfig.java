@@ -36,16 +36,11 @@ public class PayPalConfig {
     @Value("${paypal.webhook.id:}")
     private String webhookId;
 
-//    @Value("${paypal.return-url:http://localhost:8080/api/v1/paypal/return}")
-//    private String returnUrl;
     @Value("${paypal.base.url:http://localhost:8080}/return")
     private String returnUrl;
 
     @Value("${paypal.cancel-url:http://localhost:8080}/cancel")
     private String cancelUrl;
-
-//    @Value("${paypal.cancel-url:http://localhost:8080/api/v1/paypal/cancel}")
-//    private String cancelUrl;
 
     /**
      * Get the PayPal API base URL based on the mode (sandbox or live).

@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs;
 
+import com.google.cloud.spring.autoconfigure.vision.CloudVisionAutoConfiguration;
 import io.awspring.cloud.autoconfigure.core.AwsAutoConfiguration;
 import io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration;
 import org.springframework.boot.SpringApplication;
@@ -10,7 +11,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(exclude = {
         S3AutoConfiguration.class,
-        AwsAutoConfiguration.class
+        AwsAutoConfiguration.class,
+        CloudVisionAutoConfiguration.class
 })
 @EnableScheduling
 @EnableAsync

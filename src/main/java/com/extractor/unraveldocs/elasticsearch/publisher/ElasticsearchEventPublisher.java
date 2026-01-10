@@ -1,17 +1,20 @@
 package com.extractor.unraveldocs.elasticsearch.publisher;
 
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.core.Message;
+import com.extractor.unraveldocs.brokers.core.MessageBrokerFactory;
+import com.extractor.unraveldocs.brokers.core.MessageBrokerType;
+import com.extractor.unraveldocs.brokers.kafka.config.KafkaTopicConfig;
 import com.extractor.unraveldocs.elasticsearch.events.ElasticsearchIndexEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.Map;
+
 /**
- * Service for publishing Elasticsearch indexing events to RabbitMQ.
+ * Service for publishing Elasticsearch indexing events to Kafka.
  * Provides methods to publish index events for different entity types.
  */
 @Slf4j
@@ -20,7 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
 @ConditionalOnProperty(name = "spring.elasticsearch.uris")
 public class ElasticsearchEventPublisher {
 
-    private final RabbitTemplate rabbitTemplate;
+    private final MessageBrokerFactory messageBrokerFactory;
     private final JsonMapper jsonMapper;
 
     /**
@@ -29,7 +32,7 @@ public class ElasticsearchEventPublisher {
      * @param event The indexing event to publish
      */
     public void publishDocumentIndexEvent(ElasticsearchIndexEvent event) {
-        publishEvent(event, EventTypes.ES_DOCUMENT_INDEX, "elasticsearch.index.document");
+        publishEvent(event, "elasticsearch.index.document");
     }
 
     /**
@@ -38,7 +41,7 @@ public class ElasticsearchEventPublisher {
      * @param event The indexing event to publish
      */
     public void publishUserIndexEvent(ElasticsearchIndexEvent event) {
-        publishEvent(event, EventTypes.ES_USER_INDEX, "elasticsearch.index.user");
+        publishEvent(event, "elasticsearch.index.user");
     }
 
     /**
@@ -47,7 +50,7 @@ public class ElasticsearchEventPublisher {
      * @param event The indexing event to publish
      */
     public void publishPaymentIndexEvent(ElasticsearchIndexEvent event) {
-        publishEvent(event, EventTypes.ES_PAYMENT_INDEX, "elasticsearch.index.payment");
+        publishEvent(event, "elasticsearch.index.payment");
     }
 
     /**
@@ -56,7 +59,7 @@ public class ElasticsearchEventPublisher {
      * @param event The indexing event to publish
      */
     public void publishSubscriptionIndexEvent(ElasticsearchIndexEvent event) {
-        publishEvent(event, EventTypes.ES_SUBSCRIPTION_INDEX, "elasticsearch.index.subscription");
+        publishEvent(event, "elasticsearch.index.subscription");
     }
 
     /**
@@ -73,21 +76,26 @@ public class ElasticsearchEventPublisher {
         }
     }
 
-    private void publishEvent(ElasticsearchIndexEvent event, String eventType, String routingKey) {
+    private void publishEvent(ElasticsearchIndexEvent event, String eventType) {
         log.debug("Publishing Elasticsearch {} event for document ID: {}, action: {}",
                 event.getIndexType(), event.getDocumentId(), event.getAction());
 
-        rabbitTemplate.convertAndSend(
-                RabbitMQQueueConfig.ES_EVENTS_EXCHANGE,
-                routingKey,
+        Message<ElasticsearchIndexEvent> message = Message.of(
                 event,
-                message -> {
-                    message.getMessageProperties().setType(eventType);
-                    return message;
-                });
+                KafkaTopicConfig.TOPIC_ELASTICSEARCH,
+                event.getDocumentId(), // Use document ID as key for ordering
+                Map.of("event-type", eventType));
 
-        log.info("Published Elasticsearch {} event for document ID: {}",
-                event.getIndexType(), event.getDocumentId());
+        messageBrokerFactory.<ElasticsearchIndexEvent>getProducer(MessageBrokerType.KAFKA)
+                .send(message)
+                .thenAccept(result -> {
+                    if (result.success()) {
+                        log.info("Published Elasticsearch {} event for document ID: {}",
+                                event.getIndexType(), event.getDocumentId());
+                    } else {
+                        log.error("Failed to publish Elasticsearch event: {}", result.errorMessage());
+                    }
+                });
     }
 
     /**

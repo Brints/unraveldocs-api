@@ -1,10 +1,9 @@
 package com.extractor.unraveldocs.team.jobs;
 
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.kafka.events.EventMetadata;
+import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.kafka.events.EventTypes;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.shared.datamodel.MemberRole;
 import com.extractor.unraveldocs.team.events.TeamTrialExpiringEvent;
@@ -55,20 +54,23 @@ public class TeamTrialExpiryJob {
 
         List<Team> teamsNeedingReminder = teamRepository.findTeamsNeedingTrialReminder(now, reminderDate);
 
-        log.info("Found {} teams needing trial expiry reminder", sanitizer.sanitizeLoggingInteger(teamsNeedingReminder.size()));
+        log.info("Found {} teams needing trial expiry reminder",
+                sanitizer.sanitizeLoggingInteger(teamsNeedingReminder.size()));
 
         for (Team team : teamsNeedingReminder) {
             try {
                 sendTrialExpiringEvent(team);
                 teamRepository.markTrialReminderSent(team.getId());
-                log.info("Sent trial expiry reminder for team: {} ({})", sanitizer.sanitizeLogging(team.getName()), sanitizer.sanitizeLogging(team.getTeamCode()));
+                log.info("Sent trial expiry reminder for team: {} ({})", sanitizer.sanitizeLogging(team.getName()),
+                        sanitizer.sanitizeLogging(team.getTeamCode()));
             } catch (Exception e) {
                 log.error("Failed to send trial expiry reminder for team: {} - {}",
                         sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
             }
         }
 
-        log.info("Completed team trial expiry reminder job. Processed {} teams.", sanitizer.sanitizeLoggingInteger(teamsNeedingReminder.size()));
+        log.info("Completed team trial expiry reminder job. Processed {} teams.",
+                sanitizer.sanitizeLoggingInteger(teamsNeedingReminder.size()));
     }
 
     private void sendTrialExpiringEvent(Team team) {
@@ -105,10 +107,7 @@ public class TeamTrialExpiryJob {
 
         BaseEvent<TeamTrialExpiringEvent> event = new BaseEvent<>(metadata, payload);
 
-        eventPublisherService.publishEvent(
-                RabbitMQQueueConfig.TEAM_EVENTS_EXCHANGE,
-                RabbitMQQueueConfig.TEAM_TRIAL_EXPIRING_ROUTING_KEY,
-                event);
+        eventPublisherService.publishTeamEvent(event);
     }
 
     private String getPlanPrice(Team team) {

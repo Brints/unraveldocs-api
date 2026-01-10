@@ -10,8 +10,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
       localstack:
         condition: service_healthy
       kafka:
@@ -56,28 +54,6 @@ services:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - unraveldocs-net
-
-  rabbitmq:
-    image: rabbitmq:management
-    container_name: rabbitmq
-    restart: unless-stopped
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    env_file:
-      - .env
-    environment:
-      RABBITMQ_DEFAULT_USER: ${SPRING_RABBITMQ_USERNAME:-guest}
-      RABBITMQ_DEFAULT_PASS: ${SPRING_RABBITMQ_PASSWORD:-guest}
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -217,8 +193,6 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
-    driver: local
-  rabbitmq_data:
     driver: local
   localstack_data:
     driver: local

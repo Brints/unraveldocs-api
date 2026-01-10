@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FCM Token Generator</title>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+</head>
+<body>
+<h1>FCM Token Generator</h1>
+<button onclick="requestPermission()">Get FCM Token</button>
+<p id="token"></p>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBP34BFERbtNS3AYLVR0bBF-kx0fPWidek",
+        authDomain: "unraveldocs-2c16f.firebaseapp.com",
+        projectId: "unraveldocs-2c16f",
+        storageBucket: "unraveldocs-2c16f.firebasestorage.app",
+        messagingSenderId: "442108127764",
+        appId: "1:442108127764:web:40b7a4f327771b4c1e5501",
+        measurementId: "G-BYRYNDXGMM"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    async function requestPermission() {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            const token = await messaging.getToken({
+                vapidKey: 'BA9vHlh0UvrISwSjtG-tvA84Y41_h6KYIwfqipL0nAHHFg5uPdBKptQcwFhsc1A673B5bY9mvPC09Sc4Y-_I2Sc'  // From Firebase Console → Cloud Messaging → Web Push certificates
+            });
+            document.getElementById('token').innerText = token;
+            console.log('FCM Token:', token);
+        }
+    }
+</script>
+</body>
+</html>

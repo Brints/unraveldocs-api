@@ -1,12 +1,11 @@
 package com.extractor.unraveldocs.user.impl;
 
 import com.extractor.unraveldocs.auth.repository.UserVerificationRepository;
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventMetadata;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventTypes;
+import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.kafka.events.EventMetadata;
+import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.kafka.events.EventTypes;
 import com.extractor.unraveldocs.user.events.UserDeletedEvent;
 import com.extractor.unraveldocs.user.events.UserDeletionScheduledEvent;
 import com.extractor.unraveldocs.user.interfaces.userimpl.DeleteUserService;
@@ -120,10 +119,7 @@ public class DeleteUserImpl implements DeleteUserService {
         EventMetadata metadata = createEventMetadata(EventTypes.USER_DELETION_SCHEDULED);
         BaseEvent<UserDeletionScheduledEvent> event = new BaseEvent<>(metadata, payload);
 
-        eventPublisherService.publishEvent(
-                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
-                "user.deletion.scheduled",
-                event);
+        eventPublisherService.publishUserEvent(event);
     }
 
     private void publishUserDeletedEvent(User user) {
@@ -134,10 +130,7 @@ public class DeleteUserImpl implements DeleteUserService {
         EventMetadata metadata = createEventMetadata(EventTypes.USER_DELETED);
         BaseEvent<UserDeletedEvent> event = new BaseEvent<>(metadata, payload);
 
-        eventPublisherService.publishEvent(
-                RabbitMQQueueConfig.USER_EVENTS_EXCHANGE,
-                "user.deleted",
-                event);
+        eventPublisherService.publishUserEvent(event);
     }
 
     private EventMetadata createEventMetadata(String eventType) {
