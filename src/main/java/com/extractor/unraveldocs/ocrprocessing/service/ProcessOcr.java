@@ -14,12 +14,15 @@ import com.extractor.unraveldocs.ocrprocessing.provider.OcrResult;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
 import com.extractor.unraveldocs.elasticsearch.events.IndexAction;
 import com.extractor.unraveldocs.elasticsearch.service.ElasticsearchIndexingService;
+import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
+import com.extractor.unraveldocs.pushnotification.interfaces.NotificationService;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +42,7 @@ public class ProcessOcr implements ProcessOcrService {
     private final OcrProcessingService ocrProcessingService;
     private final UserRepository userRepository;
     private final Optional<ElasticsearchIndexingService> elasticsearchIndexingService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -66,6 +70,12 @@ public class ProcessOcr implements ProcessOcrService {
         try {
             log.info("Starting OCR text extraction for document: {}", sanitizeLogging.sanitizeLogging(documentId));
 
+            // Send OCR started notification
+            sendOcrNotification(collection.getUser().getId(), NotificationType.OCR_PROCESSING_STARTED,
+                    "OCR Processing Started",
+                    "OCR processing has started for your document.",
+                    documentId, collection.getId());
+
             // Build OCR request using the new abstraction
             OcrRequest ocrRequest = buildOcrRequest(fileEntry, collection);
 
@@ -83,11 +93,23 @@ public class ProcessOcr implements ProcessOcrService {
                     sanitizeLogging.sanitizeLogging(documentId),
                     result.getProviderType());
 
+            // Send OCR completed notification
+            sendOcrNotification(collection.getUser().getId(), NotificationType.OCR_PROCESSING_COMPLETED,
+                    "OCR Processing Completed",
+                    "OCR processing completed successfully. Your document is now searchable.",
+                    documentId, collection.getId());
+
         } catch (Exception e) {
             log.error("OCR processing failed for document {}: {}",
                     sanitizeLogging.sanitizeLogging(documentId), e.getMessage(), e);
             ocrData.setStatus(OcrStatus.FAILED);
             ocrData.setErrorMessage(e.getMessage());
+
+            // Send OCR failed notification
+            sendOcrNotification(collection.getUser().getId(), NotificationType.OCR_PROCESSING_FAILED,
+                    "OCR Processing Failed",
+                    "OCR processing failed: " + e.getMessage(),
+                    documentId, collection.getId());
         } finally {
             updateCollectionStatus(collection);
             ocrDataRepository.save(ocrData);
@@ -185,5 +207,22 @@ public class ProcessOcr implements ProcessOcrService {
         }
         log.info("Collection {} status updated to: {}",
                 sanitizeLogging.sanitizeLogging(collection.getId()), collection.getCollectionStatus());
+    }
+
+    /**
+     * Send OCR processing notification.
+     */
+    private void sendOcrNotification(String userId, NotificationType type,
+            String title, String message, String documentId, String collectionId) {
+        try {
+            Map<String, String> data = new HashMap<>();
+            data.put("documentId", documentId);
+            data.put("collectionId", collectionId);
+
+            notificationService.sendToUser(userId, type, title, message, data);
+            log.debug("Sent {} notification to user {}", type, sanitizeLogging.sanitizeLogging(userId));
+        } catch (Exception e) {
+            log.error("Failed to send OCR notification: {}", e.getMessage());
+        }
     }
 }

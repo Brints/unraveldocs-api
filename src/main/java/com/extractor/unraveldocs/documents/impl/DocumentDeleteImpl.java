@@ -11,6 +11,8 @@ import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import com.extractor.unraveldocs.utils.imageupload.aws.AwsS3Service;
+import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
+import com.extractor.unraveldocs.pushnotification.interfaces.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -29,6 +33,7 @@ public class DocumentDeleteImpl implements DocumentDeleteService {
     private final DocumentCollectionRepository documentCollectionRepository;
     private final SanitizeLogging s;
     private final StorageAllocationService storageAllocationService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -75,6 +80,9 @@ public class DocumentDeleteImpl implements DocumentDeleteService {
         }
 
         log.info("Document collection {} deleted successfully.", s.sanitizeLogging(collectionId));
+
+        // Send push notification
+        sendDocumentDeletedNotification(userId, collectionId, collection.getFiles().size());
     }
 
     @Override
@@ -157,6 +165,27 @@ public class DocumentDeleteImpl implements DocumentDeleteService {
                     s.sanitizeLogging(collectionId),
                     collection.getCollectionStatus(),
                     collection.getFiles().size());
+        }
+    }
+
+    /**
+     * Send push notification when document collection is deleted.
+     */
+    private void sendDocumentDeletedNotification(String userId, String collectionId, int fileCount) {
+        try {
+            Map<String, String> data = new HashMap<>();
+            data.put("collectionId", collectionId);
+            data.put("deletedFileCount", String.valueOf(fileCount));
+
+            notificationService.sendToUser(
+                    userId,
+                    NotificationType.DOCUMENT_DELETED,
+                    "Documents Deleted",
+                    String.format("%d document(s) deleted successfully.", fileCount),
+                    data);
+            log.debug("Sent document deletion notification to user {}", s.sanitizeLogging(userId));
+        } catch (Exception e) {
+            log.error("Failed to send document deletion notification: {}", e.getMessage());
         }
     }
 }

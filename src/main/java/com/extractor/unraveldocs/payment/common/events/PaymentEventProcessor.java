@@ -1,8 +1,14 @@
 package com.extractor.unraveldocs.payment.common.events;
 
+import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
+import com.extractor.unraveldocs.pushnotification.interfaces.NotificationService;
 import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Processor for payment events consumed from Kafka.
@@ -13,11 +19,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PaymentEventProcessor {
 
-    // Inject your services here for handling different event types
-    // private final UserSubscriptionService subscriptionService;
-    // private final PaymentRecordService paymentRecordService;
-    // private final NotificationService notificationService;
-    // private final AnalyticsService analyticsService;
+    private final NotificationService notificationService;
 
     /**
      * Process a payment event.
@@ -75,12 +77,14 @@ public class PaymentEventProcessor {
                 event.getProvider(), event.getProviderPaymentId(),
                 event.getUserId(), event.getAmount(), event.getCurrency());
 
-        // TODO: Implement your business logic
-        // 1. Update payment record status
-        // 2. Trigger receipt generation (already done via receipt events)
-        // 3. Update user account/credits
-        // 4. Send confirmation notification
-        // 5. Record analytics
+        // Send push notification for successful payment
+        sendPaymentNotification(
+                event.getUserId(),
+                NotificationType.PAYMENT_SUCCESS,
+                "Payment Successful",
+                String.format("Your payment of %s %s was successful.",
+                        event.getCurrency(), event.getAmount()),
+                event);
     }
 
     private void handlePaymentFailed(PaymentEvent event) {
@@ -88,11 +92,15 @@ public class PaymentEventProcessor {
                 event.getProvider(), event.getProviderPaymentId(),
                 event.getUserId(), event.getErrorMessage());
 
-        // TODO: Implement your business logic
-        // 1. Update payment record status
-        // 2. Send failure notification to user
-        // 3. Trigger retry logic if applicable
-        // 4. Record failure analytics
+        // Send push notification for failed payment
+        sendPaymentNotification(
+                event.getUserId(),
+                NotificationType.PAYMENT_FAILED,
+                "Payment Failed",
+                event.getErrorMessage() != null
+                        ? "Your payment failed: " + event.getErrorMessage()
+                        : "Your payment could not be processed. Please try again.",
+                event);
     }
 
     private void handlePaymentCanceled(PaymentEvent event) {
@@ -108,7 +116,15 @@ public class PaymentEventProcessor {
                 event.getAmount(), event.getCurrency(),
                 event.getEventType() == PaymentEventType.PARTIAL_REFUND_SUCCEEDED);
 
-        // TODO: Update payment record, adjust user credits, send notification
+        // Send push notification for refund
+        boolean isPartial = event.getEventType() == PaymentEventType.PARTIAL_REFUND_SUCCEEDED;
+        sendPaymentNotification(
+                event.getUserId(),
+                NotificationType.PAYMENT_REFUNDED,
+                isPartial ? "Partial Refund Processed" : "Refund Processed",
+                String.format("Your refund of %s %s has been processed.",
+                        event.getCurrency(), event.getAmount()),
+                event);
     }
 
     private void handleDispute(PaymentEvent event) {
@@ -141,7 +157,14 @@ public class PaymentEventProcessor {
                 event.getSubscriptionId(), event.getUserId(),
                 event.getAmount(), event.getCurrency());
 
-        // TODO: Extend subscription period, generate receipt
+        // Send push notification for subscription renewal
+        sendPaymentNotification(
+                event.getUserId(),
+                NotificationType.SUBSCRIPTION_RENEWED,
+                "Subscription Renewed",
+                String.format("Your subscription has been renewed for %s %s.",
+                        event.getCurrency(), event.getAmount()),
+                event);
     }
 
     private void handleSubscriptionCanceled(PaymentEvent event) {
@@ -164,5 +187,32 @@ public class PaymentEventProcessor {
 
         // TODO: Update user features based on new plan
     }
-}
 
+    /**
+     * Helper method to send payment-related push notifications.
+     */
+    private void sendPaymentNotification(String userId, NotificationType type,
+            String title, String message, PaymentEvent event) {
+        if (userId == null || userId.isBlank()) {
+            log.warn("Cannot send payment notification: userId is null or blank");
+            return;
+        }
+
+        try {
+            Map<String, String> data = new HashMap<>();
+            data.put("provider", event.getProvider() != null ? event.getProvider().name() : "unknown");
+            data.put("paymentId", event.getProviderPaymentId());
+            if (event.getAmount() != null) {
+                data.put("amount", event.getAmount().toString());
+            }
+            if (event.getCurrency() != null) {
+                data.put("currency", event.getCurrency());
+            }
+
+            notificationService.sendToUser(userId, type, title, message, data);
+            log.debug("Sent {} notification to user {}", type, userId);
+        } catch (Exception e) {
+            log.error("Failed to send payment notification: {}", e.getMessage());
+        }
+    }
+}

@@ -12,6 +12,8 @@ import com.extractor.unraveldocs.documents.repository.DocumentCollectionReposito
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService;
+import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
+import com.extractor.unraveldocs.pushnotification.interfaces.NotificationService;
 import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.utils.imageupload.FileUploadValidationUtil;
@@ -26,7 +28,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService.getStorageFailures;
@@ -39,6 +43,7 @@ public class DocumentUploadImpl implements DocumentUploadService {
     private final SanitizeLogging s;
     private final FileStorageService fileStorageService;
     private final StorageAllocationService storageAllocationService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -136,11 +141,18 @@ public class DocumentUploadImpl implements DocumentUploadService {
                     processedFileEntries.size(),
                     s.sanitizeLogging(user.getId()),
                     savedCollection.getCollectionStatus());
+
+            // Send push notification for document upload
+            sendDocumentUploadNotification(user, savedCollection, successfulUploads, validationFailures,
+                    storageFailures);
         } else {
             if (totalFiles > 0) {
                 log.info("No document collection created as all {} files failed validation for user {}",
                         totalFiles,
                         s.sanitizeLogging(user.getId()));
+
+                // Send failure notification
+                sendDocumentUploadFailureNotification(user, totalFiles);
             }
         }
 
@@ -189,5 +201,62 @@ public class DocumentUploadImpl implements DocumentUploadService {
                 .message(apiResponseMessage)
                 .data(uploadData)
                 .build();
+    }
+
+    /**
+     * Send push notification for successful/partial document upload.
+     */
+    private void sendDocumentUploadNotification(User user, DocumentCollection collection,
+            int successfulUploads, int validationFailures, int storageFailures) {
+        try {
+            NotificationType type;
+            String title;
+            String message;
+
+            if (collection.getCollectionStatus() == DocumentStatus.COMPLETED) {
+                type = NotificationType.DOCUMENT_UPLOAD_SUCCESS;
+                title = "Documents Uploaded Successfully";
+                message = String.format("%d document(s) uploaded successfully.", successfulUploads);
+            } else if (collection.getCollectionStatus() == DocumentStatus.PARTIALLY_COMPLETED) {
+                type = NotificationType.DOCUMENT_UPLOAD_SUCCESS;
+                title = "Documents Partially Uploaded";
+                message = String.format("%d document(s) uploaded. %d failed.",
+                        successfulUploads, validationFailures + storageFailures);
+            } else {
+                type = NotificationType.DOCUMENT_UPLOAD_FAILED;
+                title = "Document Upload Failed";
+                message = "All documents failed to upload. Please try again.";
+            }
+
+            Map<String, String> data = new HashMap<>();
+            data.put("collectionId", collection.getId());
+            data.put("status", collection.getCollectionStatus().toString());
+            data.put("successCount", String.valueOf(successfulUploads));
+
+            notificationService.sendToUser(user.getId(), type, title, message, data);
+            log.debug("Sent document upload notification to user {}", s.sanitizeLogging(user.getId()));
+        } catch (Exception e) {
+            log.error("Failed to send document upload notification: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Send push notification when all documents fail validation.
+     */
+    private void sendDocumentUploadFailureNotification(User user, int totalFiles) {
+        try {
+            Map<String, String> data = new HashMap<>();
+            data.put("failedCount", String.valueOf(totalFiles));
+
+            notificationService.sendToUser(
+                    user.getId(),
+                    NotificationType.DOCUMENT_UPLOAD_FAILED,
+                    "Document Upload Failed",
+                    String.format("All %d document(s) failed validation.", totalFiles),
+                    data);
+            log.debug("Sent document upload failure notification to user {}", s.sanitizeLogging(user.getId()));
+        } catch (Exception e) {
+            log.error("Failed to send document upload failure notification: {}", e.getMessage());
+        }
     }
 }

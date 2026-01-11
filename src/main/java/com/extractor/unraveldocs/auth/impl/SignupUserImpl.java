@@ -15,6 +15,8 @@ import com.extractor.unraveldocs.elasticsearch.events.IndexAction;
 import com.extractor.unraveldocs.elasticsearch.service.ElasticsearchIndexingService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
+import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
+import com.extractor.unraveldocs.pushnotification.interfaces.NotificationService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;
@@ -35,6 +37,8 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,6 +55,7 @@ public class SignupUserImpl implements SignupUserService {
         private final UserLibrary userLibrary;
         private final UserRepository userRepository;
         private final Optional<ElasticsearchIndexingService> elasticsearchIndexingService;
+        private final NotificationService notificationService;
 
         @Override
         @Transactional
@@ -133,6 +138,9 @@ public class SignupUserImpl implements SignupUserService {
                                 // Index user in Elasticsearch
                                 elasticsearchIndexingService
                                                 .ifPresent(service -> service.indexUser(savedUser, IndexAction.CREATE));
+
+                                // Send WELCOME push notification
+                                sendWelcomeNotification(savedUser);
                         }
                 });
 
@@ -163,5 +171,24 @@ public class SignupUserImpl implements SignupUserService {
                                                 signupData,
                                                 HttpStatus.CREATED,
                                                 "User registered successfully");
+        }
+
+        private void sendWelcomeNotification(User user) {
+                try {
+                        Map<String, String> data = new HashMap<>();
+                        data.put("userId", user.getId());
+                        data.put("email", user.getEmail());
+
+                        notificationService.sendToUser(
+                                        user.getId(),
+                                        NotificationType.WELCOME,
+                                        "Welcome to UnravelDocs!",
+                                        String.format("Hi %s, welcome to UnravelDocs! Start uploading documents to get started.",
+                                                        user.getFirstName()),
+                                        data);
+                        log.debug("Sent welcome notification to user {}", user.getId());
+                } catch (Exception e) {
+                        log.error("Failed to send welcome notification: {}", e.getMessage());
+                }
         }
 }

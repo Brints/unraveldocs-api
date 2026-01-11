@@ -2,7 +2,7 @@ package com.extractor.unraveldocs.user.service.impl;
 
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
@@ -121,7 +121,7 @@ class PasswordResetImplTest {
 
         // Assert
         verify(userRepository).save(user);
-        verify(eventPublisherService).publishEvent(anyString(), anyString(), any());
+        verify(eventPublisherService).publishUserEvent(any());
     }
 
     @Test
@@ -176,7 +176,7 @@ class PasswordResetImplTest {
         assertNull(userVerification.getPasswordResetToken());
         assertNull(userVerification.getPasswordResetTokenExpiry());
         assertEquals(VerifiedStatus.VERIFIED, userVerification.getStatus());
-        verify(eventPublisherService).publishEvent(anyString(), anyString(), any());
+        verify(eventPublisherService).publishUserEvent(any());
     }
 
     @Test

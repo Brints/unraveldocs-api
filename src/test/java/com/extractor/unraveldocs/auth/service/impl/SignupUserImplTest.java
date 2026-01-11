@@ -5,11 +5,12 @@ import com.extractor.unraveldocs.auth.dto.request.SignupRequestDto;
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.impl.SignupUserImpl;
 import com.extractor.unraveldocs.auth.model.UserVerification;
-import com.extractor.unraveldocs.brokers.rabbitmq.config.RabbitMQQueueConfig;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.kafka.config.KafkaTopicConfig;
+import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
+import com.extractor.unraveldocs.pushnotification.interfaces.NotificationService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;
@@ -62,6 +63,8 @@ class SignupUserImplTest {
         private EventPublisherService eventPublisherService;
         @Mock
         private ElasticsearchIndexingService elasticsearchIndexingService;
+        @Mock
+        private NotificationService notificationService;
 
         @InjectMocks
         private SignupUserImpl signupUserService;
@@ -88,7 +91,8 @@ class SignupUserImplTest {
                                 responseBuilder,
                                 userLibrary,
                                 userRepository,
-                                Optional.of(elasticsearchIndexingService));
+                                Optional.of(elasticsearchIndexingService),
+                                notificationService);
 
                 request = new SignupRequestDto(
                                 "john",
@@ -163,10 +167,7 @@ class SignupUserImplTest {
 
                 verify(userRepository).existsByEmail("john.doe@example.com");
                 verify(userRepository).save(argThat(savedUser -> savedUser.getRole() == Role.USER));
-                verify(eventPublisherService)
-                                .publishEvent(eq(RabbitMQQueueConfig.USER_EVENTS_EXCHANGE),
-                                                eq(RabbitMQQueueConfig.USER_REGISTERED_ROUTING_KEY),
-                                                any(BaseEvent.class));
+                verify(eventPublisherService).publishUserEvent(any(BaseEvent.class));
         }
 
         @Test

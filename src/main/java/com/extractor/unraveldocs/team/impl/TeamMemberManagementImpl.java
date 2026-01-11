@@ -15,6 +15,8 @@ import com.extractor.unraveldocs.team.repository.TeamMemberRepository;
 import com.extractor.unraveldocs.team.repository.TeamRepository;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
+import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
+import com.extractor.unraveldocs.pushnotification.interfaces.NotificationService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation for team member management operations.
@@ -39,6 +43,7 @@ public class TeamMemberManagementImpl {
     private final UserRepository userRepository;
     private final ResponseBuilderService responseBuilder;
     private final SanitizeLogging sanitizer;
+    private final NotificationService notificationService;
 
     /**
      * Adds a new member to the team.
@@ -93,6 +98,9 @@ public class TeamMemberManagementImpl {
                 "Successfully added user {} to team {}",
                 sanitizer.sanitizeLogging(userToAdd.getId()),
                 sanitizer.sanitizeLogging(teamId));
+
+        // Send push notification to the added member
+        sendTeamMemberAddedNotification(userToAdd, team, actingUser);
 
         TeamMemberResponse response = buildMemberResponse(newMember, false);
         return responseBuilder.buildUserResponse(
@@ -150,7 +158,8 @@ public class TeamMemberManagementImpl {
         // 8. Remove member
         teamMemberRepository.delete(memberToRemove);
 
-        log.info("Successfully removed member {} from team {}", sanitizer.sanitizeLogging(memberId), sanitizer.sanitizeLogging(teamId));
+        log.info("Successfully removed member {} from team {}", sanitizer.sanitizeLogging(memberId),
+                sanitizer.sanitizeLogging(teamId));
 
         return responseBuilder.buildVoidResponse(HttpStatus.OK, "Member removed successfully");
     }
@@ -218,7 +227,7 @@ public class TeamMemberManagementImpl {
                 removedCount + " member(s) removed successfully");
     }
 
-    //TODO: Implement leave team functionality
+    // TODO: Implement leave team functionality
 
     // ========== Helper Methods ==========
 
@@ -271,5 +280,28 @@ public class TeamMemberManagementImpl {
             return local.charAt(0) + "***@" + domain;
         }
         return local.substring(0, 2) + "***@" + domain;
+    }
+
+    /**
+     * Send push notification when a user is added to a team.
+     */
+    private void sendTeamMemberAddedNotification(User addedUser, Team team, User invitedBy) {
+        try {
+            Map<String, String> data = new HashMap<>();
+            data.put("teamId", team.getId());
+            data.put("teamName", team.getName());
+            data.put("invitedById", invitedBy.getId());
+            data.put("invitedByName", invitedBy.getFirstName());
+
+            notificationService.sendToUser(
+                    addedUser.getId(),
+                    NotificationType.TEAM_MEMBER_ADDED,
+                    "Added to Team",
+                    String.format("You have been added to team '%s' by %s.", team.getName(), invitedBy.getFirstName()),
+                    data);
+            log.debug("Sent team member added notification to user {}", sanitizer.sanitizeLogging(addedUser.getId()));
+        } catch (Exception e) {
+            log.error("Failed to send team member added notification: {}", e.getMessage());
+        }
     }
 }

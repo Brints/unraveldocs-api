@@ -2,8 +2,8 @@ package com.extractor.unraveldocs.user.service.impl;
 
 import com.extractor.unraveldocs.auth.model.UserVerification;
 import com.extractor.unraveldocs.auth.repository.UserVerificationRepository;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.BaseEvent;
-import com.extractor.unraveldocs.brokers.rabbitmq.events.EventPublisherService;
+import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
+import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.user.impl.DeleteUserImpl;
 import com.extractor.unraveldocs.user.model.User;
@@ -73,7 +73,7 @@ class DeleteUserImplTest {
         assertNotNull(savedUser.getUserVerification().getDeletedAt());
         assertEquals(savedUser.getDeletedAt(), savedUser.getUserVerification().getDeletedAt());
 
-        verify(eventPublisherService).publishEvent(anyString(), eq("user.deletion.scheduled"), any(BaseEvent.class));
+        verify(eventPublisherService).publishUserEvent(any(BaseEvent.class));
     }
 
     @Test
@@ -103,7 +103,7 @@ class DeleteUserImplTest {
         assertFalse(user.isActive());
         assertNotNull(user.getDeletedAt());
         assertNotNull(user.getUserVerification().getDeletedAt());
-        verify(eventPublisherService).publishEvent(anyString(), eq("user.deletion.scheduled"), any(BaseEvent.class));
+        verify(eventPublisherService).publishUserEvent(any(BaseEvent.class));
         verify(userRepository).saveAll(inactiveUsers);
     }
 
@@ -121,7 +121,7 @@ class DeleteUserImplTest {
         deleteUserImpl.processScheduledDeletions();
 
         // Assert
-        verify(eventPublisherService).publishEvent(anyString(), eq("user.deleted"), any(BaseEvent.class));
+        verify(eventPublisherService).publishUserEvent(any(BaseEvent.class));
         verify(userVerificationRepository).delete(user.getUserVerification());
         verify(userRepository).deleteAll(usersToDelete);
     }
@@ -135,7 +135,7 @@ class DeleteUserImplTest {
         deleteUserImpl.deleteUser("1");
 
         // Assert
-        verify(eventPublisherService).publishEvent(anyString(), eq("user.deleted"), any(BaseEvent.class));
+        verify(eventPublisherService).publishUserEvent(any(BaseEvent.class));
         verify(userVerificationRepository).delete(user.getUserVerification());
         verify(userRepository).delete(user);
     }
