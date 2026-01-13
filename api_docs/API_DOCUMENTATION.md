@@ -850,8 +850,8 @@ Base path: `/api/v1/teams`
 
 | Feature           | Team Premium | Team Enterprise |
 |-------------------|--------------|-----------------|
-| Price (Monthly)   | $29          | $79             |
-| Price (Yearly)    | $290         | $790            |
+| Price (Monthly)   | $29.99       | $79.99          |
+| Price (Yearly)    | $289.99      | $789.99         |
 | Max Members       | 10           | 15              |
 | Document Limit    | 200/month    | Unlimited       |
 | Admin Promotion   | ❌            | ✅               |
@@ -3040,8 +3040,8 @@ Creates a PayPal Product and billing plans for all subscription tiers. Run once 
 
 #### Deactivate a PayPal Plan
 
-| **Method** | **Endpoint**              | **Auth Required**      |
-|------------|---------------------------|------------------------|
+| **Method** | **Endpoint**                 | **Auth Required**      |
+|------------|------------------------------|------------------------|
 | `POST`     | `/plans/{planId}/deactivate` | Yes (SUPER_ADMIN role) |
 
 Deactivates a PayPal billing plan. Existing subscriptions will continue until cancelled.
@@ -4008,13 +4008,25 @@ Returns current storage usage and limits for the authenticated user.
   "status": "success",
   "message": "Storage information retrieved successfully",
   "data": {
-    "storageUsed": 267453,
-    "storageLimit": 214748364800,
-    "storageUsedFormatted": "261.18 KB",
-    "storageLimitFormatted": "200.00 GB",
+    "storageUsed": 1157179,
+    "storageLimit": 32212254720,
+    "storageUsedFormatted": "1.10 MB",
+    "storageLimitFormatted": "30.00 GB",
     "percentageUsed": 0.0,
+    "ocrPageLimit": 30000,
+    "ocrPagesUsed": 0,
+    "ocrPagesRemaining": 30000,
+    "ocrUnlimited": false,
+    "documentUploadLimit": 6000,
+    "documentsUploaded": 7,
+    "documentsRemaining": 5993,
+    "documentsUnlimited": false,
+    "subscriptionPlan": "Business_Yearly",
+    "billingInterval": "Yearly",
+    "documentQuotaExceeded": false,
+    "ocrQuotaExceeded": false,
     "quotaExceeded": false,
-    "remainingStorage": 214748097347,
+    "remainingStorage": 32211097541,
     "unlimited": false
   }
 }

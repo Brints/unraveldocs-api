@@ -52,6 +52,9 @@ public class UserSubscription {
     @Column(name = "storage_used", nullable = false)
     private Long storageUsed = 0L; // Current storage usage in bytes
 
+    @Column(name = "ocr_pages_used", nullable = false)
+    private Integer ocrPagesUsed = 0; // OCR pages used in current billing period
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false, name = "created_at")
     private OffsetDateTime createdAt;

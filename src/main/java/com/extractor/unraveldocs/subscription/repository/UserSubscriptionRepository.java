@@ -2,6 +2,8 @@ package com.extractor.unraveldocs.subscription.repository;
 
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
@@ -11,19 +13,22 @@ import java.util.Optional;
 @Repository
 public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, String> {
 
-    Optional<UserSubscription> findByUserId(String userId);
+        Optional<UserSubscription> findByUserId(String userId);
 
-    Optional<UserSubscription> findByPaymentGatewaySubscriptionId(String paymentGatewaySubscriptionId);
+        @Query("SELECT us FROM UserSubscription us JOIN FETCH us.plan WHERE us.user.id = :userId")
+        Optional<UserSubscription> findByUserIdWithPlan(@Param("userId") String userId);
 
-    /**
-     * Find subscriptions expiring within a date range where auto-renew is disabled.
-     */
-    List<UserSubscription> findByCurrentPeriodEndBetweenAndAutoRenewFalse(
-            OffsetDateTime startDate, OffsetDateTime endDate);
+        Optional<UserSubscription> findByPaymentGatewaySubscriptionId(String paymentGatewaySubscriptionId);
 
-    /**
-     * Find subscriptions in trial that expire within a date range.
-     */
-    List<UserSubscription> findByTrialEndsAtBetweenAndStatusEquals(
-            OffsetDateTime startDate, OffsetDateTime endDate, String status);
+        /**
+         * Find subscriptions expiring within a date range where auto-renew is disabled.
+         */
+        List<UserSubscription> findByCurrentPeriodEndBetweenAndAutoRenewFalse(
+                        OffsetDateTime startDate, OffsetDateTime endDate);
+
+        /**
+         * Find subscriptions in trial that expire within a date range.
+         */
+        List<UserSubscription> findByTrialEndsAtBetweenAndStatusEquals(
+                        OffsetDateTime startDate, OffsetDateTime endDate, String status);
 }

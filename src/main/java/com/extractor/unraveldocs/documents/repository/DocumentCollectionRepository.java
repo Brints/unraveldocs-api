@@ -12,6 +12,9 @@ public interface DocumentCollectionRepository extends JpaRepository<DocumentColl
     @Query("SELECT dc FROM DocumentCollection dc WHERE dc.user.id = :userId ORDER BY dc.createdAt DESC")
     List<DocumentCollection> findAllByUserId(@Param("userId") String userId);
 
+    @Query("SELECT COUNT(dc) FROM DocumentCollection dc WHERE dc.user.id = :userId")
+    Long countByUserId(@Param("userId") String userId);
+
     @Modifying
     @Query("DELETE FROM DocumentCollection dc WHERE dc.user.id = :userId")
     void deleteAllByUserId(@Param("userId") String userId);
