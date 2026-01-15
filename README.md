@@ -68,25 +68,25 @@
 
 ### Individual Subscription Plans
 
-| Plan | Monthly | Yearly | Docs/Month | OCR Pages |
-|------|---------|--------|------------|-----------|
-| Free | $0 | - | 5 | 25 |
-| Starter | $9 | $90 | 30 | 150 |
-| Pro | $19 | $190 | 100 | 500 |
-| Business | $49 | $490 | 500 | 2,500 |
+| Plan     | Monthly | Yearly  | Docs/Month | OCR Pages |
+|----------|---------|---------|------------|-----------|
+| Free     | $0      | -       | 5          | 25        |
+| Starter  | $9.99   | $89.99  | 30         | 150       |
+| Pro      | $19.99  | $189.99 | 100        | 500       |
+| Business | $49.99  | $489.99 | 500        | 2,500     |
 
 > Yearly plans include 17% savings
 
 ### Storage Allocation
 
-| Plan | Storage Limit |
-|------|---------------|
-| Free | 120 MB |
-| Starter | 2.6 GB |
-| Pro | 12.3 GB |
-| Business | 30 GB |
-| Team Premium | 200 GB |
-| Team Enterprise | Unlimited |
+| Plan            | Storage Limit |
+|-----------------|---------------|
+| Free            | 120 MB        |
+| Starter         | 2.66 GB       |
+| Pro             | 12.66 GB      |
+| Business        | 29.66 GB      |
+| Team Premium    | 199.66 GB     |
+| Team Enterprise | Unlimited     |
 
 > Storage is automatically tracked when documents are uploaded and reclaimed when deleted.
 

@@ -40,6 +40,16 @@ public class FileEntry {
     @Column(name = "error_message")
     private String errorMessage;
 
+    @Column(name = "display_name")
+    private String displayName;
+
+    @Column(name = "is_encrypted")
+    @Builder.Default
+    private boolean isEncrypted = false;
+
+    @Column(name = "encryption_iv")
+    private String encryptionIv;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     @Builder.Default

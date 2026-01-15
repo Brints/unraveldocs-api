@@ -56,6 +56,15 @@ class DocumentUploadImplTest {
         @Mock
         private StorageAllocationService storageAllocationService;
 
+        @Mock
+        private com.extractor.unraveldocs.pushnotification.interfaces.NotificationService notificationService;
+
+        @Mock
+        private com.extractor.unraveldocs.encryption.interfaces.EncryptionService encryptionService;
+
+        @Mock
+        private com.extractor.unraveldocs.subscription.service.SubscriptionFeatureService subscriptionFeatureService;
+
         @InjectMocks
         private DocumentUploadImpl documentUploadService;
 
@@ -144,7 +153,7 @@ class DocumentUploadImplTest {
 
                 // Act
                 DocumentCollectionResponse<DocumentCollectionUploadData> response = documentUploadService
-                                .uploadDocuments(files, testUser);
+                                .uploadDocuments(files, testUser, null, false);
 
                 // Assert
                 assertNotNull(response);
@@ -201,7 +210,7 @@ class DocumentUploadImplTest {
 
                 // Act
                 DocumentCollectionResponse<DocumentCollectionUploadData> response = documentUploadService
-                                .uploadDocuments(files, testUser);
+                                .uploadDocuments(files, testUser, null, false);
 
                 // Assert
                 assertNotNull(response);
@@ -276,7 +285,7 @@ class DocumentUploadImplTest {
 
                 // Act
                 DocumentCollectionResponse<DocumentCollectionUploadData> response = documentUploadService
-                                .uploadDocuments(files, testUser);
+                                .uploadDocuments(files, testUser, null, false);
 
                 // Assert
                 assertNotNull(response);
@@ -325,7 +334,7 @@ class DocumentUploadImplTest {
 
                 // Act
                 DocumentCollectionResponse<DocumentCollectionUploadData> response = documentUploadService
-                                .uploadDocuments(files, testUser);
+                                .uploadDocuments(files, testUser, null, false);
 
                 // Assert
                 assertNotNull(response);
@@ -364,7 +373,7 @@ class DocumentUploadImplTest {
 
                 // Act
                 DocumentCollectionResponse<DocumentCollectionUploadData> response = documentUploadService
-                                .uploadDocuments(files, testUser);
+                                .uploadDocuments(files, testUser, null, false);
 
                 // Assert
                 assertNotNull(response);
@@ -399,7 +408,7 @@ class DocumentUploadImplTest {
 
                 // Act
                 DocumentCollectionResponse<DocumentCollectionUploadData> response = documentUploadService
-                                .uploadDocuments(files, testUser);
+                                .uploadDocuments(files, testUser, null, false);
 
                 // Assert
                 assertNotNull(response);
@@ -424,7 +433,7 @@ class DocumentUploadImplTest {
 
                 // Act & Assert
                 BadRequestException exception = assertThrows(BadRequestException.class,
-                                () -> documentUploadService.uploadDocuments(files, testUser));
+                                () -> documentUploadService.uploadDocuments(files, testUser, null, false));
 
                 assertEquals(expectedMessage, exception.getMessage());
                 verify(documentCollectionRepository, never()).save(any(DocumentCollection.class));
@@ -441,7 +450,7 @@ class DocumentUploadImplTest {
 
                 // Act
                 DocumentCollectionResponse<DocumentCollectionUploadData> response = documentUploadService
-                                .uploadDocuments(files, testUser);
+                                .uploadDocuments(files, testUser, null, false);
 
                 // Assert
                 assertNotNull(response);

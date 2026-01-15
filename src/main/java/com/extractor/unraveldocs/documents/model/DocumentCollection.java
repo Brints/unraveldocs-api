@@ -36,6 +36,9 @@ public class DocumentCollection {
     @Column(nullable = false, name = "collection_status", length = 50)
     private DocumentStatus collectionStatus;
 
+    @Column(name = "name", nullable = false)
+    private String name;
+
     @Column(name = "upload_timestamp", nullable = false)
     private OffsetDateTime uploadTimestamp;
 

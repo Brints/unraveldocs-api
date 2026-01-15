@@ -52,6 +52,7 @@ public class GetDocumentServiceImpl implements GetDocumentService {
 
                 return GetDocumentCollectionData.builder()
                                 .id(collection.getId())
+                                .name(collection.getName())
                                 .userId(collection.getUser().getId())
                                 .collectionStatus(collection.getCollectionStatus())
                                 .uploadTimestamp(collection.getUploadTimestamp())
@@ -82,8 +83,11 @@ public class GetDocumentServiceImpl implements GetDocumentService {
                 return collections.stream()
                                 .map(collection -> DocumentCollectionSummary.builder()
                                                 .id(collection.getId())
+                                                .name(collection.getName())
                                                 .collectionStatus(collection.getCollectionStatus())
                                                 .fileCount(collection.getFiles().size())
+                                                .hasEncryptedFiles(collection.getFiles().stream()
+                                                                .anyMatch(com.extractor.unraveldocs.documents.model.FileEntry::isEncrypted))
                                                 .uploadTimestamp(collection.getUploadTimestamp())
                                                 .createdAt(collection.getCreatedAt())
                                                 .updatedAt(collection.getUpdatedAt())
@@ -128,9 +132,11 @@ public class GetDocumentServiceImpl implements GetDocumentService {
                 return FileEntryData.builder()
                                 .documentId(fileEntry.getDocumentId())
                                 .originalFileName(fileEntry.getOriginalFileName())
+                                .displayName(fileEntry.getDisplayName())
                                 .fileSize(fileEntry.getFileSize())
                                 .fileUrl(fileEntry.getFileUrl())
                                 .status(fileEntry.getUploadStatus())
+                                .isEncrypted(fileEntry.isEncrypted())
                                 .build();
         }
 }

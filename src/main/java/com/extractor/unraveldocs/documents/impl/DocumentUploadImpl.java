@@ -44,11 +44,29 @@ public class DocumentUploadImpl implements DocumentUploadService {
     private final FileStorageService fileStorageService;
     private final StorageAllocationService storageAllocationService;
     private final NotificationService notificationService;
+    private final com.extractor.unraveldocs.encryption.interfaces.EncryptionService encryptionService;
+    private final com.extractor.unraveldocs.subscription.service.SubscriptionFeatureService subscriptionFeatureService;
 
     @Override
     @Transactional
     @CacheEvict(value = "documentCollections", key = "#user.id")
-    public DocumentCollectionResponse<DocumentCollectionUploadData> uploadDocuments(MultipartFile[] files, User user) {
+    public DocumentCollectionResponse<DocumentCollectionUploadData> uploadDocuments(
+            MultipartFile[] files, User user, String collectionName, boolean enableEncryption) {
+        // Validate encryption access if enabled
+        if (enableEncryption) {
+            subscriptionFeatureService.requireFeatureAccess(
+                    user.getId(),
+                    com.extractor.unraveldocs.subscription.service.SubscriptionFeatureService.Feature.DOCUMENT_ENCRYPTION);
+            if (!encryptionService.isEncryptionAvailable()) {
+                throw new BadRequestException("Encryption is not available. Please contact support.");
+            }
+        }
+
+        // Generate collection name if not provided
+        String finalCollectionName = (collectionName != null && !collectionName.isBlank())
+                ? collectionName.trim()
+                : "Collection-" + java.time.LocalDateTime.now().format(
+                        java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss"));
         List<FileEntry> processedFileEntries = new ArrayList<>();
         List<FileEntryData> responseFileEntriesData = new ArrayList<>();
 
@@ -107,6 +125,7 @@ public class DocumentUploadImpl implements DocumentUploadService {
         if (!processedFileEntries.isEmpty()) {
             DocumentCollection documentCollection = DocumentCollection.builder()
                     .user(user)
+                    .name(finalCollectionName)
                     .files(processedFileEntries)
                     .uploadTimestamp(OffsetDateTime.now())
                     .build();
@@ -216,16 +235,15 @@ public class DocumentUploadImpl implements DocumentUploadService {
             if (collection.getCollectionStatus() == DocumentStatus.COMPLETED) {
                 type = NotificationType.DOCUMENT_UPLOAD_SUCCESS;
                 title = "Documents Uploaded Successfully";
-                message = String.format("%d document(s) uploaded successfully.", successfulUploads);
+                message = String.format("%d document(s) uploaded successfully. You can see your uploaded document in the Documents section and run an OCR extraction on it. Thank you for using UnravelDocs", successfulUploads);
             } else if (collection.getCollectionStatus() == DocumentStatus.PARTIALLY_COMPLETED) {
                 type = NotificationType.DOCUMENT_UPLOAD_SUCCESS;
                 title = "Documents Partially Uploaded";
-                message = String.format("%d document(s) uploaded. %d failed.",
-                        successfulUploads, validationFailures + storageFailures);
+                message = String.format("%d document(s) uploaded. %d failed. Please check individual document statuses in the Documents section.", successfulUploads, (validationFailures + storageFailures));
             } else {
                 type = NotificationType.DOCUMENT_UPLOAD_FAILED;
                 title = "Document Upload Failed";
-                message = "All documents failed to upload. Please try again.";
+                message = "All documents failed to upload. Please try again. You can contact support if the issue persists.";
             }
 
             Map<String, String> data = new HashMap<>();

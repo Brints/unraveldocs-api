@@ -13,6 +13,7 @@ import java.util.List;
 @Builder
 public class GetDocumentCollectionData {
     private String id;
+    private String name;
     private String userId;
     private DocumentStatus collectionStatus;
     private OffsetDateTime uploadTimestamp;
