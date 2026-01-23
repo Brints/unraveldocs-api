@@ -10,10 +10,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 /**
  * Request DTO for initializing a Paystack transaction
+ * 
+ * <p>
+ * Note: The amount should be provided in the smallest currency unit (e.g., kobo
+ * for NGN, cents for USD).
+ * For example, to charge ₦13,950.00, send amount as 1395000 (kobo).
+ * This matches Paystack's expected format directly.
+ * </p>
  */
 @Data
 @Builder
@@ -25,9 +33,13 @@ public class InitializeTransactionRequest {
     @Email(message = "Invalid email format")
     private String email;
 
+    /**
+     * Amount in the smallest currency unit (e.g., kobo for NGN).
+     * For ₦13,950.00, send 1395000
+     */
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be positive")
-    private Long amount;
+    private BigDecimal amount;
 
     @JsonProperty("callback_url")
     private String callbackUrl;
@@ -56,4 +68,3 @@ public class InitializeTransactionRequest {
     @JsonProperty("bearer")
     private String bearer;
 }
-

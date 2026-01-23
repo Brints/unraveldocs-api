@@ -456,34 +456,60 @@ Retrieves PayPal subscription details.
 **Response:**
 ```json
 {
-  "status": true,
   "message": "Subscription retrieved successfully",
   "data": {
-    "id": "I-BW452GLLEP1G",
-    "planId": "P-BIL34567890",
+    "id": "I-AKX5UYRHLC8B",
+    "planId": "P-8T868855D8094493VNFOR24A",
     "status": "ACTIVE",
-    "startTime": "2024-01-01T00:00:00Z",
-    "createTime": "2024-01-01T12:00:00Z",
-    "updateTime": "2024-01-01T12:05:00Z",
+    "startTime": "2026-01-16T23:44:25Z",
+    "createTime": "2026-01-16T23:45:43Z",
+    "updateTime": null,
     "approvalUrl": null,
-    "customId": "user_123",
+    "customId": null,
     "billingInfo": {
-      "outstandingBalance": 0.00,
+      "outstandingBalance": 0.0,
       "currency": "USD",
-      "cycleExecutionsCount": 3,
+      "cycleExecutionsCount": null,
       "failedPaymentsCount": 0,
-      "lastPaymentTime": "2024-03-01T00:00:00Z",
-      "lastPaymentAmount": 19.99,
-      "nextBillingTime": "2024-04-01T00:00:00Z"
+      "lastPaymentTime": null,
+      "lastPaymentAmount": null,
+      "nextBillingTime": "2026-02-16T10:00:00Z"
     },
-    "subscriber": {
-      "payerId": "PAYERID123",
-      "email": "subscriber@example.com",
-      "firstName": "John",
-      "lastName": "Doe"
-    },
-    "links": [...]
-  }
+    "subscriber": null,
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-AKX5UYRHLC8B/cancel",
+        "rel": "cancel",
+        "method": "POST"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-AKX5UYRHLC8B",
+        "rel": "edit",
+        "method": "PATCH"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-AKX5UYRHLC8B",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-AKX5UYRHLC8B/suspend",
+        "rel": "suspend",
+        "method": "POST"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v1/billing/subscriptions/I-AKX5UYRHLC8B/capture",
+        "rel": "capture",
+        "method": "POST"
+      }
+    ],
+    "active": true,
+    "approvalLink": null,
+    "cancelled": false,
+    "pendingApproval": false,
+    "suspended": false
+  },
+  "status": true
 }
 ```
 
@@ -534,6 +560,81 @@ Retrieves paginated subscription history.
 | size | int | No | 20 | Page size |
 
 **Response:** Paginated PayPal subscription entities
+```json
+{
+    "content": [
+        {
+            "id": "777ca01b-7ac9-4cca-84b1-3763a08665ee",
+            "userId": "f4f9c4b4-53e1-4816-bf09-057819d7a2b8",
+            "userEmail": "aniebietafia87@gmail.com",
+            "subscription_id": "I-AKX5UYRHLC8B",
+            "plan_id": "P-8T868855D8094493VNFOR24A",
+            "status": "APPROVAL_PENDING",
+            "amount": null,
+            "currency": null,
+            "custom_id": null,
+            "start_time": null,
+            "next_billing_time": null,
+            "outstanding_balance": null,
+            "cycles_completed": null,
+            "failed_payments_count": 0,
+            "last_payment_time": null,
+            "last_payment_amount": null,
+            "auto_renewal": true,
+            "cancelled_at": null,
+            "status_change_reason": null,
+            "created_at": "2026-01-16T23:44:25.011962Z"
+        },
+        {
+            "id": "11979067-1e5d-43cc-bbb2-bd5fbcc282b4",
+            "userId": "f4f9c4b4-53e1-4816-bf09-057819d7a2b8",
+            "userEmail": "aniebietafia87@gmail.com",
+            "subscription_id": "I-8XENFVXDKWRT",
+            "plan_id": "P-8T868855D8094493VNFOR24A",
+            "status": "APPROVAL_PENDING",
+            "amount": null,
+            "currency": null,
+            "custom_id": null,
+            "start_time": null,
+            "next_billing_time": null,
+            "outstanding_balance": null,
+            "cycles_completed": null,
+            "failed_payments_count": 0,
+            "last_payment_time": null,
+            "last_payment_amount": null,
+            "auto_renewal": true,
+            "cancelled_at": null,
+            "status_change_reason": null,
+            "created_at": "2026-01-16T23:12:08.07512Z"
+        }
+    ],
+    "empty": false,
+    "first": true,
+    "last": true,
+    "number": 0,
+    "numberOfElements": 2,
+    "pageable": {
+        "offset": 0,
+        "pageNumber": 0,
+        "pageSize": 20,
+        "paged": true,
+        "sort": {
+            "empty": true,
+            "sorted": false,
+            "unsorted": true
+        },
+        "unpaged": false
+    },
+    "size": 20,
+    "sort": {
+        "empty": true,
+        "sorted": false,
+        "unsorted": true
+    },
+    "totalElements": 2,
+    "totalPages": 1
+}
+```
 
 **Status Codes:**
 | Code | Description |

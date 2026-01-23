@@ -36,10 +36,10 @@ public class PayPalConfig {
     @Value("${paypal.webhook.id:}")
     private String webhookId;
 
-    @Value("${paypal.base.url:http://localhost:8080}/return")
+    @Value("${paypal.base.url}/success")
     private String returnUrl;
 
-    @Value("${paypal.cancel-url:http://localhost:8080}/cancel")
+    @Value("${paypal.base.url}/cancel")
     private String cancelUrl;
 
     /**

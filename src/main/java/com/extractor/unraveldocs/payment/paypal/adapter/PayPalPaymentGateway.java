@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.payment.paypal.adapter;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.common.dto.*;
 import com.extractor.unraveldocs.payment.common.enums.PaymentGateway;
 import com.extractor.unraveldocs.payment.common.service.PaymentGatewayService;
@@ -8,7 +9,6 @@ import com.extractor.unraveldocs.payment.enums.SubscriptionStatus;
 import com.extractor.unraveldocs.payment.paypal.dto.request.CreateOrderRequest;
 import com.extractor.unraveldocs.payment.paypal.dto.request.CreateSubscriptionRequest;
 import com.extractor.unraveldocs.payment.paypal.dto.request.RefundOrderRequest;
-import com.extractor.unraveldocs.payment.paypal.dto.response.PayPalCaptureResponse;
 import com.extractor.unraveldocs.payment.paypal.dto.response.PayPalOrderResponse;
 import com.extractor.unraveldocs.payment.paypal.dto.response.PayPalRefundResponse;
 import com.extractor.unraveldocs.payment.paypal.dto.response.PayPalSubscriptionResponse;
@@ -39,6 +39,7 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
     private final PayPalPaymentService paymentService;
     private final PayPalCustomerService customerService;
     private final PayPalSubscriptionService subscriptionService;
+    private final SanitizeLogging sanitizer;
 
     @Override
     public PaymentGateway getProvider() {
@@ -50,7 +51,8 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
             InitializePaymentRequest request) {
         try {
             log.info("Initializing PayPal subscription payment for user: {}, plan: {}",
-                    user.getId(), plan.getName());
+                    sanitizer.sanitizeLogging(user.getId()),
+                    sanitizer.sanitizeLoggingObject(plan.getName()));
 
             CreateSubscriptionRequest subRequest = CreateSubscriptionRequest.builder()
                     .planId(plan.getPaypalPlanCode())
@@ -70,7 +72,9 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Failed to initialize PayPal subscription payment: {}", e.getMessage(), e);
+            log.error(
+                    "Failed to initialize PayPal subscription payment: {}",
+                    sanitizer.sanitizeLogging(e.getMessage()), e);
             return InitializePaymentResponse.builder()
                     .gateway(PaymentGateway.PAYPAL)
                     .success(false)
@@ -82,7 +86,10 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
     @Override
     public PaymentResponse createPayment(User user, PaymentRequest request) {
         try {
-            log.info("Creating PayPal payment for user: {}, amount: {}", user.getId(), request.getAmount());
+            log.info(
+                    "Creating PayPal payment for user: {}, amount: {}",
+                    sanitizer.sanitizeLogging(user.getId()),
+                    sanitizer.sanitizeLoggingInteger(Math.toIntExact(request.getAmount())));
 
             // Convert cents to dollars
             BigDecimal amountInDollars = BigDecimal.valueOf(request.getAmount())
@@ -107,7 +114,7 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Failed to create PayPal payment: {}", e.getMessage(), e);
+            log.error("Failed to create PayPal payment: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             return PaymentResponse.builder()
                     .success(false)
                     .errorMessage(e.getMessage())
@@ -129,7 +136,7 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Failed to get PayPal payment: {}", e.getMessage(), e);
+            log.error("Failed to get PayPal payment: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             return PaymentResponse.builder()
                     .success(false)
                     .errorMessage(e.getMessage())
@@ -140,7 +147,7 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
     @Override
     public RefundResponse refundPayment(RefundRequest request) {
         try {
-            log.info("Processing PayPal refund for payment: {}", request.getPaymentId());
+            log.info("Processing PayPal refund for payment: {}", sanitizer.sanitizeLogging(request.getPaymentId()));
 
             // Get the capture ID from the payment
             Optional<PayPalPayment> paymentOpt = paymentService.getPaymentByOrderId(request.getPaymentId());
@@ -181,7 +188,7 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Failed to process PayPal refund: {}", e.getMessage(), e);
+            log.error("Failed to process PayPal refund: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             return RefundResponse.builder()
                     .success(false)
                     .errorMessage(e.getMessage())
@@ -192,7 +199,9 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
     @Override
     public SubscriptionResponse createSubscription(User user, SubscriptionRequest request) {
         try {
-            log.info("Creating PayPal subscription for user: {}", user.getId());
+            log.info(
+                    "Creating PayPal subscription for user: {}",
+                    sanitizer.sanitizeLogging(user.getId()));
 
             CreateSubscriptionRequest subRequest = CreateSubscriptionRequest.builder()
                     .planId(request.getPriceId())
@@ -209,7 +218,9 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Failed to create PayPal subscription: {}", e.getMessage(), e);
+            log.error(
+                    "Failed to create PayPal subscription: {}",
+                    sanitizer.sanitizeLogging(e.getMessage()), e);
             return SubscriptionResponse.builder()
                     .success(false)
                     .errorMessage(e.getMessage())
@@ -234,7 +245,7 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Failed to get PayPal subscription: {}", e.getMessage(), e);
+            log.error("Failed to get PayPal subscription: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             return SubscriptionResponse.builder()
                     .success(false)
                     .errorMessage(e.getMessage())
@@ -245,7 +256,9 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
     @Override
     public SubscriptionResponse cancelSubscription(String providerSubscriptionId, boolean immediately) {
         try {
-            log.info("Cancelling PayPal subscription: {}", providerSubscriptionId);
+            log.info(
+                    "Cancelling PayPal subscription: {}",
+                    sanitizer.sanitizeLogging(providerSubscriptionId));
 
             PayPalSubscriptionResponse subscription = subscriptionService.cancelSubscription(
                     providerSubscriptionId,
@@ -259,7 +272,7 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Failed to cancel PayPal subscription: {}", e.getMessage(), e);
+            log.error("Failed to cancel PayPal subscription: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             return SubscriptionResponse.builder()
                     .success(false)
                     .errorMessage(e.getMessage())
@@ -293,7 +306,7 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Failed to get/create PayPal customer: {}", e.getMessage(), e);
+            log.error("Failed to get/create PayPal customer: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             return CustomerResponse.builder()
                     .success(false)
                     .errorMessage(e.getMessage())
@@ -308,21 +321,21 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
             return order.isCompleted();
 
         } catch (Exception e) {
-            log.error("Failed to verify PayPal payment: {}", e.getMessage(), e);
+            log.error("Failed to verify PayPal payment: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             return false;
         }
     }
 
     @Override
     public String ensurePlanExists(SubscriptionPlan plan) {
-        // PayPal plans need to be created via the PayPal dashboard or API
         // Return the existing plan code if set
         if (plan.getPaypalPlanCode() != null && !plan.getPaypalPlanCode().isEmpty()) {
             return plan.getPaypalPlanCode();
         }
 
         log.warn("PayPal plan code not set for subscription plan: {}. " +
-                "Please create the plan in PayPal and update the subscription_plans table.", plan.getName());
+                "Please create the plan in PayPal and update the subscription_plans table.",
+                sanitizer.sanitizeLoggingObject(plan.getName()));
         return null;
     }
 
@@ -333,7 +346,6 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
             return PaymentStatus.PENDING;
 
         return switch (paypalStatus.toUpperCase()) {
-            case "CREATED", "SAVED", "PAYER_ACTION_REQUIRED" -> PaymentStatus.PENDING;
             case "APPROVED" -> PaymentStatus.PROCESSING;
             case "COMPLETED" -> PaymentStatus.SUCCEEDED;
             case "VOIDED" -> PaymentStatus.CANCELED;
@@ -346,7 +358,6 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
             return SubscriptionStatus.INCOMPLETE;
 
         return switch (paypalStatus.toUpperCase()) {
-            case "APPROVAL_PENDING" -> SubscriptionStatus.INCOMPLETE;
             case "APPROVED", "ACTIVE" -> SubscriptionStatus.ACTIVE;
             case "SUSPENDED" -> SubscriptionStatus.PAUSED;
             case "CANCELLED", "EXPIRED" -> SubscriptionStatus.CANCELED;

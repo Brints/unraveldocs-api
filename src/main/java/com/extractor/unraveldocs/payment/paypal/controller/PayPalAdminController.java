@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.payment.paypal.controller;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.paypal.service.PayPalPlanSetupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -27,6 +28,7 @@ import java.util.Map;
 public class PayPalAdminController {
 
     private final PayPalPlanSetupService planSetupService;
+    private final SanitizeLogging sanitizer;
 
     /**
      * Set up all PayPal billing plans.
@@ -83,7 +85,7 @@ public class PayPalAdminController {
     @PostMapping("/plans/{planId}/deactivate")
     @Operation(summary = "Deactivate PayPal billing plan", description = "Deactivates a PayPal billing plan. Existing subscriptions will continue.")
     public ResponseEntity<Map<String, Object>> deactivatePlan(@PathVariable String planId) {
-        log.info("Admin deactivating PayPal plan: {}", planId);
+        log.info("Admin deactivating PayPal plan: {}", sanitizer.sanitizeLogging(planId));
 
         planSetupService.deactivatePlan(planId);
 

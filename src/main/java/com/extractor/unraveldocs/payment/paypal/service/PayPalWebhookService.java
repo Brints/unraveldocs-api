@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.payment.paypal.service;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.enums.PaymentStatus;
 import com.extractor.unraveldocs.payment.paypal.exception.PayPalWebhookException;
 import com.extractor.unraveldocs.payment.paypal.model.PayPalWebhookEvent;
@@ -25,6 +26,7 @@ public class PayPalWebhookService {
     private final PayPalSubscriptionService subscriptionService;
     private final PayPalWebhookEventRepository webhookEventRepository;
     private final ObjectMapper objectMapper;
+    private final SanitizeLogging sanitizer;
 
     // ==================== Payment Event Types ====================
     private static final String PAYMENT_CAPTURE_COMPLETED = "PAYMENT.CAPTURE.COMPLETED";
@@ -61,7 +63,7 @@ public class PayPalWebhookService {
 
             // Check for duplicate processing (idempotency)
             if (isEventProcessed(eventId)) {
-                log.info("Webhook event {} already processed, skipping", eventId);
+                log.info("Webhook event {} already processed, skipping", sanitizer.sanitizeLogging(eventId));
                 return;
             }
 
@@ -108,14 +110,14 @@ public class PayPalWebhookService {
                     break;
 
                 default:
-                    log.info("Unhandled webhook event type: {}", eventType);
+                    log.info("Unhandled webhook event type: {}", sanitizer.sanitizeLogging(eventType));
             }
 
             // Mark as processed
             markEventAsProcessed(eventId, null);
 
         } catch (Exception e) {
-            log.error("Failed to process webhook event: {}", e.getMessage(), e);
+            log.error("Failed to process webhook event: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             throw new PayPalWebhookException("Failed to process webhook event", e);
         }
     }
@@ -125,7 +127,7 @@ public class PayPalWebhookService {
     private void handlePaymentCaptureCompleted(JsonNode resource) {
         try {
             String captureId = resource.get("id").asText();
-            log.info("Processing PAYMENT.CAPTURE.COMPLETED for: {}", captureId);
+            log.info("Processing PAYMENT.CAPTURE.COMPLETED for: {}", sanitizer.sanitizeLogging(captureId));
 
             // Find the payment by capture ID and update status
             paymentService.getPaymentByCaptureId(captureId).ifPresent(payment -> {
@@ -133,7 +135,7 @@ public class PayPalWebhookService {
             });
 
         } catch (Exception e) {
-            log.error("Failed to handle payment capture completed: {}", e.getMessage(), e);
+            log.error("Failed to handle payment capture completed: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             throw new PayPalWebhookException("Failed to process payment capture", e);
         }
     }
@@ -141,7 +143,7 @@ public class PayPalWebhookService {
     private void handlePaymentCaptureDenied(JsonNode resource) {
         try {
             String captureId = resource.get("id").asText();
-            log.info("Processing PAYMENT.CAPTURE.DENIED for: {}", captureId);
+            log.info("Processing PAYMENT.CAPTURE.DENIED for: {}", sanitizer.sanitizeLogging(captureId));
 
             paymentService.getPaymentByCaptureId(captureId).ifPresent(payment -> {
                 String reason = resource.has("status_details")
@@ -151,7 +153,7 @@ public class PayPalWebhookService {
             });
 
         } catch (Exception e) {
-            log.error("Failed to handle payment capture denied: {}", e.getMessage(), e);
+            log.error("Failed to handle payment capture denied: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             throw new PayPalWebhookException("Failed to process payment capture denied", e);
         }
     }
@@ -159,27 +161,27 @@ public class PayPalWebhookService {
     private void handlePaymentCapturePending(JsonNode resource) {
         try {
             String captureId = resource.get("id").asText();
-            log.info("Processing PAYMENT.CAPTURE.PENDING for: {}", captureId);
+            log.info("Processing PAYMENT.CAPTURE.PENDING for: {}", sanitizer.sanitizeLogging(captureId));
 
             paymentService.getPaymentByCaptureId(captureId).ifPresent(payment -> {
                 paymentService.updatePaymentStatus(payment.getOrderId(), PaymentStatus.PENDING, null);
             });
 
         } catch (Exception e) {
-            log.error("Failed to handle payment capture pending: {}", e.getMessage(), e);
+            log.error("Failed to handle payment capture pending: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
         }
     }
 
     private void handlePaymentCaptureRefunded(JsonNode resource) {
         try {
             String captureId = resource.get("id").asText();
-            log.info("Processing PAYMENT.CAPTURE.REFUNDED for: {}", captureId);
+            log.info("Processing PAYMENT.CAPTURE.REFUNDED for: {}", sanitizer.sanitizeLogging(captureId));
 
             // The refund is already recorded in refundPayment method
             // This webhook confirms the refund completed
 
         } catch (Exception e) {
-            log.error("Failed to handle payment capture refunded: {}", e.getMessage(), e);
+            log.error("Failed to handle payment capture refunded: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
         }
     }
 
@@ -188,32 +190,32 @@ public class PayPalWebhookService {
     private void handleSubscriptionActivated(JsonNode resource) {
         try {
             String subscriptionId = resource.get("id").asText();
-            log.info("Processing subscription activated: {}", subscriptionId);
+            log.info("Processing subscription activated: {}", sanitizer.sanitizeLogging(subscriptionId));
 
             subscriptionService.updateSubscriptionStatus(subscriptionId, "ACTIVE", "Subscription activated");
 
         } catch (Exception e) {
-            log.error("Failed to handle subscription activated: {}", e.getMessage(), e);
+            log.error("Failed to handle subscription activated: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
         }
     }
 
     private void handleSubscriptionUpdated(JsonNode resource) {
         try {
             String subscriptionId = resource.get("id").asText();
-            log.info("Processing subscription updated: {}", subscriptionId);
+            log.info("Processing subscription updated: {}", sanitizer.sanitizeLogging(subscriptionId));
 
             // Sync with PayPal to get latest state
             subscriptionService.syncSubscription(subscriptionId);
 
         } catch (Exception e) {
-            log.error("Failed to handle subscription updated: {}", e.getMessage(), e);
+            log.error("Failed to handle subscription updated: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
         }
     }
 
     private void handleSubscriptionCancelled(JsonNode resource) {
         try {
             String subscriptionId = resource.get("id").asText();
-            log.info("Processing subscription cancelled: {}", subscriptionId);
+            log.info("Processing subscription cancelled: {}", sanitizer.sanitizeLogging(subscriptionId));
 
             subscriptionService.updateSubscriptionStatus(subscriptionId, "CANCELLED",
                     "Subscription cancelled via PayPal");
@@ -226,37 +228,37 @@ public class PayPalWebhookService {
     private void handleSubscriptionSuspended(JsonNode resource) {
         try {
             String subscriptionId = resource.get("id").asText();
-            log.info("Processing subscription suspended: {}", subscriptionId);
+            log.info("Processing subscription suspended: {}", sanitizer.sanitizeLogging(subscriptionId));
 
             subscriptionService.updateSubscriptionStatus(subscriptionId, "SUSPENDED", "Subscription suspended");
 
         } catch (Exception e) {
-            log.error("Failed to handle subscription suspended: {}", e.getMessage(), e);
+            log.error("Failed to handle subscription suspended: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
         }
     }
 
     private void handleSubscriptionExpired(JsonNode resource) {
         try {
             String subscriptionId = resource.get("id").asText();
-            log.info("Processing subscription expired: {}", subscriptionId);
+            log.info("Processing subscription expired: {}", sanitizer.sanitizeLogging(subscriptionId));
 
             subscriptionService.updateSubscriptionStatus(subscriptionId, "EXPIRED", "Subscription expired");
 
         } catch (Exception e) {
-            log.error("Failed to handle subscription expired: {}", e.getMessage(), e);
+            log.error("Failed to handle subscription expired: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
         }
     }
 
     private void handleSubscriptionPaymentFailed(JsonNode resource) {
         try {
             String subscriptionId = resource.get("id").asText();
-            log.info("Processing subscription payment failed: {}", subscriptionId);
+            log.info("Processing subscription payment failed: {}", sanitizer.sanitizeLogging(subscriptionId));
 
             // Sync to update failed payment count
             subscriptionService.syncSubscription(subscriptionId);
 
         } catch (Exception e) {
-            log.error("Failed to handle subscription payment failed: {}", e.getMessage(), e);
+            log.error("Failed to handle subscription payment failed: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
         }
     }
 

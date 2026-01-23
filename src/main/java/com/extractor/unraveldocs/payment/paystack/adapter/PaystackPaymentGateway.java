@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,7 +45,9 @@ public class PaystackPaymentGateway implements PaymentGatewayService {
         try {
             InitializeTransactionRequest paystackRequest = new InitializeTransactionRequest();
             paystackRequest.setEmail(user.getEmail());
-            paystackRequest.setAmount(request.getAmountInCents());
+            // Amount is already in smallest currency unit (kobo/cents), pass directly as
+            // BigDecimal
+            paystackRequest.setAmount(BigDecimal.valueOf(request.getAmountInCents()));
             paystackRequest.setCallbackUrl(request.getCallbackUrl());
             paystackRequest.setPlanCode(plan.getPaystackPlanCode());
 
@@ -81,7 +84,9 @@ public class PaystackPaymentGateway implements PaymentGatewayService {
         try {
             InitializeTransactionRequest paystackRequest = new InitializeTransactionRequest();
             paystackRequest.setEmail(user.getEmail());
-            paystackRequest.setAmount(request.getAmount());
+            // Amount is already in smallest currency unit (kobo/cents), pass directly as
+            // BigDecimal
+            paystackRequest.setAmount(BigDecimal.valueOf(request.getAmount()));
 
             Map<String, Object> metadata = new HashMap<>();
             if (request.getMetadata() != null) {
@@ -136,7 +141,8 @@ public class PaystackPaymentGateway implements PaymentGatewayService {
 
     @Override
     public RefundResponse refundPayment(RefundRequest request) {
-        // Paystack refunds are typically done via dashboard or require special API access
+        // Paystack refunds are typically done via dashboard or require special API
+        // access
         log.warn("Paystack refunds should be processed via the Paystack dashboard");
         return RefundResponse.builder()
                 .provider(PaymentGateway.PAYSTACK)
@@ -202,7 +208,8 @@ public class PaystackPaymentGateway implements PaymentGatewayService {
         try {
             // Paystack requires email token to disable subscription
             var subscription = subscriptionService.getSubscriptionByCode(providerSubscriptionId)
-                    .orElseThrow(() -> new IllegalArgumentException("Subscription not found: " + providerSubscriptionId));
+                    .orElseThrow(
+                            () -> new IllegalArgumentException("Subscription not found: " + providerSubscriptionId));
 
             subscriptionService.disableSubscription(providerSubscriptionId, subscription.getEmailToken());
 
@@ -275,7 +282,8 @@ public class PaystackPaymentGateway implements PaymentGatewayService {
     }
 
     /**
-     * Maps Paystack subscription status strings to the unified SubscriptionStatus enum.
+     * Maps Paystack subscription status strings to the unified SubscriptionStatus
+     * enum.
      * Paystack uses: active, non-renewing, attention, completed, cancelled
      */
     private SubscriptionStatus mapPaystackStatus(String paystackStatus) {

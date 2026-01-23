@@ -42,3 +42,4 @@ rest-client.private.env.json
 http-client.private.env.json
 
 src/main/resources/google-credentials.json
+src/main/resources/firebase-service-account.json

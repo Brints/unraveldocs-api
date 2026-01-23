@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.payment.paypal.service;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.paypal.config.PayPalConfig;
 import com.extractor.unraveldocs.payment.paypal.exception.PayPalPaymentException;
 import com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ public class PayPalPlanSetupService {
     private final SubscriptionPlanRepository planRepository;
     private final RestClient paypalRestClient;
     private final ObjectMapper objectMapper;
+    private final SanitizeLogging sanitizer;
 
     private static final String PRODUCT_NAME = "UnravelDocs Subscription";
     private static final String PRODUCT_DESCRIPTION = "Document processing and OCR subscription service";
@@ -56,7 +59,7 @@ public class PayPalPlanSetupService {
             // Step 1: Create or get the product
             String productId = createOrGetProduct();
             result.put("productId", productId);
-            log.info("Using PayPal product: {}", productId);
+            log.info("Using PayPal product: {}", sanitizer.sanitizeLogging(productId));
 
             // Step 2: Create billing plans for each subscription tier
             List<SubscriptionPlan> plans = planRepository.findAll();
@@ -80,7 +83,11 @@ public class PayPalPlanSetupService {
                             "price", plan.getPrice().toString(),
                             "interval", plan.getBillingIntervalUnit().name()));
 
-                    log.info("Created PayPal plan for {}: {}", plan.getName(), planId);
+                    log.info(
+                            "Created PayPal plan for {}: {}",
+                            sanitizer.sanitizeLoggingObject(plan.getName()),
+                            sanitizer.sanitizeLogging(planId)
+                    );
 
                 } catch (Exception e) {
                     String error = "Failed to create plan for " + plan.getName() + ": " + e.getMessage();
@@ -94,10 +101,13 @@ public class PayPalPlanSetupService {
             result.put("errors", errors);
             result.put("success", errors.isEmpty());
 
-            log.info("PayPal plan setup completed. Created {} plans.", createdPlans.size());
+            log.info(
+                    "PayPal plan setup completed. Created {} plans.",
+                    sanitizer.sanitizeLoggingInteger(createdPlans.size())
+            );
 
         } catch (Exception e) {
-            log.error("Failed to setup PayPal plans: {}", e.getMessage(), e);
+            log.error("Failed to setup PayPal plans: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -118,18 +128,7 @@ public class PayPalPlanSetupService {
             }
 
             // Create new product - home_url is optional and PayPal rejects localhost URLs
-            Map<String, Object> productRequest = new LinkedHashMap<>();
-            productRequest.put("name", PRODUCT_NAME);
-            productRequest.put("description", PRODUCT_DESCRIPTION);
-            productRequest.put("type", PRODUCT_TYPE);
-            productRequest.put("category", PRODUCT_CATEGORY);
-
-            // Only add home_url if it's not localhost (PayPal rejects localhost URLs)
-            String returnUrl = payPalConfig.getReturnUrl();
-            if (returnUrl != null && !returnUrl.contains("localhost") && !returnUrl.contains("127.0.0.1")) {
-                String homeUrl = returnUrl.replace("/api/v1/paypal/return", "");
-                productRequest.put("home_url", homeUrl);
-            }
+            Map<String, Object> productRequest = getProductRequest();
 
             String response = paypalRestClient.post()
                     .uri("/v1/catalogs/products")
@@ -142,13 +141,29 @@ public class PayPalPlanSetupService {
             JsonNode productJson = objectMapper.readTree(response);
             String productId = productJson.get("id").asText();
 
-            log.info("Created PayPal product: {}", productId);
+            log.info("Created PayPal product: {}", sanitizer.sanitizeLogging(productId));
             return productId;
 
         } catch (Exception e) {
-            log.error("Failed to create PayPal product: {}", e.getMessage(), e);
+            log.error("Failed to create PayPal product: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             throw new PayPalPaymentException("Failed to create PayPal product", e);
         }
+    }
+
+    private @NonNull Map<String, Object> getProductRequest() {
+        Map<String, Object> productRequest = new LinkedHashMap<>();
+        productRequest.put("name", PRODUCT_NAME);
+        productRequest.put("description", PRODUCT_DESCRIPTION);
+        productRequest.put("type", PRODUCT_TYPE);
+        productRequest.put("category", PRODUCT_CATEGORY);
+
+        // Only add home_url if it's not localhost (PayPal rejects localhost URLs)
+        String returnUrl = payPalConfig.getReturnUrl();
+        if (returnUrl != null && !returnUrl.contains("localhost") && !returnUrl.contains("127.0.0.1")) {
+            String homeUrl = returnUrl.replace("/api/v1/paypal/return", "");
+            productRequest.put("home_url", homeUrl);
+        }
+        return productRequest;
     }
 
     /**
@@ -173,7 +188,7 @@ public class PayPalPlanSetupService {
             return null;
 
         } catch (Exception e) {
-            log.warn("Could not search for existing products: {}", e.getMessage());
+            log.warn("Could not search for existing products: {}", sanitizer.sanitizeLogging(e.getMessage()));
             return null;
         }
     }
@@ -226,7 +241,9 @@ public class PayPalPlanSetupService {
             return planJson.get("id").asText();
 
         } catch (Exception e) {
-            log.error("Failed to create billing plan for {}: {}", plan.getName(), e.getMessage(), e);
+            log.error(
+                    "Failed to create billing plan for {}: {}",
+                    sanitizer.sanitizeLoggingObject(plan.getName()), e.getMessage(), e);
             throw new PayPalPaymentException("Failed to create billing plan", e);
         }
     }
@@ -236,7 +253,6 @@ public class PayPalPlanSetupService {
      */
     private String mapBillingInterval(String interval) {
         return switch (interval.toUpperCase()) {
-            case "MONTH" -> "MONTH";
             case "YEAR" -> "YEAR";
             case "WEEK" -> "WEEK";
             case "DAY" -> "DAY";
@@ -305,7 +321,7 @@ public class PayPalPlanSetupService {
             return plans;
 
         } catch (Exception e) {
-            log.error("Failed to list PayPal plans: {}", e.getMessage(), e);
+            log.error("Failed to list PayPal plans: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
             throw new PayPalPaymentException("Failed to list PayPal plans", e);
         }
     }
@@ -321,10 +337,13 @@ public class PayPalPlanSetupService {
                     .retrieve()
                     .toBodilessEntity();
 
-            log.info("Deactivated PayPal plan: {}", planId);
+            log.info("Deactivated PayPal plan: {}", sanitizer.sanitizeLogging(planId));
 
         } catch (Exception e) {
-            log.error("Failed to deactivate plan {}: {}", planId, e.getMessage(), e);
+            log.error(
+                    "Failed to deactivate plan {}: {}",
+                    sanitizer.sanitizeLogging(planId),
+                    sanitizer.sanitizeLogging(e.getMessage()), e);
             throw new PayPalPaymentException("Failed to deactivate plan", e);
         }
     }

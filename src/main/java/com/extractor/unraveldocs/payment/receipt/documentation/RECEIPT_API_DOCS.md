@@ -65,37 +65,23 @@ Retrieves a paginated list of receipts for the authenticated user.
 ```json
 {
   "statusCode": 200,
-  "status": true,
+  "status": "success",
   "message": "Receipts retrieved successfully",
   "data": [
     {
-      "id": "uuid-abc123",
-      "receiptNumber": "REC-2024-00001",
-      "paymentProvider": "STRIPE",
-      "amount": 49.99,
-      "currency": "USD",
+      "id": "c5960b7d-58d4-4ab0-9db7-8015d929e54a",
+      "receiptNumber": "RCP-20260116-108835",
+      "paymentProvider": "PAYSTACK",
+      "amount": 2945000.00,
+      "currency": "NGN",
       "paymentMethod": "card",
-      "paymentMethodDetails": "Visa ending in 4242",
-      "description": "PRO Monthly Subscription",
-      "receiptUrl": "https://storage.example.com/receipts/REC-2024-00001.pdf",
-      "paidAt": "2024-01-01T12:00:00Z",
-      "createdAt": "2024-01-01T12:00:05Z"
-    },
-    {
-      "id": "uuid-def456",
-      "receiptNumber": "REC-2024-00002",
-      "paymentProvider": "PAYPAL",
-      "amount": 29.99,
-      "currency": "USD",
-      "paymentMethod": "paypal",
-      "paymentMethodDetails": "PayPal Account - john@example.com",
-      "description": "Document Processing Credits",
-      "receiptUrl": "https://storage.example.com/receipts/REC-2024-00002.pdf",
-      "paidAt": "2024-01-15T10:30:00Z",
-      "createdAt": "2024-01-15T10:30:10Z"
+      "paymentMethodDetails": "**** 4081 (VISA )",
+      "description": null,
+      "receiptUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/receipts/RCP-20260116-108835.pdf",
+      "paidAt": "2026-01-16T21:47:40.859287Z",
+      "createdAt": "2026-01-16T21:47:47.263663Z"
     }
-  ],
-  "timestamp": "2024-01-20T14:30:00Z"
+  ]
 }
 ```
 
@@ -247,24 +233,24 @@ Retrieves the download URL for a receipt PDF.
 
 The Receipt entity stores payment receipt information in the database.
 
-| Field | Type | Nullable | Description |
-|-------|------|----------|-------------|
-| id | string (UUID) | No | Primary key |
-| user | User | No | Associated user (foreign key) |
-| receiptNumber | string | No | Unique receipt number |
-| paymentProvider | PaymentProvider | No | Payment gateway used |
-| externalPaymentId | string | No | Payment ID from provider |
-| amount | decimal(10,2) | No | Payment amount |
-| currency | string(3) | No | ISO currency code |
-| paymentMethod | string | Yes | Payment method type |
-| paymentMethodDetails | string | Yes | Additional payment details |
-| description | text | Yes | Payment description |
-| receiptUrl | text | Yes | URL to receipt PDF |
-| paidAt | datetime | Yes | Payment timestamp |
-| emailSent | boolean | No | Whether email was sent |
-| emailSentAt | datetime | Yes | When email was sent |
-| createdAt | datetime | No | Record creation time |
-| updatedAt | datetime | No | Last update time |
+| Field                | Type            | Nullable | Description                   |
+|----------------------|-----------------|----------|-------------------------------|
+| id                   | string (UUID)   | No       | Primary key                   |
+| user                 | User            | No       | Associated user (foreign key) |
+| receiptNumber        | string          | No       | Unique receipt number         |
+| paymentProvider      | PaymentProvider | No       | Payment gateway used          |
+| externalPaymentId    | string          | No       | Payment ID from provider      |
+| amount               | decimal(10,2)   | No       | Payment amount                |
+| currency             | string(3)       | No       | ISO currency code             |
+| paymentMethod        | string          | Yes      | Payment method type           |
+| paymentMethodDetails | string          | Yes      | Additional payment details    |
+| description          | text            | Yes      | Payment description           |
+| receiptUrl           | text            | Yes      | URL to receipt PDF            |
+| paidAt               | datetime        | Yes      | Payment timestamp             |
+| emailSent            | boolean         | No       | Whether email was sent        |
+| emailSentAt          | datetime        | Yes      | When email was sent           |
+| createdAt            | datetime        | No       | Record creation time          |
+| updatedAt            | datetime        | No       | Last update time              |
 
 ---
 
@@ -320,12 +306,12 @@ All errors follow this format:
 
 ### Error Codes
 
-| HTTP Status | Exception | Description |
-|-------------|-----------|-------------|
-| 401 | UnauthorizedException | User not authenticated or access denied |
-| 403 | ForbiddenException | User lacks permission |
-| 404 | NotFoundException | Receipt not found |
-| 500 | Internal Server Error | Server error |
+| HTTP Status | Exception             | Description                             |
+|-------------|-----------------------|-----------------------------------------|
+| 401         | UnauthorizedException | User not authenticated or access denied |
+| 403         | ForbiddenException    | User lacks permission                   |
+| 404         | NotFoundException     | Receipt not found                       |
+| 500         | Internal Server Error | Server error                            |
 
 ---
 

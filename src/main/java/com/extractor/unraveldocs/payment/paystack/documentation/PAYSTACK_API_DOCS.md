@@ -696,15 +696,15 @@ Or for webhook errors:
 
 ## Payment Channels
 
-| Channel | Description |
-|---------|-------------|
-| card | Debit/Credit card |
-| bank | Bank account |
-| ussd | USSD payment |
-| qr | QR code payment |
-| mobile_money | Mobile money |
-| bank_transfer | Bank transfer |
-| eft | Electronic funds transfer |
+| Channel       | Description               |
+|---------------|---------------------------|
+| card          | Debit/Credit card         |
+| bank          | Bank account              |
+| ussd          | USSD payment              |
+| qr            | QR code payment           |
+| mobile_money  | Mobile money              |
+| bank_transfer | Bank transfer             |
+| eft           | Electronic funds transfer |
 
 ---
 

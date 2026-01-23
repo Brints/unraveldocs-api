@@ -56,8 +56,11 @@ public class PaystackPaymentService {
             // Generate unique reference if not provided
             String reference = request.getReference() != null ? request.getReference() : generateReference();
 
-            // Convert amount to kobo for Paystack API (amount in Naira * 100)
-            long amountInKobo = request.getAmount() * 100;
+            // Amount should be in the smallest currency unit (kobo for NGN)
+            // e.g., ₦13,950.00 should be sent as 1395000 (kobo) by the client
+            long amountInKobo = request.getAmount()
+                    .setScale(0, RoundingMode.HALF_UP)
+                    .longValue();
 
             // Build request body
             Map<String, Object> requestBody = new HashMap<>();
@@ -117,7 +120,7 @@ public class PaystackPaymentService {
                     .authorizationUrl(data.getAuthorizationUrl())
                     .paymentType(paymentType)
                     .status(PaymentStatus.PENDING)
-                    .amount(BigDecimal.valueOf(request.getAmount()))
+                    .amount(request.getAmount())
                     .currency(
                             request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency())
                     .planCode(request.getPlanCode())

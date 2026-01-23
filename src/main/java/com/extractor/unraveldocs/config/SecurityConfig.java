@@ -93,7 +93,11 @@ public class SecurityConfig {
                                                                 "/api/v1/auth/generate-password",
                                                                 "/api/v1/stripe/webhook/**",
                                                                 "/api/v1/paystack/webhook/**",
-                                                                "/api/v1/paystack/callback")
+                                                                "/api/v1/paystack/callback",
+                                                                "/api/v1/paypal/webhook",
+                                                                "/api/v1/paypal/plans",
+                                                                "/api/v1/paypal/return",
+                                                                "/api/v1/paypal/cancel")
                                                 .permitAll()
                                                 .requestMatchers(
                                                                 "/api/v1/admin/**")

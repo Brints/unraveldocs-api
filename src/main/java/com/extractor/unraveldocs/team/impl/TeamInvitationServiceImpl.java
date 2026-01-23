@@ -144,7 +144,8 @@ public class TeamInvitationServiceImpl {
                 sanitizer.sanitizeLogging(request.email()),
                 sanitizer.sanitizeLogging(teamId));
 
-        String inviteLink = baseUrl + "/teams/invite/" + token;
+        //String inviteLink = baseUrl + "/teams/invite/" + token;
+        String inviteLink = baseUrl + "/teams/join/" + token;
         return responseBuilder.buildUserResponse(inviteLink, HttpStatus.CREATED,
                 "Invitation sent to " + request.email());
     }

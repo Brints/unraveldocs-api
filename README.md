@@ -66,14 +66,16 @@
   - **Flutterwave**: African payment gateway *(stub)*
   - **Chappa**: Ethiopian payment gateway *(stub)*
 
-### Individual Subscription Plans
+### Subscription Plans
 
-| Plan     | Monthly | Yearly  | Docs/Month | OCR Pages |
-|----------|---------|---------|------------|-----------|
-| Free     | $0      | -       | 5          | 25        |
-| Starter  | $9.99   | $89.99  | 30         | 150       |
-| Pro      | $19.99  | $189.99 | 100        | 500       |
-| Business | $49.99  | $489.99 | 500        | 2,500     |
+| Plan            | Monthly | Yearly  | Docs/Month | OCR Pages |
+|-----------------|---------|---------|------------|-----------|
+| Free            | $0      | -       | 5          | 25        |
+| Starter         | $9.99   | $89.99  | 30         | 150       |
+| Pro             | $19.99  | $189.99 | 100        | 500       |
+| Business        | $49.99  | $489.99 | 500        | 2,500     |
+| Team Premium    | $29.00  | $290.00 | 200        | 1,000     |
+| Team Enterprise | $79.00  | $790.00 | Unlimited  |           |
 
 > Yearly plans include 17% savings
 
