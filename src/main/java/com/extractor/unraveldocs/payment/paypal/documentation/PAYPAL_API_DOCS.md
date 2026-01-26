@@ -59,16 +59,17 @@ Creates a new PayPal order for one-time payment.
 ```
 
 **Request Fields:**
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| amount | decimal | Yes | - | Payment amount (minimum 0.01) |
-| currency | string | Yes | - | 3-letter ISO currency code |
-| description | string | No | null | Payment description |
-| returnUrl | string | No | null | URL to redirect after approval |
-| cancelUrl | string | No | null | URL to redirect on cancellation |
-| metadata | object | No | null | Custom key-value metadata |
-| planId | string | No | null | Subscription plan ID |
-| intent | string | No | "CAPTURE" | `CAPTURE` or `AUTHORIZE` |
+
+| Field       | Type    | Required | Default   | Description                     |
+|-------------|---------|----------|-----------|---------------------------------|
+| amount      | decimal | Yes      | -         | Payment amount (minimum 0.01)   |
+| currency    | string  | Yes      | -         | 3-letter ISO currency code      |
+| description | string  | No       | null      | Payment description             |
+| returnUrl   | string  | No       | null      | URL to redirect after approval  |
+| cancelUrl   | string  | No       | null      | URL to redirect on cancellation |
+| metadata    | object  | No       | null      | Custom key-value metadata       |
+| planId      | string  | No       | null      | Subscription plan ID            |
+| intent      | string  | No       | "CAPTURE" | `CAPTURE` or `AUTHORIZE`        |
 
 **Response:**
 ```json

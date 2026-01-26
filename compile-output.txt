@@ -1,0 +1,152 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::staticFieldBase has been called by com.google.inject.internal.aop.HiddenClassDefiner (file:/C:/ProgramData/chocolatey/lib/maven/apache-maven-3.9.11/lib/guice-5.1.0-classes.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.inject.internal.aop.HiddenClassDefiner
+WARNING: sun.misc.Unsafe::staticFieldBase will be removed in a future release
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.extractor:UnravelDocs >----------------------
+[INFO] Building UnravelDocs 6.4.1
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.13:prepare-agent (prepare-agent) @ UnravelDocs ---
+[INFO] argLine set to -javaagent:C:\\Users\\afiaa\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.13\\org.jacoco.agent-0.8.13-runtime.jar=destfile=C:\\Users\\afiaa\\Desktop\\projects\\Brints\\unraveldocs-api\\target\\jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ UnravelDocs ---
+[INFO] Copying 66 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ UnravelDocs ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 635 source files with javac [debug parameters release 25] to target\classes
+[INFO] Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/CouponAnalytics.java:[39,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/CouponAnalytics.java:[42,24] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/CouponAnalytics.java:[45,24] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/CouponAnalytics.java:[48,24] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/CouponAnalytics.java:[51,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/dto/request/BulkCouponGenerationRequest.java:[75,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/dto/request/CreateCouponTemplateRequest.java:[43,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/CouponTemplate.java:[49,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/CouponTemplate.java:[55,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/payment/receipt/model/Receipt.java:[72,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/payment/stripe/model/StripeSubscription.java:[87,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/dto/request/CreateCouponRequest.java:[65,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/dto/request/CreateCouponRequest.java:[78,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/Coupon.java:[33,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/Coupon.java:[40,31] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/Coupon.java:[52,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/Coupon.java:[55,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/Coupon.java:[58,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[WARNING] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/model/Coupon.java:[67,21] @Builder will ignore the initializing expression entirely. If you want the initializing expression to serve as default, add @Builder.Default. If it is not supposed to be settable during building, make the field final.
+[INFO] 19 warnings 
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[185,35] cannot find symbol
+  symbol:   method getIsActive()
+  location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[185,99] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[192,35] cannot find symbol
+  symbol:   method getIsActive()
+  location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[192,100] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[199,77] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[208,36] cannot find symbol
+  symbol:   method getIsActive()
+  location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[209,28] cannot find symbol
+  symbol:   method getEndDate()
+  location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[210,28] cannot find symbol
+  symbol:   method getEndDate()
+  location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[226,50] cannot find symbol
+  symbol:   method getOcrPagesLimit()
+  location: class com.extractor.unraveldocs.subscription.model.SubscriptionPlan
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[210,32] cannot find symbol
+  symbol:   method getIsActive()
+  location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[210,96] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[211,24] incompatible types: java.lang.Object cannot be converted to boolean
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[216,32] cannot find symbol
+  symbol:   method getIsActive()
+  location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[216,97] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[217,24] incompatible types: java.lang.Object cannot be converted to boolean
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[222,92] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[232,49] cannot find symbol
+  symbol:   method getIsActive()
+  location: variable subscription of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[237,28] cannot find symbol
+  symbol:   method getEndDate()
+  location: variable subscription of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[238,29] cannot find symbol
+  symbol:   method getEndDate()
+  location: variable subscription of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[254,55] cannot find symbol
+  symbol:   method getOcrPagesLimit()
+  location: class com.extractor.unraveldocs.subscription.model.SubscriptionPlan
+[INFO] 20 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:12 min
+[INFO] Finished at: 2026-01-25T13:14:42+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.14.1:compile (default-compile) on project UnravelDocs: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[185,35] cannot find symbol
+[ERROR]   symbol:   method getIsActive()
+[ERROR]   location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[185,99] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[192,35] cannot find symbol
+[ERROR]   symbol:   method getIsActive()
+[ERROR]   location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[192,100] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[199,77] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[208,36] cannot find symbol
+[ERROR]   symbol:   method getIsActive()
+[ERROR]   location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[209,28] cannot find symbol
+[ERROR]   symbol:   method getEndDate()
+[ERROR]   location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[210,28] cannot find symbol
+[ERROR]   symbol:   method getEndDate()
+[ERROR]   location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponNotificationServiceImpl.java:[226,50] cannot find symbol
+[ERROR]   symbol:   method getOcrPagesLimit()
+[ERROR]   location: class com.extractor.unraveldocs.subscription.model.SubscriptionPlan
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[210,32] cannot find symbol
+[ERROR]   symbol:   method getIsActive()
+[ERROR]   location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[210,96] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[211,24] incompatible types: java.lang.Object cannot be converted to boolean
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[216,32] cannot find symbol
+[ERROR]   symbol:   method getIsActive()
+[ERROR]   location: variable sub of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[216,97] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[217,24] incompatible types: java.lang.Object cannot be converted to boolean
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[222,92] incompatible types: com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans cannot be converted to java.lang.String
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[232,49] cannot find symbol
+[ERROR]   symbol:   method getIsActive()
+[ERROR]   location: variable subscription of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[237,28] cannot find symbol
+[ERROR]   symbol:   method getEndDate()
+[ERROR]   location: variable subscription of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[238,29] cannot find symbol
+[ERROR]   symbol:   method getEndDate()
+[ERROR]   location: variable subscription of type com.extractor.unraveldocs.subscription.model.UserSubscription
+[ERROR] /C:/Users/afiaa/Desktop/projects/Brints/unraveldocs-api/src/main/java/com/extractor/unraveldocs/coupon/service/impl/CouponValidationServiceImpl.java:[254,55] cannot find symbol
+[ERROR]   symbol:   method getOcrPagesLimit()
+[ERROR]   location: class com.extractor.unraveldocs.subscription.model.SubscriptionPlan
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

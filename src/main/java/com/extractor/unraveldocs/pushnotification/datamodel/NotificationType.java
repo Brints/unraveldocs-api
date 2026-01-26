@@ -43,6 +43,14 @@ public enum NotificationType {
     TEAM_MEMBER_REMOVED("Team Member Removed", "team"),
     TEAM_ROLE_CHANGED("Team Role Changed", "team"),
 
+    // Coupon events
+    COUPON_RECEIVED("Coupon Received", "coupon"),
+    COUPON_EXPIRING_7_DAYS("Coupon Expiring in 7 Days", "coupon"),
+    COUPON_EXPIRING_3_DAYS("Coupon Expiring in 3 Days", "coupon"),
+    COUPON_EXPIRING_1_DAY("Coupon Expiring Tomorrow", "coupon"),
+    COUPON_EXPIRED("Coupon Expired", "coupon"),
+    COUPON_APPLIED("Coupon Applied", "coupon"),
+
     // System
     SYSTEM_ANNOUNCEMENT("System Announcement", "system"),
     WELCOME("Welcome", "system");

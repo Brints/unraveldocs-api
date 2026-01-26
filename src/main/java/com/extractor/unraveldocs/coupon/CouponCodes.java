@@ -1,4 +1,4 @@
-package com.extractor.unraveldocs.utils;
+package com.extractor.unraveldocs.coupon;
 
 import org.springframework.stereotype.Component;
 
