@@ -191,8 +191,12 @@ public class CouponGenerationConsumer {
             return null;
         }
 
-        int success = Integer.parseInt(Objects.requireNonNull(redisTemplate.opsForValue().get(key + ":success")));
-        int total = Integer.parseInt(Objects.requireNonNull(redisTemplate.opsForValue().get(key + ":total")));
+        String successStr = redisTemplate.opsForValue().get(key + ":success");
+        String totalStr = redisTemplate.opsForValue().get(key + ":total");
+
+        int success = successStr != null ? Integer.parseInt(successStr) : 0;
+        int total = totalStr != null ? Integer.parseInt(totalStr) : 0;
+
         return new JobProgress(status, success, total, new ArrayList<>(), new ArrayList<>());
     }
 

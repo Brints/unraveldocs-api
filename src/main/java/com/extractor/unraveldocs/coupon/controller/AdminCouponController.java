@@ -11,6 +11,7 @@ import com.extractor.unraveldocs.coupon.dto.response.CouponListData;
 import com.extractor.unraveldocs.coupon.enums.RecipientCategory;
 import com.extractor.unraveldocs.coupon.service.BulkCouponGenerationService;
 import com.extractor.unraveldocs.coupon.service.CouponService;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
 import jakarta.validation.Valid;
@@ -38,13 +39,16 @@ public class AdminCouponController {
 
     private final CouponService couponService;
     private final BulkCouponGenerationService bulkCouponGenerationService;
+    private final SanitizeLogging sanitizer;
 
     @Autowired
     public AdminCouponController(
+            SanitizeLogging sanitizer,
             CouponService couponService,
             @Autowired(required = false) BulkCouponGenerationService bulkCouponGenerationService) {
         this.couponService = couponService;
         this.bulkCouponGenerationService = bulkCouponGenerationService;
+        this.sanitizer = sanitizer;
     }
 
     /**
@@ -54,7 +58,7 @@ public class AdminCouponController {
     public ResponseEntity<UnravelDocsResponse<CouponData>> createCoupon(
             @Valid @RequestBody CreateCouponRequest request,
             @AuthenticationPrincipal User user) {
-        log.info("Admin {} creating coupon", user.getEmail());
+        log.info("Admin {} creating coupon", sanitizer.sanitizeLogging(user.getEmail()));
         UnravelDocsResponse<CouponData> response = couponService.createCoupon(request, user);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
@@ -67,7 +71,7 @@ public class AdminCouponController {
             @PathVariable String id,
             @Valid @RequestBody UpdateCouponRequest request,
             @AuthenticationPrincipal User user) {
-        log.info("Admin {} updating coupon: {}", user.getEmail(), id);
+        log.info("Admin {} updating coupon: {}", sanitizer.sanitizeLogging(user.getEmail()), sanitizer.sanitizeLogging(id));
         UnravelDocsResponse<CouponData> response = couponService.updateCoupon(id, request, user);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
@@ -79,7 +83,7 @@ public class AdminCouponController {
     public ResponseEntity<UnravelDocsResponse<Void>> deactivateCoupon(
             @PathVariable String id,
             @AuthenticationPrincipal User user) {
-        log.info("Admin {} deactivating coupon: {}", user.getEmail(), id);
+        log.info("Admin {} deactivating coupon: {}", sanitizer.sanitizeLogging(user.getEmail()), sanitizer.sanitizeLogging(id));
         UnravelDocsResponse<Void> response = couponService.deactivateCoupon(id, user);
         return ResponseEntity.status(response.getStatusCode()).body(response);
     }
@@ -150,7 +154,9 @@ public class AdminCouponController {
                             "Bulk coupon generation is not available. Kafka is not configured.",
                             null));
         }
-        log.info("Admin {} initiating bulk generation of {} coupons", user.getEmail(), request.getQuantity());
+        log.info("Admin {} initiating bulk generation of {} coupons",
+                sanitizer.sanitizeLogging(user.getEmail()),
+                sanitizer.sanitizeLoggingInteger(request.getQuantity()));
         UnravelDocsResponse<BulkGenerationJobResponse> response = bulkCouponGenerationService
                 .generateBulkCoupons(request, user);
         return ResponseEntity.status(response.getStatusCode()).body(response);

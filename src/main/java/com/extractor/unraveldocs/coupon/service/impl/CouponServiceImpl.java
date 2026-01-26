@@ -38,7 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -64,7 +63,7 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional
     public UnravelDocsResponse<CouponData> createCoupon(CreateCouponRequest request, User createdBy) {
-        log.info("Creating coupon by user: {}", createdBy.getEmail());
+        log.info("Creating coupon by user: {}", sanitizer.sanitizeLogging(createdBy.getEmail()));
 
         // Validate date range
         if (request.getValidUntil().isBefore(request.getValidFrom())) {
@@ -332,7 +331,6 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     public UnravelDocsResponse<List<CouponData>> getCouponsForUser(String userId) {
-        OffsetDateTime now = OffsetDateTime.now();
         List<CouponData> availableCoupons = new ArrayList<>();
 
         // Get coupons where user is a specific recipient
@@ -341,8 +339,7 @@ public class CouponServiceImpl implements CouponService {
             availableCoupons.add(couponMapper.toCouponData(assignment.getCoupon()));
         }
 
-        // TODO: Also get coupons matching user's category (based on subscription,
-        // activity, etc.)
+        // TODO: Also get coupons matching user's category (based on subscription, activity, etc.)
 
         return responseBuilder.buildUserResponse(availableCoupons, HttpStatus.OK, "Available coupons retrieved");
     }
