@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.coupon.dto.request.ApplyCouponRequest;
 import com.extractor.unraveldocs.coupon.dto.response.DiscountCalculationData;
 import com.extractor.unraveldocs.coupon.exception.InvalidCouponException;
 import com.extractor.unraveldocs.coupon.service.CouponValidationService;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.enums.PaymentStatus;
 import com.extractor.unraveldocs.payment.enums.PaymentType;
 import com.extractor.unraveldocs.payment.paypal.config.PayPalConfig;
@@ -51,6 +52,7 @@ public class PayPalPaymentService {
     private final CouponValidationService couponValidationService;
     private final RestClient paypalRestClient;
     private final ObjectMapper objectMapper;
+    private final SanitizeLogging sanitizer;
 
     /**
      * Create a PayPal order for payment.
@@ -58,7 +60,9 @@ public class PayPalPaymentService {
     @Transactional
     public PayPalOrderResponse createOrder(User user, CreateOrderRequest request) {
         log.info("Creating PayPal order for user: {}, amount: {} {}",
-                user.getId(), request.getAmount(), request.getCurrency());
+                sanitizer.sanitizeLogging(user.getId()),
+                sanitizer.sanitizeLoggingObject(request.getAmount()),
+                sanitizer.sanitizeLogging(request.getCurrency()));
 
         try {
             // Ensure customer exists
@@ -90,8 +94,10 @@ public class PayPalPaymentService {
                 discountAmount = discountData.getDiscountAmount();
                 appliedCouponCode = discountData.getCouponCode();
 
-                log.info("Coupon {} applied: original={}, discount={}, final={}",
-                        appliedCouponCode, originalAmount, discountAmount, finalAmount);
+                log.info("Coupon applied: original={}, discount={}, final={}",
+                        sanitizer.sanitizeLoggingObject(originalAmount),
+                        sanitizer.sanitizeLoggingObject(discountAmount),
+                        sanitizer.sanitizeLoggingObject(finalAmount));
             }
 
             // Build order request
@@ -127,11 +133,11 @@ public class PayPalPaymentService {
             recordPayment(user, customer, orderResponse, request,
                     originalAmount, finalAmount, discountAmount, appliedCouponCode);
 
-            log.info("Created PayPal order: {}", orderResponse.getId());
+            log.info("Created PayPal order: {}", sanitizer.sanitizeLogging(orderResponse.getId()));
             return orderResponse;
 
         } catch (InvalidCouponException e) {
-            log.warn("Coupon validation failed for user {}: {}", user.getId(), e.getMessage());
+            log.warn("Coupon validation failed for user {}: {}", sanitizer.sanitizeLogging(user.getId()), e.getMessage());
             throw e;
         } catch (PayPalPaymentException e) {
             throw e;
@@ -146,7 +152,7 @@ public class PayPalPaymentService {
      */
     @Transactional
     public PayPalCaptureResponse captureOrder(String orderId) {
-        log.info("Capturing PayPal order: {}", orderId);
+        log.info("Capturing PayPal order: {}", sanitizer.sanitizeLogging(orderId));
 
         try {
             String response = paypalRestClient.post()
@@ -161,7 +167,9 @@ public class PayPalPaymentService {
             // Update payment record
             updatePaymentAfterCapture(orderId, captureResponse);
 
-            log.info("Captured PayPal order: {}, status: {}", orderId, captureResponse.getStatus());
+            log.info("Captured PayPal order: {}, status: {}",
+                    sanitizer.sanitizeLogging(orderId),
+                    sanitizer.sanitizeLogging(captureResponse.getStatus()));
             return captureResponse;
 
         } catch (PayPalPaymentException e) {
@@ -176,7 +184,7 @@ public class PayPalPaymentService {
      * Get order details from PayPal.
      */
     public PayPalOrderResponse getOrderDetails(String orderId) {
-        log.debug("Getting PayPal order details: {}", orderId);
+        log.debug("Getting PayPal order details: {}", sanitizer.sanitizeLogging(orderId));
 
         try {
             String response = paypalRestClient.get()
@@ -199,7 +207,7 @@ public class PayPalPaymentService {
      */
     @Transactional
     public PayPalRefundResponse refundPayment(RefundOrderRequest request) {
-        log.info("Refunding PayPal capture: {}", request.getCaptureId());
+        log.info("Refunding PayPal capture: {}", sanitizer.sanitizeLogging(request.getCaptureId()));
 
         try {
             Map<String, Object> refundRequest = buildRefundRequest(request);
@@ -217,7 +225,9 @@ public class PayPalPaymentService {
             // Update payment record
             updatePaymentAfterRefund(request.getCaptureId(), refundResponse);
 
-            log.info("Refunded PayPal capture: {}, status: {}", request.getCaptureId(), refundResponse.getStatus());
+            log.info("Refunded PayPal capture: {}, status: {}",
+                    sanitizer.sanitizeLogging(request.getCaptureId()),
+                    sanitizer.sanitizeLogging(refundResponse.getStatus()));
             return refundResponse;
 
         } catch (PayPalPaymentException e) {
@@ -277,7 +287,9 @@ public class PayPalPaymentService {
                 payment.setCompletedAt(OffsetDateTime.now());
             }
             paymentRepository.save(payment);
-            log.info("Updated payment {} status to {}", payment.getId(), status);
+            log.info("Updated payment {} status to {}",
+                    sanitizer.sanitizeLogging(payment.getId()),
+                    sanitizer.sanitizeLoggingObject(status));
         });
     }
 
@@ -355,7 +367,7 @@ public class PayPalPaymentService {
             builder.links(links);
         }
 
-        if (orderJson.has("purchase_units") && orderJson.get("purchase_units").size() > 0) {
+        if (orderJson.has("purchase_units") && !orderJson.get("purchase_units").isEmpty()) {
             JsonNode unit = orderJson.get("purchase_units").get(0);
             if (unit.has("amount")) {
                 builder.amount(new BigDecimal(unit.get("amount").get("value").asText()));
@@ -371,7 +383,7 @@ public class PayPalPaymentService {
                 .orderId(orderId)
                 .status(captureJson.get("status").asText());
 
-        if (captureJson.has("purchase_units") && captureJson.get("purchase_units").size() > 0) {
+        if (captureJson.has("purchase_units") && !captureJson.get("purchase_units").isEmpty()) {
             JsonNode unit = captureJson.get("purchase_units").get(0);
             if (unit.has("payments") && unit.get("payments").has("captures")) {
                 JsonNode capture = unit.get("payments").get("captures").get(0);

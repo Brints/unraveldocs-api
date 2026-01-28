@@ -238,12 +238,12 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
             case KES -> new Locale.Builder().setLanguage("en").setRegion("KE").build();
             case GHS -> new Locale.Builder().setLanguage("en").setRegion("GH").build();
             case LKR -> new Locale.Builder().setLanguage("si").setRegion("LK").build();
-            case MUR -> new Locale.Builder().setLanguage("ms").setRegion("MUR").build();
+            case MUR -> new Locale.Builder().setLanguage("ms").setRegion("MU").build();
             case TND -> new Locale.Builder().setLanguage("ar").setRegion("TN").build();
             case OMR -> new Locale.Builder().setLanguage("ar").setRegion("OM").build();
-            case QAR -> new Locale.Builder().setLanguage("ar").setRegion("QAR").build();
-            case KWD -> new Locale.Builder().setLanguage("ar").setRegion("KWD").build();
-            case BHD -> new Locale.Builder().setLanguage("ar").setRegion("BHD").build();
+            case QAR -> new Locale.Builder().setLanguage("ar").setRegion("QA").build();
+            case KWD -> new Locale.Builder().setLanguage("ar").setRegion("KW").build();
+            case BHD -> new Locale.Builder().setLanguage("ar").setRegion("BH").build();
             case JOD -> new Locale.Builder().setLanguage("ar").setRegion("JO").build();
             default -> Locale.US;
         };

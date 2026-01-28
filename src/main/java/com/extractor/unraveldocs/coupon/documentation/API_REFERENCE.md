@@ -439,7 +439,7 @@ POST /admin/coupons/bulk-generate
 | `codePrefix`         | `string`   | No       | Prefix for generated coupon codes                                          |
 | `validFrom`          | `datetime` | No       | Override start date/time for validity (ISO 8601)                           |
 | `validUntil`         | `datetime` | No       | Override end date/time for validity (ISO 8601)                             |
-| `recipientCategory`  | `string`   | No       | Target users: `ALL_USERS`, `NEW_USERS`, `ALL_PAID_USERS`, `SPECIFIC_USERS` |                                                         |
+| `recipientCategory`  | `string`   | No       | Target users: `ALL_USERS`, `NEW_USERS`, `ALL_PAID_USERS`, `SPECIFIC_USERS` |
 | `autoDistribute`     | `boolean`  | No       | Whether to auto-distribute coupons via email/notification                  |
 
 **Request Body:**
@@ -529,7 +529,7 @@ GET /coupons/validate/{code}
 }
 ```
 
-**Response (200 OK - Invalid):**
+**Response (400 Bad Request - Invalid):**
 
 ```json
 {
