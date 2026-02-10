@@ -77,4 +77,20 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
                         "WHERE us.ocrPagesUsed IS NOT NULL AND p.ocrPageLimit IS NOT NULL AND p.ocrPageLimit > 0 " +
                         "AND (CAST(us.ocrPagesUsed AS double) / CAST(p.ocrPageLimit AS double)) > 0.5")
         List<UserSubscription> findHighActivitySubscriptions();
+
+        // ========== Monthly Quota Reset Query Methods ==========
+
+        /**
+         * Find subscriptions that need quota reset (quota_reset_date <= now).
+         * Used by the scheduled quota reset job.
+         */
+        @Query("SELECT us FROM UserSubscription us WHERE us.quotaResetDate IS NOT NULL AND us.quotaResetDate <= :now")
+        List<UserSubscription> findSubscriptionsNeedingQuotaReset(@Param("now") OffsetDateTime now);
+
+        /**
+         * Find subscriptions without a quota reset date set.
+         * Used to initialize quota reset dates for existing subscriptions.
+         */
+        @Query("SELECT us FROM UserSubscription us WHERE us.quotaResetDate IS NULL")
+        List<UserSubscription> findSubscriptionsWithoutQuotaResetDate();
 }

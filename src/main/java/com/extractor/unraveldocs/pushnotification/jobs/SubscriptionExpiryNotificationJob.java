@@ -28,6 +28,7 @@ public class SubscriptionExpiryNotificationJob {
 
     private final UserSubscriptionRepository subscriptionRepository;
     private final NotificationService notificationService;
+    private final com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService emailTemplateService;
 
     /**
      * Run daily at 9 AM to check subscription expirations.
@@ -107,6 +108,16 @@ public class SubscriptionExpiryNotificationJob {
                         "Trial Ending Soon",
                         "Your free trial ends in 3 days. Subscribe now to continue enjoying our services.",
                         data);
+
+                // Send email
+                String expiryDate = subscription.getTrialEndsAt()
+                        .format(java.time.format.DateTimeFormatter.ofLocalizedDate(java.time.format.FormatStyle.LONG));
+                emailTemplateService.sendTrialExpiringSoonEmail(
+                        subscription.getUser().getEmail(),
+                        subscription.getUser().getFirstName(),
+                        subscription.getUser().getLastName(),
+                        expiryDate);
+
                 log.debug("Sent trial expiry notification to user {}", userId);
             } catch (Exception e) {
                 log.error("Failed to send trial expiry notification: {}", e.getMessage());

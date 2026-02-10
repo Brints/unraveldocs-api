@@ -14,6 +14,7 @@ import com.extractor.unraveldocs.payment.paypal.model.PayPalSubscription;
 import com.extractor.unraveldocs.payment.paypal.service.PayPalPaymentService;
 import com.extractor.unraveldocs.payment.paypal.service.PayPalPlanSetupService;
 import com.extractor.unraveldocs.payment.paypal.service.PayPalSubscriptionService;
+import com.extractor.unraveldocs.subscription.service.UserSubscriptionService;
 import com.extractor.unraveldocs.user.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,6 +43,7 @@ public class PayPalPaymentController {
         private final PayPalPaymentService paymentService;
         private final PayPalSubscriptionService subscriptionService;
         private final PayPalPlanSetupService planSetupService;
+        private final UserSubscriptionService userSubscriptionService;
 
         // ==================== PLAN ENDPOINTS (PUBLIC) ====================
 
@@ -65,6 +67,9 @@ public class PayPalPaymentController {
         public ResponseEntity<Map<String, Object>> createOrder(
                         @AuthenticationPrincipal User user,
                         @Valid @RequestBody CreateOrderRequest request) {
+
+                // Validate subscription eligibility
+                userSubscriptionService.validateSubscriptionEligibility(user);
 
                 PayPalOrderResponse order = paymentService.createOrder(user, request);
 
@@ -154,6 +159,9 @@ public class PayPalPaymentController {
         public ResponseEntity<Map<String, Object>> createSubscription(
                         @AuthenticationPrincipal User user,
                         @Valid @RequestBody CreateSubscriptionRequest request) {
+
+                // Validate subscription eligibility
+                userSubscriptionService.validateSubscriptionEligibility(user);
 
                 PayPalSubscriptionResponse subscription = subscriptionService.createSubscription(user, request);
 

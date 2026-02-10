@@ -11,6 +11,8 @@ import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.loginattempts.interfaces.LoginAttemptsService;
 import com.extractor.unraveldocs.security.JwtTokenProvider;
 import com.extractor.unraveldocs.security.RefreshTokenService;
+import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
+import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class LoginUserImpl implements LoginUserService {
+    private final AssignSubscriptionService subscriptionService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final LoginAttemptsService loginAttemptsService;
@@ -85,6 +88,13 @@ public class LoginUserImpl implements LoginUserService {
 
         authenticatedUser.setLastLogin(OffsetDateTime.now());
         userRepository.save(authenticatedUser);
+
+        // Ensure user has a subscription
+        if (authenticatedUser.getSubscription() == null) {
+            UserSubscription subscription = subscriptionService.assignDefaultSubscription(authenticatedUser);
+            authenticatedUser.setSubscription(subscription);
+            userRepository.save(authenticatedUser);
+        }
 
         LoginData data = LoginData.builder()
                 .id(authenticatedUser.getId())

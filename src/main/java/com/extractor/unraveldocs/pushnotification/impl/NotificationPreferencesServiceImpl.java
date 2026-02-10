@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.pushnotification.impl;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
 import com.extractor.unraveldocs.pushnotification.dto.request.UpdatePreferencesRequest;
 import com.extractor.unraveldocs.pushnotification.dto.response.NotificationPreferencesResponse;
@@ -23,6 +24,7 @@ public class NotificationPreferencesServiceImpl implements NotificationPreferenc
 
     private final NotificationPreferencesRepository preferencesRepository;
     private final UserRepository userRepository;
+    private final SanitizeLogging sanitizer;
 
     @Override
     @Transactional
@@ -57,7 +59,7 @@ public class NotificationPreferencesServiceImpl implements NotificationPreferenc
         }
 
         NotificationPreferences saved = preferencesRepository.save(preferences);
-        log.info("Updated notification preferences for user {}", userId);
+        log.info("Updated notification preferences for user {}", sanitizer.sanitizeLogging(userId));
         return mapToResponse(saved);
     }
 
@@ -94,7 +96,7 @@ public class NotificationPreferencesServiceImpl implements NotificationPreferenc
 
             NotificationPreferences preferences = NotificationPreferences.createDefault(user);
             preferencesRepository.save(preferences);
-            log.info("Created default notification preferences for user {}", userId);
+            log.info("Created default notification preferences for user {}", sanitizer.sanitizeLogging(userId));
         }
     }
 
@@ -106,7 +108,7 @@ public class NotificationPreferencesServiceImpl implements NotificationPreferenc
 
                     NotificationPreferences newPrefs = NotificationPreferences.createDefault(user);
                     NotificationPreferences saved = preferencesRepository.save(newPrefs);
-                    log.info("Created default notification preferences for user {}", userId);
+                    log.info("Created default notification preferences for user {}", sanitizer.sanitizeLogging(userId));
                     return saved;
                 });
     }

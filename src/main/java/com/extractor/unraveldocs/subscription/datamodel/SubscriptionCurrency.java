@@ -66,7 +66,7 @@ public enum SubscriptionCurrency {
     QAR("ر.ق", "Qatari Riyal", "QAR"),
     KWD("د.ك", "Kuwaiti Dinar", "KWD"),
     BHD("د.ب", "Bahraini Dinar", "BHD"),
-    JOD("د.أ", "Jordanian Dinar", "JOD"),;
+    JOD("د.أ", "Jordanian Dinar", "JOD");
 
     private final String fullName;
     private final String symbol;

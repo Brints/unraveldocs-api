@@ -73,4 +73,7 @@ public class SubscriptionPlan {
 
     @Column(name = "storage_limit", nullable = false)
     private Long storageLimit; // Storage limit in bytes
+
+    @Column(name = "trial_days", nullable = false)
+    private Integer trialDays = 10; // Trial period in days (default 10 days, matching team subscriptions)
 }

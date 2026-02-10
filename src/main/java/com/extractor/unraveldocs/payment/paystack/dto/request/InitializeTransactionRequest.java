@@ -48,7 +48,8 @@ public class InitializeTransactionRequest {
 
     private String currency;
 
-    @JsonProperty("plan")
+    @JsonProperty("planCode")
+    @com.fasterxml.jackson.annotation.JsonAlias({ "plan", "plan_code" })
     private String planCode;
 
     @JsonProperty("subscription_start_date")

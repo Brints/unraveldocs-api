@@ -7,8 +7,16 @@ import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.enums.PaymentStatus;
 import com.extractor.unraveldocs.payment.paypal.exception.PayPalWebhookException;
 import com.extractor.unraveldocs.payment.paypal.model.PayPalPayment;
+import com.extractor.unraveldocs.payment.paypal.model.PayPalSubscription;
 import com.extractor.unraveldocs.payment.paypal.model.PayPalWebhookEvent;
+import com.extractor.unraveldocs.payment.paypal.repository.PayPalSubscriptionRepository;
 import com.extractor.unraveldocs.payment.paypal.repository.PayPalWebhookEventRepository;
+import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
+import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
+import com.extractor.unraveldocs.subscription.model.UserSubscription;
+import com.extractor.unraveldocs.subscription.repository.SubscriptionPlanRepository;
+import com.extractor.unraveldocs.subscription.repository.UserSubscriptionRepository;
+import com.extractor.unraveldocs.user.model.User;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +37,9 @@ public class PayPalWebhookService {
     private final PayPalPaymentService paymentService;
     private final PayPalSubscriptionService subscriptionService;
     private final PayPalWebhookEventRepository webhookEventRepository;
+    private final PayPalSubscriptionRepository paypalSubscriptionRepository;
+    private final UserSubscriptionRepository userSubscriptionRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final CouponValidationService couponValidationService;
     private final CouponRepository couponRepository;
     private final ObjectMapper objectMapper;
@@ -141,6 +152,9 @@ public class PayPalWebhookService {
 
                 // Record coupon usage if applicable
                 recordCouponUsageIfApplicable(payment);
+
+                // Update user subscription from payment (for one-time payments with plan)
+                updateUserSubscriptionFromPayment(payment);
             });
 
         } catch (Exception e) {
@@ -202,6 +216,9 @@ public class PayPalWebhookService {
             log.info("Processing subscription activated: {}", sanitizer.sanitizeLogging(subscriptionId));
 
             subscriptionService.updateSubscriptionStatus(subscriptionId, "ACTIVE", "Subscription activated");
+
+            // Update user subscription table
+            updateUserSubscriptionFromPayPalSubscription(subscriptionId);
 
         } catch (Exception e) {
             log.error("Failed to handle subscription activated: {}", sanitizer.sanitizeLogging(e.getMessage()), e);
@@ -272,6 +289,203 @@ public class PayPalWebhookService {
     }
 
     // ==================== Helper Methods ====================
+
+    /**
+     * Update user subscription from PayPal subscription data after activation.
+     * This ensures the user_subscription table is updated when a subscription is
+     * activated.
+     */
+    private void updateUserSubscriptionFromPayPalSubscription(String paypalSubscriptionId) {
+        try {
+            PayPalSubscription paypalSubscription = paypalSubscriptionRepository
+                    .findBySubscriptionId(paypalSubscriptionId)
+                    .orElse(null);
+
+            if (paypalSubscription == null) {
+                log.warn("PayPal subscription not found for ID: {}", sanitizer.sanitizeLogging(paypalSubscriptionId));
+                return;
+            }
+
+            User user = paypalSubscription.getUser();
+            String planId = paypalSubscription.getPlanId();
+
+            // Try to find the subscription plan
+            SubscriptionPlan plan = findSubscriptionPlanByPayPalPlanId(planId);
+            if (plan == null) {
+                log.warn("Subscription plan not found for PayPal plan ID: {}", sanitizer.sanitizeLogging(planId));
+                return;
+            }
+
+            // Get or create user subscription
+            UserSubscription userSubscription = userSubscriptionRepository.findByUserId(user.getId())
+                    .orElseGet(() -> {
+                        UserSubscription newSubscription = new UserSubscription();
+                        newSubscription.setUser(user);
+                        return newSubscription;
+                    });
+
+            // Update subscription details
+            userSubscription.setPlan(plan);
+            userSubscription.setPaymentGatewaySubscriptionId(paypalSubscriptionId);
+            userSubscription.setStatus("active");
+            userSubscription.setCurrentPeriodStart(paypalSubscription.getStartTime() != null
+                    ? paypalSubscription.getStartTime()
+                    : OffsetDateTime.now());
+
+            // Calculate period end based on billing interval or use next billing time
+            if (paypalSubscription.getNextBillingTime() != null) {
+                userSubscription.setCurrentPeriodEnd(paypalSubscription.getNextBillingTime());
+            } else {
+                userSubscription.setCurrentPeriodEnd(calculatePeriodEnd(plan));
+            }
+
+            userSubscription.setAutoRenew(Boolean.TRUE.equals(paypalSubscription.getAutoRenewal()));
+
+            userSubscriptionRepository.save(userSubscription);
+            log.info("Updated user subscription for user {} with plan {} via PayPal",
+                    sanitizer.sanitizeLogging(user.getId()),
+                    sanitizer.sanitizeLogging(plan.getName().getPlanName()));
+
+        } catch (Exception e) {
+            log.error("Failed to update user subscription for PayPal subscription {}: {}",
+                    sanitizer.sanitizeLogging(paypalSubscriptionId), e.getMessage());
+            // Don't rethrow - user subscription update failure shouldn't fail the webhook
+        }
+    }
+
+    /**
+     * Update user subscription from a one-time PayPal payment.
+     * Extracts plan info from payment metadata and updates the user_subscription
+     * table.
+     */
+    private void updateUserSubscriptionFromPayment(PayPalPayment payment) {
+        try {
+            User user = payment.getUser();
+
+            // Extract plan code from metadata
+            String planCode = extractPlanFromMetadata(payment.getMetadata());
+            if (planCode == null || planCode.isBlank()) {
+                log.debug("No plan code in PayPal payment metadata for order {}, skipping subscription update",
+                        sanitizer.sanitizeLogging(payment.getOrderId()));
+                return;
+            }
+
+            log.info("Updating user subscription from PayPal payment {} with plan code: {}",
+                    sanitizer.sanitizeLogging(payment.getOrderId()),
+                    sanitizer.sanitizeLogging(planCode));
+
+            // Find the subscription plan
+            SubscriptionPlan plan = findSubscriptionPlan(planCode);
+            if (plan == null) {
+                log.warn("Subscription plan not found for code: {}", sanitizer.sanitizeLogging(planCode));
+                return;
+            }
+
+            // Get or create user subscription
+            UserSubscription userSubscription = userSubscriptionRepository.findByUserId(user.getId())
+                    .orElseGet(() -> {
+                        UserSubscription newSubscription = new UserSubscription();
+                        newSubscription.setUser(user);
+                        return newSubscription;
+                    });
+
+            // Update subscription details
+            OffsetDateTime now = OffsetDateTime.now();
+            userSubscription.setPlan(plan);
+            userSubscription.setPaymentGatewaySubscriptionId(payment.getOrderId());
+            userSubscription.setStatus("active");
+            userSubscription.setCurrentPeriodStart(now);
+            userSubscription.setCurrentPeriodEnd(calculatePeriodEnd(plan));
+            userSubscription.setAutoRenew(false); // One-time payment, not auto-renewing
+
+            userSubscriptionRepository.save(userSubscription);
+            log.info("Successfully updated user subscription for user {} with plan {} via PayPal (period: {} to {})",
+                    sanitizer.sanitizeLogging(user.getId()),
+                    sanitizer.sanitizeLogging(plan.getName().getPlanName()),
+                    userSubscription.getCurrentPeriodStart(),
+                    userSubscription.getCurrentPeriodEnd());
+
+        } catch (Exception e) {
+            log.error("Failed to update user subscription from PayPal payment {}: {}",
+                    sanitizer.sanitizeLogging(payment.getOrderId()), e.getMessage());
+            // Don't rethrow - subscription update failure shouldn't fail the webhook
+        }
+    }
+
+    /**
+     * Extract plan code from payment metadata.
+     */
+    private String extractPlanFromMetadata(String metadataJson) {
+        if (metadataJson == null || metadataJson.isBlank()) {
+            return null;
+        }
+        try {
+            com.fasterxml.jackson.databind.JsonNode metadata = objectMapper.readTree(metadataJson);
+            // Try common field names
+            String[] fieldNames = { "plan_code", "planCode", "plan", "planId", "plan_id" };
+            for (String fieldName : fieldNames) {
+                if (metadata.has(fieldName) && !metadata.get(fieldName).isNull()) {
+                    return metadata.get(fieldName).asText();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to parse payment metadata: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Find subscription plan by various identifiers.
+     */
+    private SubscriptionPlan findSubscriptionPlan(String planCode) {
+        // Try to match by enum name first
+        try {
+            com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans planEnum = com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans
+                    .fromString(planCode);
+            SubscriptionPlan plan = subscriptionPlanRepository.findByName(planEnum).orElse(null);
+            if (plan != null) {
+                return plan;
+            }
+        } catch (IllegalArgumentException e) {
+            // Not a valid enum name, try other methods
+        }
+
+        // Try partial/case-insensitive match
+        String normalizedCode = planCode.toUpperCase().replace(" ", "_").replace("-", "_");
+        return subscriptionPlanRepository.findAll().stream()
+                .filter(plan -> {
+                    String planName = plan.getName().name().toUpperCase();
+                    return planName.contains(normalizedCode) || normalizedCode.contains(planName);
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Find subscription plan by PayPal plan ID.
+     */
+    private SubscriptionPlan findSubscriptionPlanByPayPalPlanId(String paypalPlanId) {
+        // Try to find by PayPal plan code
+        return subscriptionPlanRepository.findAll().stream()
+                .filter(plan -> paypalPlanId.equals(plan.getPaypalPlanCode()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Calculate the subscription period end based on the plan's billing interval.
+     */
+    private OffsetDateTime calculatePeriodEnd(SubscriptionPlan plan) {
+        OffsetDateTime now = OffsetDateTime.now();
+        BillingIntervalUnit intervalUnit = plan.getBillingIntervalUnit();
+        int intervalValue = plan.getBillingIntervalValue();
+
+        return switch (intervalUnit) {
+            case WEEK -> now.plusWeeks(intervalValue);
+            case MONTH -> now.plusMonths(intervalValue);
+            case YEAR -> now.plusYears(intervalValue);
+        };
+    }
 
     private void recordWebhookEvent(String eventId, String eventType, String payload, JsonNode eventJson) {
         PayPalWebhookEvent event = PayPalWebhookEvent.builder()

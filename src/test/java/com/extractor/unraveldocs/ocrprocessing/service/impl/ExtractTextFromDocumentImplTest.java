@@ -10,6 +10,7 @@ import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
 import com.extractor.unraveldocs.ocrprocessing.utils.ExtractImageURL;
 import com.extractor.unraveldocs.ocrprocessing.utils.FindAndValidateFileEntry;
+import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import net.sourceforge.tess4j.TesseractException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,9 @@ class ExtractTextFromDocumentImplTest {
 
     @Mock
     private SanitizeLogging sanitizeLogging;
+
+    @Mock
+    private StorageAllocationService storageAllocationService;
 
     @InjectMocks
     private ExtractTextFromDocumentImpl extractTextFromDocumentService;

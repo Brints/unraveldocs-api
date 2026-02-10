@@ -1,10 +1,12 @@
 package com.extractor.unraveldocs.ocrprocessing.service;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.ocrprocessing.config.OcrProperties;
 import com.extractor.unraveldocs.ocrprocessing.exception.OcrProcessingException;
 import com.extractor.unraveldocs.ocrprocessing.metrics.OcrMetrics;
 import com.extractor.unraveldocs.ocrprocessing.provider.*;
 import com.extractor.unraveldocs.ocrprocessing.quota.OcrQuotaService;
+import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +25,10 @@ public class OcrProcessingService {
 
     private final OcrProviderFactory providerFactory;
     private final OcrQuotaService quotaService;
+    private final StorageAllocationService storageAllocationService;
     private final OcrMetrics ocrMetrics;
     private final OcrProperties ocrProperties;
+    private final SanitizeLogging sanitizer;
 
     /**
      * Process an OCR request with automatic provider selection based on
@@ -54,7 +58,9 @@ public class OcrProcessingService {
             ocrMetrics.recordRequestStart(primaryProvider.getProviderType());
 
             log.info("Processing OCR for document {} using provider: {} (tier: {})",
-                    request.getDocumentId(), primaryProvider.getProviderType(), userTier);
+                    sanitizer.sanitizeLogging(request.getDocumentId()),
+                    sanitizer.sanitizeLoggingObject(primaryProvider.getProviderType()),
+                    sanitizer.sanitizeLogging(userTier));
 
             // Process with primary provider
             OcrResult result = primaryProvider.extractText(request);
@@ -62,6 +68,7 @@ public class OcrProcessingService {
             if (result.isSuccess()) {
                 // Consume quota on success
                 quotaService.consumeQuota(userId, userTier, primaryProvider.getProviderType());
+                storageAllocationService.updateOcrUsage(userId, 1);
                 ocrMetrics.recordSuccess(result);
                 return result;
             }
@@ -109,12 +116,12 @@ public class OcrProcessingService {
 
         // Free tier users use Tesseract
         if (tier.equals("free") || tier.equals("trial")) {
-            log.debug("User tier '{}' using Tesseract OCR", tier);
+            log.debug("User tier '{}' using Tesseract OCR", sanitizer.sanitizeLogging(tier));
             return OcrProviderType.TESSERACT;
         }
 
         // Paid subscribers (basic, premium, enterprise) use Google Vision
-        log.debug("User tier '{}' using Google Cloud Vision OCR", tier);
+        log.debug("User tier '{}' using Google Cloud Vision OCR", sanitizer.sanitizeLogging(tier));
         return OcrProviderType.GOOGLE_VISION;
     }
 
@@ -132,7 +139,8 @@ public class OcrProcessingService {
 
         // Preferred not available, log and fall back to default
         log.warn("Preferred OCR provider {} is not available, falling back to default: {}",
-                preferredType, ocrProperties.getDefaultProvider());
+                sanitizer.sanitizeLoggingObject(preferredType),
+                sanitizer.sanitizeLoggingObject(ocrProperties.getDefaultProvider()));
 
         return providerFactory.getDefaultProvider();
     }
@@ -167,6 +175,7 @@ public class OcrProcessingService {
 
             if (result.isSuccess()) {
                 quotaService.consumeQuota(userId, userTier, providerType);
+                storageAllocationService.updateOcrUsage(userId, 1);
                 ocrMetrics.recordSuccess(result);
             } else {
                 ocrMetrics.recordError(providerType, result.getProcessingTimeMs(), result.getErrorMessage());
@@ -201,7 +210,8 @@ public class OcrProcessingService {
         Optional<OcrProvider> fallbackProvider = getFallbackProvider(failedProvider.getProviderType());
 
         if (fallbackProvider.isEmpty()) {
-            log.warn("No fallback provider available for {}", failedProvider.getProviderType());
+            log.warn("No fallback provider available for {}",
+                    sanitizer.sanitizeLoggingObject(failedProvider.getProviderType()));
             return failedResult;
         }
 
@@ -247,7 +257,9 @@ public class OcrProcessingService {
         OcrProviderType fallbackType = fallbackProvider.getProviderType();
 
         log.info("Falling back from {} to {} for document {}",
-                primaryType, fallbackType, request.getDocumentId());
+                sanitizer.sanitizeLoggingObject(primaryType),
+                sanitizer.sanitizeLoggingObject(fallbackType),
+                sanitizer.sanitizeLogging(request.getDocumentId()));
 
         ocrMetrics.recordFallback(primaryType, fallbackType);
         ocrMetrics.recordRequestStart(fallbackType);
@@ -259,6 +271,7 @@ public class OcrProcessingService {
 
             if (result.isSuccess()) {
                 quotaService.consumeQuota(userId, userTier, fallbackType);
+                storageAllocationService.updateOcrUsage(userId, 1);
                 ocrMetrics.recordSuccess(result);
                 result.withMetadata("fallbackFrom", primaryType.getCode());
             } else {
@@ -294,19 +307,5 @@ public class OcrProcessingService {
         }
 
         return providerFactory.getProviderOptional(fallbackType);
-    }
-
-    /**
-     * Check if a specific provider is available.
-     */
-    public boolean isProviderAvailable(OcrProviderType providerType) {
-        return providerFactory.isProviderAvailable(providerType);
-    }
-
-    /**
-     * Get remaining quota for a user.
-     */
-    public long getRemainingQuota(String userId, String userTier) {
-        return quotaService.getRemainingQuota(userId, userTier);
     }
 }

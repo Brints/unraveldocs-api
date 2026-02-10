@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trial Expiring Soon</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f7; color: #51545E; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eaeaec; }
+        .header h1 { color: #f2994a; margin: 0; font-size: 24px; }
+        .content { padding: 20px 0; line-height: 1.6; }
+        .content p { margin: 10px 0; }
+        .button-container { text-align: center; margin: 30px 0; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #3869D4; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px; }
+        .footer { text-align: center; font-size: 12px; color: #a8aaaf; padding-top: 20px; border-top: 1px solid #eaeaec; }
+        .warning-box { background-color: #fff8f1; border: 1px solid #ffeeba; border-radius: 6px; padding: 15px; margin: 20px 0; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Trial Expiring Soon</h1>
+        </div>
+        <div class="content">
+            <p>Hi <span th:text="${firstName}">User</span>,</p>
+            <p>Just a friendly reminder that your free trial is ending soon.</p>
+            
+            <div class="warning-box">
+                <strong>Your trial will expire on:</strong> <span th:text="${expiryDate}">Dec 31, 2026</span>
+            </div>
+
+            <p>To keep enjoying our premium features without interruption, please upgrade to a paid subscription before your trial ends.</p>
+
+            <div class="button-container">
+                <a th:href="${billingUrl}" class="button">Upgrade Now</a>
+            </div>
+            
+            <p>If you choose not to subscribe, your account will revert to the free plan, and some features may no longer be available.</p>
+            <p>Best regards,<br>The Team</p>
+        </div>
+        <div class="footer">
+            <p>&copy; <span th:text="${#temporals.format(#temporals.createNow(), 'yyyy')}">2026</span> UnravelDocs. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -8,7 +8,10 @@ import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.enums.PaymentStatus;
 import com.extractor.unraveldocs.payment.enums.PaymentType;
 import com.extractor.unraveldocs.payment.paystack.config.PaystackConfig;
+import com.extractor.unraveldocs.payment.paystack.dto.request.ChargeAuthorizationPayload;
 import com.extractor.unraveldocs.payment.paystack.dto.request.InitializeTransactionRequest;
+import com.extractor.unraveldocs.payment.paystack.dto.request.PaystackTransactionPayload;
+import com.extractor.unraveldocs.payment.paystack.dto.request.TransactionMetadata;
 import com.extractor.unraveldocs.payment.paystack.dto.response.*;
 import com.extractor.unraveldocs.payment.paystack.exception.PaystackPaymentException;
 import com.extractor.unraveldocs.payment.paystack.model.PaystackCustomer;
@@ -30,7 +33,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Service for Paystack payment operations
@@ -101,51 +105,37 @@ public class PaystackPaymentService {
                         sanitize.sanitizeLoggingObject(finalAmount));
             }
 
-            // Amount should be in the smallest currency unit (kobo for NGN)
-            // e.g., ₦13,950.00 should be sent as 1395000 (kobo) by the client
             long amountInKobo = finalAmount
                     .setScale(0, RoundingMode.HALF_UP)
                     .longValue();
 
-            // Build request body
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("email", user.getEmail());
-            requestBody.put("amount", amountInKobo);
-            requestBody.put("reference", reference);
-            requestBody.put("currency",
-                    request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency());
-            requestBody.put(
-                    "callback_url",
-                    request.getCallbackUrl() != null ? request.getCallbackUrl() : paystackConfig.getCallbackUrl());
+            String internalPlanCode = request.getPlanCode();
 
-            if (request.getPlanCode() != null) {
-                requestBody.put("plan", request.getPlanCode());
-            }
+            // Build metadata DTO
+            TransactionMetadata metadata = TransactionMetadata.builder()
+                    .userId(user.getId())
+                    .customerCode(customer.getCustomerCode())
+                    .planCode(internalPlanCode != null && !internalPlanCode.isBlank() ? internalPlanCode : null)
+                    .couponCode(appliedCouponCode)
+                    .originalAmount(appliedCouponCode != null ? originalAmount.toString() : null)
+                    .discountAmount(appliedCouponCode != null ? discountAmount.toString() : null)
+                    .build();
 
-            if (request.getChannels() != null && request.getChannels().length > 0) {
-                requestBody.put("channels", request.getChannels());
-            }
-
-            Map<String, Object> metadata;
-            if (request.getMetadata() != null) {
-                metadata = new HashMap<>(request.getMetadata());
-            } else {
-                metadata = new HashMap<>();
-            }
-            metadata.put("user_id", user.getId());
-            metadata.put("customer_code", customer.getCustomerCode());
-
-            // Store coupon info in metadata if coupon was applied
-            if (appliedCouponCode != null) {
-                metadata.put("coupon_code", appliedCouponCode);
-                metadata.put("original_amount", originalAmount.toString());
-                metadata.put("discount_amount", discountAmount.toString());
-            }
-            requestBody.put("metadata", metadata);
+            // Build request payload DTO
+            PaystackTransactionPayload payload = PaystackTransactionPayload.builder()
+                    .email(user.getEmail())
+                    .amount(amountInKobo)
+                    .reference(reference)
+                    .currency(request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency())
+                    .callbackUrl(request.getCallbackUrl() != null ? request.getCallbackUrl() : paystackConfig.getCallbackUrl())
+                    .plan(internalPlanCode != null && internalPlanCode.startsWith("PLN_") ? internalPlanCode : null)
+                    .channels(request.getChannels() != null && request.getChannels().length > 0 ? request.getChannels() : null)
+                    .metadata(metadata)
+                    .build();
 
             String responseBody = paystackRestClient.post()
                     .uri("/transaction/initialize")
-                    .body(requestBody)
+                    .body(payload)
                     .retrieve()
                     .body(String.class);
 
@@ -161,8 +151,14 @@ public class PaystackPaymentService {
 
             InitializeTransactionData data = response.getData();
 
-            // Save payment record - store final (discounted) amount
             PaymentType paymentType = request.getPlanCode() != null ? PaymentType.SUBSCRIPTION : PaymentType.ONE_TIME;
+            BigDecimal amountInMajorUnits = finalAmount.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal originalAmountInMajorUnits = appliedCouponCode != null
+                    ? originalAmount.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                    : null;
+            BigDecimal discountAmountInMajorUnits = appliedCouponCode != null
+                    ? discountAmount.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                    : null;
 
             PaystackPayment payment = PaystackPayment.builder()
                     .user(user)
@@ -172,21 +168,20 @@ public class PaystackPaymentService {
                     .authorizationUrl(data.getAuthorizationUrl())
                     .paymentType(paymentType)
                     .status(PaymentStatus.PENDING)
-                    .amount(finalAmount)
+                    .amount(amountInMajorUnits)
                     .currency(
                             request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency())
-                    .planCode(request.getPlanCode())
+                    .planCode(internalPlanCode)
                     .couponCode(appliedCouponCode)
-                    .originalAmount(appliedCouponCode != null ? originalAmount : null)
-                    .discountAmount(appliedCouponCode != null ? discountAmount : null)
+                    .originalAmount(originalAmountInMajorUnits)
+                    .discountAmount(discountAmountInMajorUnits)
                     .build();
 
-            if (request.getMetadata() != null) {
-                try {
-                    payment.setMetadata(objectMapper.writeValueAsString(metadata));
-                } catch (JsonProcessingException e) {
-                    log.warn("Failed to serialize payment metadata: {}", e.getMessage());
-                }
+            // Always store metadata - contains plan_code, user_id, customer_code, etc.
+            try {
+                payment.setMetadata(objectMapper.writeValueAsString(metadata));
+            } catch (JsonProcessingException e) {
+                log.warn("Failed to serialize payment metadata: {}", e.getMessage());
             }
 
             paymentRepository.save(payment);
@@ -280,21 +275,25 @@ public class PaystackPaymentService {
             PaystackCustomer customer = customerService.getCustomerByUserId(user.getId());
             String reference = generateReference();
 
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("email", user.getEmail());
-            requestBody.put("amount", amount);
-            requestBody.put("authorization_code", authorizationCode);
-            requestBody.put("reference", reference);
-            requestBody.put("currency", currency != null ? currency : paystackConfig.getDefaultCurrency());
+            // Build metadata DTO
+            TransactionMetadata metadata = TransactionMetadata.builder()
+                    .userId(user.getId())
+                    .customerCode(customer.getCustomerCode())
+                    .build();
 
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put("user_id", user.getId());
-            metadata.put("customer_code", customer.getCustomerCode());
-            requestBody.put("metadata", metadata);
+            // Build request payload DTO
+            ChargeAuthorizationPayload payload = ChargeAuthorizationPayload.builder()
+                    .email(user.getEmail())
+                    .amount(amount)
+                    .authorizationCode(authorizationCode)
+                    .reference(reference)
+                    .currency(currency != null ? currency : paystackConfig.getDefaultCurrency())
+                    .metadata(metadata)
+                    .build();
 
             String responseBody = paystackRestClient.post()
                     .uri("/transaction/charge_authorization")
-                    .body(requestBody)
+                    .body(payload)
                     .retrieve()
                     .body(String.class);
 
