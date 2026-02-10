@@ -1,6 +1,7 @@
 package com.extractor.unraveldocs.storage.service;
 
 import com.extractor.unraveldocs.documents.repository.DocumentCollectionRepository;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.storage.dto.StorageInfo;
 import com.extractor.unraveldocs.storage.exception.StorageQuotaExceededException;
 import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +35,7 @@ public class StorageAllocationService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final DocumentCollectionRepository documentCollectionRepository;
+    private final SanitizeLogging sanitizer;
 
     /**
      * Check if user has sufficient storage available for upload.
@@ -153,8 +156,6 @@ public class StorageAllocationService {
         long availableStorage = storageLimit - storageUsed;
 
         if (requiredBytes > availableStorage) {
-            log.warn("Storage quota exceeded for user {}. Required: {}, Available: {}, Limit: {}",
-                    user.getId(), requiredBytes, availableStorage, storageLimit);
             throw new StorageQuotaExceededException(requiredBytes, availableStorage, storageLimit);
         }
     }
@@ -178,8 +179,6 @@ public class StorageAllocationService {
         long availableStorage = storageLimit - storageUsed;
 
         if (requiredBytes > availableStorage) {
-            log.warn("Team storage quota exceeded for team {}. Required: {}, Available: {}, Limit: {}",
-                    team.getId(), requiredBytes, availableStorage, storageLimit);
             throw new StorageQuotaExceededException(requiredBytes, availableStorage, storageLimit);
         }
     }
@@ -217,7 +216,6 @@ public class StorageAllocationService {
         Optional<UserSubscription> subscriptionOpt = userSubscriptionRepository.findByUserId(user.getId());
 
         if (subscriptionOpt.isEmpty()) {
-            log.warn("Cannot update storage for user {} - no subscription found", user.getId());
             return;
         }
 
@@ -230,7 +228,10 @@ public class StorageAllocationService {
         userSubscriptionRepository.save(subscription);
 
         log.info("Updated storage for user {}: {} -> {} (change: {})",
-                user.getId(), formatBytes(currentUsage), formatBytes(newUsage), formatBytes(bytesChange));
+                sanitizer.sanitizeLogging(user.getId()),
+                sanitizer.sanitizeLoggingObject(formatBytes(currentUsage)),
+                sanitizer.sanitizeLoggingObject(formatBytes(newUsage)),
+                sanitizer.sanitizeLoggingObject(formatBytes(bytesChange)));
     }
 
     /**
@@ -245,7 +246,10 @@ public class StorageAllocationService {
         teamRepository.save(team);
 
         log.info("Updated storage for team {}: {} -> {} (change: {})",
-                team.getId(), formatBytes(currentUsage), formatBytes(newUsage), formatBytes(bytesChange));
+                sanitizer.sanitizeLogging(team.getId()),
+                sanitizer.sanitizeLoggingObject(formatBytes(currentUsage)),
+                sanitizer.sanitizeLoggingObject(formatBytes(newUsage)),
+                sanitizer.sanitizeLoggingObject(formatBytes(bytesChange)));
     }
 
     /**
@@ -272,7 +276,6 @@ public class StorageAllocationService {
         initializeQuotaResetDateIfNeeded(subscription);
 
         userSubscriptionRepository.save(subscription);
-        log.debug("Updated OCR usage for user {}: {} -> {} (+{})", userId, currentUsage, currentUsage + pages, pages);
     }
 
     /**
@@ -288,7 +291,6 @@ public class StorageAllocationService {
 
         Optional<UserSubscription> subscriptionOpt = userSubscriptionRepository.findByUserId(userId);
         if (subscriptionOpt.isEmpty()) {
-            log.warn("Cannot update monthly documents for user {} - no subscription found", userId);
             return;
         }
 
@@ -317,8 +319,6 @@ public class StorageAllocationService {
                     .withSecond(0)
                     .withNano(0);
             subscription.setQuotaResetDate(nextResetDate);
-            log.debug("Initialized quota reset date to {} for subscription {}",
-                    nextResetDate, subscription.getId());
         }
     }
 
@@ -386,7 +386,7 @@ public class StorageAllocationService {
 
         // Document upload info - use monthly count (resets monthly)
         Integer documentUploadLimit = plan.getDocumentUploadLimit();
-        Integer documentsUploaded = subscription.getMonthlyDocumentsUploaded() != null
+        int documentsUploaded = subscription.getMonthlyDocumentsUploaded() != null
                 ? subscription.getMonthlyDocumentsUploaded() : 0;
         boolean documentsUnlimited = documentUploadLimit == null || documentUploadLimit == 0;
         Integer documentsRemaining = documentsUnlimited ? null : Math.max(0, documentUploadLimit - documentsUploaded);
@@ -396,7 +396,7 @@ public class StorageAllocationService {
         String billingInterval = formatBillingInterval(plan);
 
         // Quota reset date
-        java.time.OffsetDateTime quotaResetDate = subscription.getQuotaResetDate();
+        OffsetDateTime quotaResetDate = subscription.getQuotaResetDate();
 
         return buildStorageInfo(storageUsed, storageLimit, ocrPageLimit, ocrPagesUsed, ocrPagesRemaining,
                 ocrUnlimited, documentUploadLimit, documentsUploaded, documentsRemaining, documentsUnlimited,
@@ -457,7 +457,7 @@ public class StorageAllocationService {
             boolean ocrUnlimited, Integer documentUploadLimit, Integer documentsUploaded,
             Integer documentsRemaining, boolean documentsUnlimited,
             String subscriptionPlan, String billingInterval,
-            java.time.OffsetDateTime quotaResetDate) {
+            OffsetDateTime quotaResetDate) {
         boolean isUnlimited = storageLimit == null;
         double percentageUsed = 0.0;
         long safeStorageUsed = storageUsed != null ? storageUsed : 0L;

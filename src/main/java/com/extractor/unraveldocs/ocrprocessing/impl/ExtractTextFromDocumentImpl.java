@@ -57,8 +57,12 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
             extractImageURL(fileEntry, ocrData, tesseractDataPath);
             log.info("OCR text extraction completed for document: {}", sanitizeLogging.sanitizeLogging(documentId));
 
-            // Update OCR pages used (for monthly quota tracking)
-            storageAllocationService.updateOcrUsage(userId, 1);
+            try {
+                // Update OCR pages used (for monthly quota tracking)
+                storageAllocationService.updateOcrUsage(userId, 1);
+            } catch (Exception e) {
+                log.error("Failed to update OCR usage for user {}: {}", sanitizeLogging.sanitizeLogging(userId), e.getMessage(), e);
+            }
         } catch (IOException | TesseractException e) {
             log.error("OCR processing failed for document {}: {}", sanitizeLogging.sanitizeLogging(documentId), e.getMessage(), e);
             ocrData.setStatus(OcrStatus.FAILED);

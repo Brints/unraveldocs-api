@@ -262,8 +262,6 @@ public class UserSubscriptionServiceImpl implements UserSubscriptionService {
 
         // Send notifications
         try {
-            String planName = subscription.getPlan().getName().getPlanName();
-
             // Push Notification
             notificationService.sendToUser(
                     subscription.getUser().getId(),
