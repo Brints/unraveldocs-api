@@ -36,6 +36,7 @@ public enum NotificationType {
     SUBSCRIPTION_DOWNGRADED("Subscription Downgraded", "subscription"),
     TRIAL_EXPIRING_SOON("Trial Expiring Soon", "subscription"),
     TRIAL_EXPIRED("Trial Expired", "subscription"),
+    TRIAL_ACTIVATED("Trial Activated", "subscription"),
 
     // Team events
     TEAM_INVITATION_RECEIVED("Team Invitation Received", "team"),

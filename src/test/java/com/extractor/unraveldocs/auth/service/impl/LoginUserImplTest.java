@@ -13,6 +13,7 @@ import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.loginattempts.interfaces.LoginAttemptsService;
 import com.extractor.unraveldocs.security.JwtTokenProvider;
 import com.extractor.unraveldocs.security.RefreshTokenService;
+import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,14 +30,16 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class LoginUserImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private AssignSubscriptionService subscriptionService;
 
     @Mock
     private JwtTokenProvider jwtTokenProvider;
@@ -141,7 +144,7 @@ public class LoginUserImplTest {
         verify(jwtTokenProvider).generateRefreshToken(user);
         verify(jwtTokenProvider).getJtiFromToken("jwtRefreshToken");
         verify(refreshTokenService).storeRefreshToken("refreshTokenJti", user.getId());
-        verify(userRepository).save(user); // User is saved after lastLogin update
+        verify(userRepository, atLeastOnce()).save(user); // User is saved after lastLogin update and possibly subscription assignment
         verify(responseBuilder).buildUserResponse(any(LoginData.class), eq(HttpStatus.OK), eq("User logged in successfully"));
     }
 
@@ -172,7 +175,7 @@ public class LoginUserImplTest {
         assertTrue(user.isActive(), "User should be set to active on login.");
         assertNull(user.getUserVerification().getDeletedAt(), "UserVerification DeletedAt should be cleared.");
         assertNotNull(user.getLastLogin(), "Last login should be updated.");
-        verify(userRepository).save(user);
+        verify(userRepository, atLeastOnce()).save(user);
     }
 
     @Test

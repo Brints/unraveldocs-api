@@ -5,16 +5,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
+
 /**
  * DTO containing storage, OCR, and document usage information for a user or
  * team.
+ *
+ * <p>Monthly quotas (documents uploaded, OCR pages used) reset on the first day of each month.
+ * Storage usage is cumulative and does not reset.</p>
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class StorageInfo {
-    // Storage fields
+    // Storage fields (cumulative, not reset monthly)
     private Long storageUsed;
     private Long storageLimit; // null = unlimited
     private String storageUsedFormatted;
@@ -22,21 +27,24 @@ public class StorageInfo {
     private Double percentageUsed;
     private boolean isUnlimited;
 
-    // OCR fields
+    // OCR fields (resets monthly)
     private Integer ocrPageLimit; // null = unlimited
     private Integer ocrPagesUsed;
     private Integer ocrPagesRemaining;
     private boolean ocrUnlimited;
 
-    // Document upload fields
+    // Document upload fields (resets monthly)
     private Integer documentUploadLimit; // null = unlimited
-    private Integer documentsUploaded;
+    private Integer documentsUploaded;  // Monthly count, resets on quotaResetDate
     private Integer documentsRemaining;
     private boolean documentsUnlimited;
 
     // Subscription plan info
     private String subscriptionPlan;
     private String billingInterval;
+
+    // Quota reset info
+    private OffsetDateTime quotaResetDate; // When monthly quotas (documents, OCR pages) will reset
 
     /**
      * Check if storage quota is exceeded.

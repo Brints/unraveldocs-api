@@ -50,10 +50,16 @@ public class UserSubscription {
     private boolean hasUsedTrial = false;
 
     @Column(name = "storage_used", nullable = false)
-    private Long storageUsed = 0L; // Current storage usage in bytes
+    private Long storageUsed = 0L; // Current storage usage in bytes (cumulative, not reset monthly)
 
     @Column(name = "ocr_pages_used", nullable = false)
-    private Integer ocrPagesUsed = 0; // OCR pages used in current billing period
+    private Integer ocrPagesUsed = 0; // OCR pages used in current billing period (resets monthly)
+
+    @Column(name = "monthly_documents_uploaded", nullable = false)
+    private Integer monthlyDocumentsUploaded = 0; // Documents uploaded in current billing period (resets monthly)
+
+    @Column(name = "quota_reset_date")
+    private OffsetDateTime quotaResetDate; // Date when monthly quotas should be reset
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false, name = "created_at")

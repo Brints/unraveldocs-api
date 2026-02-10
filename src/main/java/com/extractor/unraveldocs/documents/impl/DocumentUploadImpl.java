@@ -79,6 +79,7 @@ public class DocumentUploadImpl implements DocumentUploadService {
 
         // Check storage availability before processing uploads
         long totalUploadSize = Arrays.stream(files).mapToLong(MultipartFile::getSize).sum();
+        storageAllocationService.checkDocumentUploadLimit(user, files.length); // Check limit first
         storageAllocationService.checkStorageAvailable(user, totalUploadSize);
 
         for (MultipartFile file : files) {
@@ -153,6 +154,11 @@ public class DocumentUploadImpl implements DocumentUploadService {
                     .sum();
             if (successfulUploadSize > 0) {
                 storageAllocationService.updateStorageUsed(user, successfulUploadSize);
+            }
+
+            // Update monthly documents uploaded count (for quota tracking)
+            if (successfulUploads > 0) {
+                storageAllocationService.updateMonthlyDocumentsUploaded(user.getId(), successfulUploads);
             }
 
             log.info("Document collection {} created with {} processed files for user {}. Status: {}",
@@ -235,11 +241,15 @@ public class DocumentUploadImpl implements DocumentUploadService {
             if (collection.getCollectionStatus() == DocumentStatus.COMPLETED) {
                 type = NotificationType.DOCUMENT_UPLOAD_SUCCESS;
                 title = "Documents Uploaded Successfully";
-                message = String.format("%d document(s) uploaded successfully. You can see your uploaded document in the Documents section and run an OCR extraction on it. Thank you for using UnravelDocs", successfulUploads);
+                message = String.format(
+                        "%d document(s) uploaded successfully. You can see your uploaded document in the Documents section and run an OCR extraction on it. Thank you for using UnravelDocs",
+                        successfulUploads);
             } else if (collection.getCollectionStatus() == DocumentStatus.PARTIALLY_COMPLETED) {
                 type = NotificationType.DOCUMENT_UPLOAD_SUCCESS;
                 title = "Documents Partially Uploaded";
-                message = String.format("%d document(s) uploaded. %d failed. Please check individual document statuses in the Documents section.", successfulUploads, (validationFailures + storageFailures));
+                message = String.format(
+                        "%d document(s) uploaded. %d failed. Please check individual document statuses in the Documents section.",
+                        successfulUploads, (validationFailures + storageFailures));
             } else {
                 type = NotificationType.DOCUMENT_UPLOAD_FAILED;
                 title = "Document Upload Failed";

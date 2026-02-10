@@ -6,6 +6,7 @@ import com.extractor.unraveldocs.brokers.core.MessageBrokerType;
 import com.extractor.unraveldocs.brokers.core.MessageResult;
 import com.extractor.unraveldocs.brokers.kafka.config.KafkaTopicConfig;
 import com.extractor.unraveldocs.brokers.messages.EmailNotificationMessage;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 public class EmailMessageProducerService {
 
         private final MessageBrokerFactory messageBrokerFactory;
+        private final SanitizeLogging sanitizer;
 
         /**
          * Queue an email for async sending via Kafka.
@@ -106,7 +108,9 @@ public class EmailMessageProducerService {
          * @return CompletableFuture with the send result
          */
         public CompletableFuture<MessageResult> sendEmailMessage(EmailNotificationMessage emailMessage) {
-                log.debug("Queueing email to: {}, subject: {} via Kafka", emailMessage.to(), emailMessage.subject());
+                log.debug("Queueing email to: {}, subject: {} via Kafka",
+                        sanitizer.sanitizeLogging(emailMessage.to()),
+                        sanitizer.sanitizeLogging(emailMessage.subject()));
 
                 Message<EmailNotificationMessage> message = Message.of(
                                 emailMessage,
@@ -119,10 +123,12 @@ public class EmailMessageProducerService {
                                 .thenApply(result -> {
                                         if (result.success()) {
                                                 log.info("Email queued via Kafka. To: {}, MessageId: {}",
-                                                                emailMessage.to(), result.messageId());
+                                                        sanitizer.sanitizeLogging(emailMessage.to()),
+                                                        sanitizer.sanitizeLogging(result.messageId()));
                                         } else {
                                                 log.warn("Failed to queue email via Kafka. To: {}, Error: {}",
-                                                                emailMessage.to(), result.errorMessage());
+                                                        sanitizer.sanitizeLogging(emailMessage.to()),
+                                                        sanitizer.sanitizeLogging(result.errorMessage()));
                                         }
                                         return result;
                                 });

@@ -10,7 +10,11 @@ import com.extractor.unraveldocs.payment.stripe.model.StripeCustomer;
 import com.extractor.unraveldocs.payment.stripe.model.StripeWebhookEvent;
 import com.extractor.unraveldocs.payment.stripe.repository.StripeCustomerRepository;
 import com.extractor.unraveldocs.payment.stripe.repository.StripeWebhookEventRepository;
+import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans;
+import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
+import com.extractor.unraveldocs.subscription.repository.SubscriptionPlanRepository;
 import com.extractor.unraveldocs.subscription.repository.UserSubscriptionRepository;
 import com.extractor.unraveldocs.user.model.User;
 import com.stripe.model.*;
@@ -40,6 +44,7 @@ public class StripeWebhookService {
     private final StripeCustomerRepository customerRepository;
     private final StripePaymentService paymentService;
     private final UserSubscriptionRepository userSubscriptionRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
 
     // Optional dependency - only available when Kafka is configured
     private ReceiptEventPublisher receiptEventPublisher;
@@ -178,6 +183,10 @@ public class StripeWebhookService {
                         null,
                         null);
             }
+
+            // Update user subscription from payment metadata (for one-time payments with
+            // plan)
+            updateUserSubscriptionFromPayment(user, paymentIntent);
 
             // Generate receipt
             generateReceipt(user, paymentIntent);
@@ -486,5 +495,123 @@ public class StripeWebhookService {
             log.debug("Could not extract payment method details: {}", e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Update user subscription from a one-time Stripe payment.
+     * Extracts plan info from payment intent metadata and updates the
+     * user_subscription table.
+     */
+    private void updateUserSubscriptionFromPayment(User user, PaymentIntent paymentIntent) {
+        try {
+            // Extract plan code from metadata
+            java.util.Map<String, String> metadata = paymentIntent.getMetadata();
+            if (metadata == null || metadata.isEmpty()) {
+                log.debug("No metadata in Stripe payment intent {}, skipping subscription update",
+                        paymentIntent.getId());
+                return;
+            }
+
+            String planCode = extractPlanFromMetadata(metadata);
+            if (planCode == null || planCode.isBlank()) {
+                log.debug("No plan code in Stripe payment metadata for payment {}, skipping subscription update",
+                        paymentIntent.getId());
+                return;
+            }
+
+            log.info("Updating user subscription from Stripe payment {} with plan code: {}",
+                    paymentIntent.getId(), planCode);
+
+            // Find the subscription plan
+            SubscriptionPlan plan = findSubscriptionPlan(planCode);
+            if (plan == null) {
+                log.warn("Subscription plan not found for code: {}", planCode);
+                return;
+            }
+
+            // Get or create user subscription
+            UserSubscription userSubscription = userSubscriptionRepository.findByUserId(user.getId())
+                    .orElseGet(() -> {
+                        UserSubscription newSubscription = new UserSubscription();
+                        newSubscription.setUser(user);
+                        return newSubscription;
+                    });
+
+            // Update subscription details
+            OffsetDateTime now = OffsetDateTime.now();
+            userSubscription.setPlan(plan);
+            userSubscription.setPaymentGatewaySubscriptionId(paymentIntent.getId());
+            userSubscription.setStatus("active");
+            userSubscription.setCurrentPeriodStart(now);
+            userSubscription.setCurrentPeriodEnd(calculatePeriodEnd(plan));
+            userSubscription.setAutoRenew(false); // One-time payment, not auto-renewing
+
+            userSubscriptionRepository.save(userSubscription);
+            log.info("Successfully updated user subscription for user {} with plan {} via Stripe (period: {} to {})",
+                    user.getId(),
+                    plan.getName().getPlanName(),
+                    userSubscription.getCurrentPeriodStart(),
+                    userSubscription.getCurrentPeriodEnd());
+
+        } catch (Exception e) {
+            log.error("Failed to update user subscription from Stripe payment {}: {}",
+                    paymentIntent.getId(), e.getMessage());
+            // Don't rethrow - subscription update failure shouldn't fail the webhook
+        }
+    }
+
+    /**
+     * Extract plan code from payment metadata.
+     */
+    private String extractPlanFromMetadata(java.util.Map<String, String> metadata) {
+        // Try common field names
+        String[] fieldNames = { "plan_code", "planCode", "plan", "planId", "plan_id" };
+        for (String fieldName : fieldNames) {
+            if (metadata.containsKey(fieldName) && metadata.get(fieldName) != null) {
+                return metadata.get(fieldName);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Find subscription plan by various identifiers.
+     */
+    private SubscriptionPlan findSubscriptionPlan(String planCode) {
+        // Try to match by enum name first
+        try {
+            SubscriptionPlans planEnum = SubscriptionPlans.fromString(planCode);
+            SubscriptionPlan plan = subscriptionPlanRepository.findByName(planEnum).orElse(null);
+            if (plan != null) {
+                return plan;
+            }
+        } catch (IllegalArgumentException e) {
+            // Not a valid enum name, try other methods
+        }
+
+        // Try partial/case-insensitive match
+        String normalizedCode = planCode.toUpperCase().replace(" ", "_").replace("-", "_");
+        return subscriptionPlanRepository.findAll().stream()
+                .filter(plan -> {
+                    String planName = plan.getName().name().toUpperCase();
+                    return planName.contains(normalizedCode) || normalizedCode.contains(planName);
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Calculate the subscription period end based on the plan's billing interval.
+     */
+    private OffsetDateTime calculatePeriodEnd(SubscriptionPlan plan) {
+        OffsetDateTime now = OffsetDateTime.now();
+        BillingIntervalUnit intervalUnit = plan.getBillingIntervalUnit();
+        int intervalValue = plan.getBillingIntervalValue();
+
+        return switch (intervalUnit) {
+            case WEEK -> now.plusWeeks(intervalValue);
+            case MONTH -> now.plusMonths(intervalValue);
+            case YEAR -> now.plusYears(intervalValue);
+        };
     }
 }

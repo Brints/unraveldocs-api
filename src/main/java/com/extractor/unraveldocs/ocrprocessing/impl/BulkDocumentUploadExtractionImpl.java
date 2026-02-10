@@ -18,6 +18,7 @@ import com.extractor.unraveldocs.ocrprocessing.interfaces.BulkDocumentUploadExtr
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
 import com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService;
+import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.utils.imageupload.FileUploadValidationUtil;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,6 +49,7 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
     private final OcrEventMapper ocrEventMapper;
     private final SanitizeLogging s;
     private final FileStorageService fileStorageService;
+    private final StorageAllocationService storageAllocationService;
 
     @Override
     @Transactional
@@ -61,6 +64,11 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
         int storageFailures = 0;
 
         FileUploadValidationUtil.validateTotalFileSize(files);
+
+        // Check document upload limit and storage availability before processing uploads
+        long totalUploadSize = Arrays.stream(files).mapToLong(MultipartFile::getSize).sum();
+        storageAllocationService.checkDocumentUploadLimit(user, files.length);
+        storageAllocationService.checkStorageAvailable(user, totalUploadSize);
 
         for (MultipartFile file : files) {
             String originalFilename = Objects.requireNonNullElse(file.getOriginalFilename(), "unnamed_file");
@@ -105,8 +113,13 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
         String savedCollectionId = null;
 
         if (!processedFiles.isEmpty()) {
+            // Generate default collection name
+            String collectionName = "Collection-" + java.time.LocalDateTime.now().format(
+                    java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss"));
+
             DocumentCollection documentCollection = DocumentCollection.builder()
                     .user(user)
+                    .name(collectionName)
                     .files(processedFiles)
                     .uploadTimestamp(OffsetDateTime.now())
                     .build();
@@ -151,6 +164,11 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
             log.info("Document collection {} created with {} processed files for user {}. Status: {}",
                     s.sanitizeLogging(savedCollectionId), processedFiles.size(), s.sanitizeLogging(user.getId()),
                     savedCollection.getCollectionStatus());
+
+            // Update monthly documents uploaded count (for quota tracking)
+            if (successfulUploads > 0) {
+                storageAllocationService.updateMonthlyDocumentsUploaded(user.getId(), successfulUploads);
+            }
         } else {
             if (totalFiles > 0) {
                 log.info("No document collection created as all {} files failed validation for user {}", totalFiles,

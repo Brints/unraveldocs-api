@@ -5,6 +5,7 @@ import com.extractor.unraveldocs.coupon.repository.CouponRepository;
 import com.extractor.unraveldocs.coupon.service.CouponValidationService;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.enums.PaymentStatus;
+import com.extractor.unraveldocs.payment.enums.PaymentType;
 import com.extractor.unraveldocs.payment.paystack.config.PaystackConfig;
 import com.extractor.unraveldocs.payment.paystack.dto.response.SubscriptionData;
 import com.extractor.unraveldocs.payment.paystack.dto.response.TransactionData;
@@ -15,6 +16,12 @@ import com.extractor.unraveldocs.payment.paystack.repository.PaystackPaymentRepo
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
 import com.extractor.unraveldocs.payment.receipt.enums.PaymentProvider;
 import com.extractor.unraveldocs.payment.receipt.events.ReceiptEventPublisher;
+import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans;
+import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
+import com.extractor.unraveldocs.subscription.model.UserSubscription;
+import com.extractor.unraveldocs.subscription.repository.SubscriptionPlanRepository;
+import com.extractor.unraveldocs.subscription.repository.UserSubscriptionRepository;
 import com.extractor.unraveldocs.user.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +54,8 @@ public class PaystackWebhookService {
     private final PaystackPaymentService paymentService;
     private final PaystackSubscriptionService subscriptionService;
     private final PaystackPaymentRepository paymentRepository;
+    private final UserSubscriptionRepository userSubscriptionRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final ObjectMapper objectMapper;
     private final SanitizeLogging sanitize;
     private final CouponValidationService couponValidationService;
@@ -143,6 +152,11 @@ public class PaystackWebhookService {
                 paymentRepository.save(payment);
                 log.info("Updated payment {} to SUCCEEDED", sanitize.sanitizeLogging(reference));
 
+                // Update user subscription for subscription payments
+                if (payment.getPaymentType() == PaymentType.SUBSCRIPTION) {
+                    updateUserSubscriptionFromPayment(payment);
+                }
+
                 // Record coupon usage if a coupon was applied
                 recordCouponUsageIfApplicable(payment);
 
@@ -153,6 +167,176 @@ public class PaystackWebhookService {
             log.error("Failed to handle charge.success: {}", e.getMessage(), e);
             throw new PaystackWebhookException("Failed to process charge.success", e);
         }
+    }
+
+    /**
+     * Update user subscription from payment data after successful charge.
+     * This ensures the user_subscription table is updated when a payment succeeds.
+     */
+    private void updateUserSubscriptionFromPayment(PaystackPayment payment) {
+        try {
+            User user = payment.getUser();
+
+            // Try to get plan code from metadata first (internal plan code like "STARTER_MONTHLY")
+            // then fall back to payment.getPlanCode() which may be a Paystack plan code
+            String planCode = extractPlanFromMetadata(payment.getMetadata());
+            if (planCode == null || planCode.isBlank()) {
+                planCode = payment.getPlanCode();
+            }
+
+            if (planCode == null || planCode.isBlank()) {
+                log.warn("No plan code found for subscription payment: {}. " +
+                        "Subscription update skipped. Ensure planCode is sent in initialize request or metadata.",
+                        sanitize.sanitizeLogging(payment.getReference()));
+                return;
+            }
+
+            log.info("Attempting to update user subscription for payment {} with plan code: {}",
+                    sanitize.sanitizeLogging(payment.getReference()),
+                    sanitize.sanitizeLogging(planCode));
+
+            // Try to find the subscription plan by name
+            SubscriptionPlan plan = findSubscriptionPlan(planCode);
+            if (plan == null) {
+                log.error("Subscription plan not found for code: {}. Available lookup methods tried: " +
+                        "enum name match, Paystack plan code match, partial name match.",
+                        sanitize.sanitizeLogging(planCode));
+                return;
+            }
+
+            // Get or create user subscription
+            UserSubscription userSubscription = userSubscriptionRepository.findByUserId(user.getId())
+                    .orElseGet(() -> {
+                        log.info("Creating new user subscription for user: {}",
+                                sanitize.sanitizeLogging(user.getId()));
+                        UserSubscription newSubscription = new UserSubscription();
+                        newSubscription.setUser(user);
+                        return newSubscription;
+                    });
+
+            // Update subscription details
+            userSubscription.setPlan(plan);
+            userSubscription.setStatus("active");
+            userSubscription.setCurrentPeriodStart(OffsetDateTime.now());
+
+            // Calculate period end based on billing interval
+            OffsetDateTime periodEnd = calculatePeriodEnd(plan);
+            userSubscription.setCurrentPeriodEnd(periodEnd);
+
+            // Set auto-renew based on payment type
+            userSubscription.setAutoRenew(true);
+
+            // Link to Paystack subscription if available
+            if (payment.getSubscriptionCode() != null) {
+                userSubscription.setPaymentGatewaySubscriptionId(payment.getSubscriptionCode());
+            }
+
+            userSubscriptionRepository.save(userSubscription);
+            log.info("Successfully updated user subscription for user {} with plan {} (period: {} to {})",
+                    sanitize.sanitizeLogging(user.getId()),
+                    sanitize.sanitizeLogging(plan.getName().getPlanName()),
+                    userSubscription.getCurrentPeriodStart(),
+                    userSubscription.getCurrentPeriodEnd());
+
+        } catch (Exception e) {
+            log.error("Failed to update user subscription for payment {}: {}",
+                    sanitize.sanitizeLogging(payment.getReference()), e.getMessage(), e);
+            // Don't rethrow - user subscription update failure shouldn't fail the webhook
+        }
+    }
+
+    /**
+     * Extract plan code from payment metadata JSON.
+     */
+    private String extractPlanFromMetadata(String metadataJson) {
+        if (metadataJson == null || metadataJson.isBlank()) {
+            return null;
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> metadata = objectMapper.readValue(metadataJson, Map.class);
+            // Try common metadata keys for plan information
+            if (metadata.containsKey("plan_code")) {
+                return String.valueOf(metadata.get("plan_code"));
+            }
+            if (metadata.containsKey("planCode")) {
+                return String.valueOf(metadata.get("planCode"));
+            }
+            if (metadata.containsKey("plan")) {
+                return String.valueOf(metadata.get("plan"));
+            }
+            if (metadata.containsKey("subscription_plan")) {
+                return String.valueOf(metadata.get("subscription_plan"));
+            }
+        } catch (Exception e) {
+            log.debug("Could not parse metadata for plan extraction: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Find subscription plan by plan code.
+     * The plan code can be a SubscriptionPlans enum name or a Paystack plan code.
+     * Also supports partial name matching for flexibility.
+     */
+    private SubscriptionPlan findSubscriptionPlan(String planCode) {
+        log.debug("Searching for subscription plan with code: {}", sanitize.sanitizeLogging(planCode));
+
+        // First, try to find by enum name (e.g., "STARTER_MONTHLY", "Starter_Monthly")
+        try {
+            SubscriptionPlans planEnum = SubscriptionPlans.fromString(planCode);
+            SubscriptionPlan plan = subscriptionPlanRepository.findByName(planEnum).orElse(null);
+            if (plan != null) {
+                log.debug("Found plan by enum name: {}", plan.getName());
+                return plan;
+            }
+        } catch (IllegalArgumentException e) {
+            // Not a valid enum name, try other methods
+            log.debug("Plan code {} is not a valid enum name, trying other methods",
+                    sanitize.sanitizeLogging(planCode));
+        }
+
+        // Try to find by Paystack plan code (exact match)
+        SubscriptionPlan byPaystackCode = subscriptionPlanRepository.findAll().stream()
+                .filter(plan -> planCode.equals(plan.getPaystackPlanCode()))
+                .findFirst()
+                .orElse(null);
+        if (byPaystackCode != null) {
+            log.debug("Found plan by Paystack plan code: {}", byPaystackCode.getName());
+            return byPaystackCode;
+        }
+
+        // Try partial/case-insensitive match on plan name
+        String normalizedCode = planCode.toUpperCase().replace(" ", "_").replace("-", "_");
+        SubscriptionPlan byPartialMatch = subscriptionPlanRepository.findAll().stream()
+                .filter(plan -> {
+                    String planName = plan.getName().name().toUpperCase();
+                    return planName.contains(normalizedCode) || normalizedCode.contains(planName);
+                })
+                .findFirst()
+                .orElse(null);
+        if (byPartialMatch != null) {
+            log.debug("Found plan by partial name match: {}", byPartialMatch.getName());
+            return byPartialMatch;
+        }
+
+        log.warn("No subscription plan found for code: {}", sanitize.sanitizeLogging(planCode));
+        return null;
+    }
+
+    /**
+     * Calculate the subscription period end based on the plan's billing interval.
+     */
+    private OffsetDateTime calculatePeriodEnd(SubscriptionPlan plan) {
+        OffsetDateTime now = OffsetDateTime.now();
+        BillingIntervalUnit intervalUnit = plan.getBillingIntervalUnit();
+        int intervalValue = plan.getBillingIntervalValue();
+
+        return switch (intervalUnit) {
+            case WEEK -> now.plusWeeks(intervalValue);
+            case MONTH -> now.plusMonths(intervalValue);
+            case YEAR -> now.plusYears(intervalValue);
+        };
     }
 
     /**

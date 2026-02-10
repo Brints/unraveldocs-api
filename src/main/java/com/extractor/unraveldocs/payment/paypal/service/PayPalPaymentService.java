@@ -137,7 +137,8 @@ public class PayPalPaymentService {
             return orderResponse;
 
         } catch (InvalidCouponException e) {
-            log.warn("Coupon validation failed for user {}: {}", sanitizer.sanitizeLogging(user.getId()), e.getMessage());
+            log.warn("Coupon validation failed for user {}: {}", sanitizer.sanitizeLogging(user.getId()),
+                    e.getMessage());
             throw e;
         } catch (PayPalPaymentException e) {
             throw e;
@@ -313,9 +314,21 @@ public class PayPalPaymentService {
                 .description(request.getDescription())
                 .build();
 
+        // Build metadata with planId for subscription tracking
+        Map<String, Object> metadata = new HashMap<>();
         if (request.getMetadata() != null) {
+            metadata.putAll(request.getMetadata());
+        }
+        // Always store planId in metadata if provided for subscription tracking after
+        // payment
+        if (request.getPlanId() != null && !request.getPlanId().isBlank()) {
+            metadata.put("plan_code", request.getPlanId());
+        }
+        metadata.put("user_id", user.getId());
+
+        if (!metadata.isEmpty()) {
             try {
-                payment.setMetadata(objectMapper.writeValueAsString(request.getMetadata()));
+                payment.setMetadata(objectMapper.writeValueAsString(metadata));
             } catch (JsonProcessingException e) {
                 log.warn("Failed to serialize payment metadata: {}", e.getMessage());
             }

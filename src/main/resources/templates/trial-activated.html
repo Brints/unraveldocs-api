@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trial Activated</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f7; color: #51545E; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eaeaec; }
+        .header h1 { color: #333333; margin: 0; font-size: 24px; }
+        .content { padding: 20px 0; line-height: 1.6; }
+        .content p { margin: 10px 0; }
+        .button-container { text-align: center; margin: 30px 0; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #3869D4; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px; }
+        .footer { text-align: center; font-size: 12px; color: #a8aaaf; padding-top: 20px; border-top: 1px solid #eaeaec; }
+        .details-box { background-color: #f4f6f8; border: 1px solid #e1e4e8; border-radius: 6px; padding: 15px; margin: 20px 0; }
+        .details-item { margin-bottom: 5px; }
+        .details-label { font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Free Trial Activated!</h1>
+        </div>
+        <div class="content">
+            <p>Hi <span th:text="${firstName}">User</span>,</p>
+            <p>Great news! Your free trial for the <strong><span th:text="${planName}">Pro</span></strong> plan has been successfully activated.</p>
+            <p>You now have full access to all the premium features for the duration of your trial. We hope you enjoy exploring everything our platform has to offer!</p>
+            
+            <div class="details-box">
+                <div class="details-item">
+                    <span class="details-label">Plan:</span> <span th:text="${planName}">Pro Plan</span>
+                </div>
+                <div class="details-item">
+                    <span class="details-label">Trial Ends On:</span> <span th:text="${expiryDate}">Dec 31, 2026</span>
+                </div>
+            </div>
+
+            <p>No charges will be applied until your trial period ends. You can cancel anytime before then.</p>
+
+            <div class="button-container">
+                <a th:href="${dashboardUrl}" class="button">Go to Dashboard</a>
+            </div>
+            
+            <p>If you have any questions, feel free to reply to this email.</p>
+            <p>Best regards,<br>The Team</p>
+        </div>
+        <div class="footer">
+            <p>&copy; <span th:text="${#temporals.format(#temporals.createNow(), 'yyyy')}">2026</span> UnravelDocs. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

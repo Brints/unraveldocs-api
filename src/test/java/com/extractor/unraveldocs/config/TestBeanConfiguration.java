@@ -62,20 +62,19 @@ public class TestBeanConfiguration {
         @Override
         public void sendToUser(String userId, NotificationType type, String title,
                 String message, Map<String, String> data) {
-            log.debug("STUB: Would send notification to user '{}': {} - {}", userId, type, title);
+            log.debug("STUB: Would send notification to user");
         }
 
         @Override
         public void sendToUsers(List<String> userIds, NotificationType type,
                 String title, String message, Map<String, String> data) {
-            log.debug("STUB: Would send notification to {} users: {} - {}",
-                    userIds.size(), type, title);
+            log.debug("STUB: Would send notification to users");
         }
 
         @Override
         public void sendToTopic(String topic, NotificationType type, String title,
                 String message, Map<String, String> data) {
-            log.debug("STUB: Would send notification to topic '{}': {} - {}", topic, type, title);
+            log.debug("STUB: Would send notification to topic");
         }
 
         @Override
@@ -101,17 +100,17 @@ public class TestBeanConfiguration {
 
         @Override
         public void markAsRead(String userId, String notificationId) {
-            log.debug("STUB: Would mark notification '{}' as read for user '{}'", notificationId, userId);
+            log.debug("STUB: Would mark notification as read for user");
         }
 
         @Override
         public void markAllAsRead(String userId) {
-            log.debug("STUB: Would mark all notifications as read for user '{}'", userId);
+            log.debug("STUB: Would mark all notifications as read for user");
         }
 
         @Override
         public void deleteNotification(String userId, String notificationId) {
-            log.debug("STUB: Would delete notification '{}' for user '{}'", notificationId, userId);
+            log.debug("STUB: Would delete notification for user");
         }
 
         @Override

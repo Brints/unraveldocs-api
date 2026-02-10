@@ -53,7 +53,8 @@ public class AddSubscriptionPlansImplTest {
                 BillingIntervalUnit.MONTH,
                 1,
                 100,
-                500
+                500,
+                10 // trial days
         );
 
         savedPlan = new SubscriptionPlan();
@@ -81,11 +82,13 @@ public class AddSubscriptionPlansImplTest {
         UnravelDocsResponse<SubscriptionPlansData> expectedResponse = new UnravelDocsResponse<>();
         expectedResponse.setData(plansData);
         expectedResponse.setStatusCode(HttpStatus.CREATED.value());
-        when(responseBuilderService.buildUserResponse(any(SubscriptionPlansData.class), eq(HttpStatus.CREATED), anyString()))
+        when(responseBuilderService.buildUserResponse(any(SubscriptionPlansData.class), eq(HttpStatus.CREATED),
+                anyString()))
                 .thenReturn(expectedResponse);
 
         // Act
-        UnravelDocsResponse<SubscriptionPlansData> actualResponse = addSubscriptionPlansService.createSubscriptionPlan(request);
+        UnravelDocsResponse<SubscriptionPlansData> actualResponse = addSubscriptionPlansService
+                .createSubscriptionPlan(request);
 
         // Assert
         assertNotNull(actualResponse);
@@ -101,7 +104,8 @@ public class AddSubscriptionPlansImplTest {
         assertTrue(capturedPlan.isActive());
 
         verify(planRepository).findByName(request.name());
-        verify(responseBuilderService).buildUserResponse(any(SubscriptionPlansData.class), eq(HttpStatus.CREATED), eq("Subscription plan created successfully."));
+        verify(responseBuilderService).buildUserResponse(any(SubscriptionPlansData.class), eq(HttpStatus.CREATED),
+                eq("Subscription plan created successfully."));
     }
 
     @Test
@@ -110,8 +114,8 @@ public class AddSubscriptionPlansImplTest {
         when(planRepository.findByName(request.name())).thenReturn(Optional.of(new SubscriptionPlan()));
 
         // Act & Assert
-        BadRequestException exception = assertThrows(BadRequestException.class, () ->
-            addSubscriptionPlansService.createSubscriptionPlan(request));
+        BadRequestException exception = assertThrows(BadRequestException.class,
+                () -> addSubscriptionPlansService.createSubscriptionPlan(request));
 
         assertEquals("Subscription plan with this name already exists.", exception.getMessage());
         verify(planRepository).findByName(request.name());

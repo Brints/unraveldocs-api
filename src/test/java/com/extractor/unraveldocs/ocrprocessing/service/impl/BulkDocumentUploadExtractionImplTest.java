@@ -15,6 +15,7 @@ import com.extractor.unraveldocs.ocrprocessing.events.OcrRequestedEvent;
 import com.extractor.unraveldocs.ocrprocessing.impl.BulkDocumentUploadExtractionImpl;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
 import com.extractor.unraveldocs.ocrprocessing.utils.FileStorageService;
+import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.utils.imageupload.FileUploadValidationUtil;
 import com.extractor.unraveldocs.utils.imageupload.FileSize;
@@ -57,6 +58,8 @@ class BulkDocumentUploadExtractionImplTest {
         private SanitizeLogging s;
         @Mock
         private FileStorageService fileStorageService;
+        @Mock
+        private StorageAllocationService storageAllocationService;
 
         @InjectMocks
         private BulkDocumentUploadExtractionImpl bulkDocumentUploadExtractionService;
@@ -83,7 +86,8 @@ class BulkDocumentUploadExtractionImplTest {
                                 Optional.of(ocrEventPublisher),
                                 ocrEventMapper,
                                 s,
-                                fileStorageService);
+                                fileStorageService,
+                                storageAllocationService);
 
                 byte[] smallContent = "c".getBytes();
                 validFile1 = new MockMultipartFile("files", "test1.png", "image/png", smallContent);

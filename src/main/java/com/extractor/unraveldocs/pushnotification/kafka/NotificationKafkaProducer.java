@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.pushnotification.kafka;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.pushnotification.config.NotificationConfig;
 import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
 import lombok.extern.slf4j.Slf4j;
@@ -23,14 +24,16 @@ public class NotificationKafkaProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final NotificationConfig notificationConfig;
+    private final SanitizeLogging sanitizer;
 
     @Autowired
-    @SuppressWarnings("unchecked")
     public NotificationKafkaProducer(
             KafkaTemplate<String, Object> kafkaTemplate,
+            SanitizeLogging sanitizer,
             NotificationConfig notificationConfig) {
         this.kafkaTemplate = kafkaTemplate;
         this.notificationConfig = notificationConfig;
+        this.sanitizer = sanitizer;
         log.info("NotificationKafkaProducer initialized");
     }
 
@@ -60,12 +63,13 @@ public class NotificationKafkaProducer {
         try {
             String topic = notificationConfig.getKafkaTopic();
             kafkaTemplate.send(topic, event.getUserId(), event)
-                    .whenComplete((result, ex) -> {
+                    .whenComplete((_, ex) -> {
                         if (ex != null) {
                             log.error("Failed to publish notification event: {}", ex.getMessage());
                         } else {
                             log.debug("Notification event published for user {}: {}",
-                                    event.getUserId(), event.getType());
+                                    sanitizer.sanitizeLogging(event.getUserId()),
+                                    sanitizer.sanitizeLoggingObject(event.getType()));
                         }
                     });
         } catch (Exception e) {

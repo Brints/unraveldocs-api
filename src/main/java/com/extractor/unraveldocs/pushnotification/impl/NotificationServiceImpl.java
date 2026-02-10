@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.pushnotification.impl;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
 import com.extractor.unraveldocs.pushnotification.dto.response.NotificationResponse;
 import com.extractor.unraveldocs.pushnotification.interfaces.NotificationPreferencesService;
@@ -28,15 +29,18 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationKafkaProducer kafkaProducer;
     private final NotificationPreferencesService preferencesService;
+    private final SanitizeLogging sanitizer;
 
     @Autowired
     public NotificationServiceImpl(
             NotificationRepository notificationRepository,
             @Autowired(required = false) NotificationKafkaProducer kafkaProducer,
+            SanitizeLogging sanitizer,
             NotificationPreferencesService preferencesService) {
         this.notificationRepository = notificationRepository;
         this.kafkaProducer = kafkaProducer;
         this.preferencesService = preferencesService;
+        this.sanitizer = sanitizer;
 
         if (kafkaProducer == null) {
             log.warn("NotificationKafkaProducer not available - notifications will be logged only");
@@ -46,31 +50,44 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void sendToUser(String userId, NotificationType type, String title,
             String message, Map<String, String> data) {
-        log.debug("Sending notification to user {}: {} - {}", userId, type, title);
+        log.debug("Sending notification to user {}: {} - {}",
+                sanitizer.sanitizeLogging(userId),
+                sanitizer.sanitizeLoggingObject(type),
+                sanitizer.sanitizeLogging(title));
         if (kafkaProducer != null) {
             kafkaProducer.publishNotification(userId, type, title, message, data);
         } else {
-            log.info("Would send notification to user {}: {} - {}", userId, type, title);
+            log.info("Would send notification to user {}: {} - {}",
+                    sanitizer.sanitizeLogging(userId),
+                    sanitizer.sanitizeLoggingObject(type),
+                    sanitizer.sanitizeLogging(title));
         }
     }
 
     @Override
     public void sendToUsers(List<String> userIds, NotificationType type, String title,
             String message, Map<String, String> data) {
-        log.debug("Sending notification to {} users: {} - {}", userIds.size(), type, title);
+        log.debug("Sending notification to {} users: {} - {}",
+                sanitizer.sanitizeLoggingInteger(userIds.size()),
+                sanitizer.sanitizeLoggingObject(type),
+                sanitizer.sanitizeLogging(title));
         if (kafkaProducer != null) {
             kafkaProducer.publishNotifications(userIds, type, title, message, data);
         } else {
-            log.info("Would send notification to {} users: {} - {}", userIds.size(), type, title);
+            log.info("Would send notification to {} users: {} - {}",
+                    sanitizer.sanitizeLoggingInteger(userIds.size()),
+                    sanitizer.sanitizeLoggingObject(type),
+                    sanitizer.sanitizeLogging(title));
         }
     }
 
     @Override
     public void sendToTopic(String topic, NotificationType type, String title,
             String message, Map<String, String> data) {
-        log.debug("Sending notification to topic {}: {} - {}", topic, type, title);
-        // Topic notifications would be sent directly through the provider
-        // This would require a different flow for topic-based messaging
+        log.debug("Sending notification to topic {}: {} - {}",
+                sanitizer.sanitizeLogging(topic),
+                sanitizer.sanitizeLoggingObject(type),
+                sanitizer.sanitizeLogging(title));
     }
 
     @Override
@@ -109,7 +126,9 @@ public class NotificationServiceImpl implements NotificationService {
                 .ifPresent(notification -> {
                     notification.markAsRead();
                     notificationRepository.save(notification);
-                    log.debug("Marked notification {} as read for user {}", notificationId, userId);
+                    log.debug("Marked notification {} as read for user {}",
+                            sanitizer.sanitizeLogging(notificationId),
+                            sanitizer.sanitizeLogging(userId));
                 });
     }
 
@@ -117,7 +136,9 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public void markAllAsRead(String userId) {
         int updated = notificationRepository.markAllAsRead(userId, OffsetDateTime.now());
-        log.debug("Marked {} notifications as read for user {}", updated, userId);
+        log.debug("Marked {} notifications as read for user {}",
+                sanitizer.sanitizeLoggingInteger(updated),
+                sanitizer.sanitizeLogging(userId));
     }
 
     @Override
@@ -127,7 +148,9 @@ public class NotificationServiceImpl implements NotificationService {
                 .filter(n -> n.getUser().getId().equals(userId))
                 .ifPresent(notification -> {
                     notificationRepository.delete(notification);
-                    log.debug("Deleted notification {} for user {}", notificationId, userId);
+                    log.debug("Deleted notification {} for user {}",
+                            sanitizer.sanitizeLogging(notificationId),
+                            sanitizer.sanitizeLogging(userId));
                 });
     }
 

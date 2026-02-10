@@ -8,6 +8,7 @@ import com.extractor.unraveldocs.ocrprocessing.interfaces.ExtractTextFromDocumen
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
 import com.extractor.unraveldocs.ocrprocessing.utils.FindAndValidateFileEntry;
+import com.extractor.unraveldocs.storage.service.StorageAllocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.tess4j.TesseractException;
@@ -29,6 +30,7 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
     private final OcrDataRepository ocrDataRepository;
     private final FindAndValidateFileEntry validateFileEntry;
     private final SanitizeLogging sanitizeLogging;
+    private final StorageAllocationService storageAllocationService;
 
     @Value("${tesseract.datapath}")
     private String tesseractDataPath;
@@ -54,6 +56,13 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
 
             extractImageURL(fileEntry, ocrData, tesseractDataPath);
             log.info("OCR text extraction completed for document: {}", sanitizeLogging.sanitizeLogging(documentId));
+
+            try {
+                // Update OCR pages used (for monthly quota tracking)
+                storageAllocationService.updateOcrUsage(userId, 1);
+            } catch (Exception e) {
+                log.error("Failed to update OCR usage for user {}: {}", sanitizeLogging.sanitizeLogging(userId), e.getMessage(), e);
+            }
         } catch (IOException | TesseractException e) {
             log.error("OCR processing failed for document {}: {}", sanitizeLogging.sanitizeLogging(documentId), e.getMessage(), e);
             ocrData.setStatus(OcrStatus.FAILED);

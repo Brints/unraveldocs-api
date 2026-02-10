@@ -32,13 +32,16 @@ public class AddSubscriptionPlansImpl implements AddSubscriptionPlansService {
 
         SubscriptionPlan newPlan = getSubscriptionPlan(request, now);
 
-
         SubscriptionPlan savedPlan = planRepository.save(newPlan);
 
         SubscriptionPlansData plansData = getSubscriptionPlansData(savedPlan);
 
         return responseBuilderService
-                .buildUserResponse(plansData, HttpStatus.CREATED, "Subscription plan created successfully.");
+                .buildUserResponse(
+                        plansData,
+                        HttpStatus.CREATED,
+                        "Subscription plan created successfully."
+                );
     }
 
     private static SubscriptionPlan getSubscriptionPlan(CreateSubscriptionPlanRequest request, OffsetDateTime now) {
@@ -50,6 +53,7 @@ public class AddSubscriptionPlansImpl implements AddSubscriptionPlansService {
         newPlan.setBillingIntervalValue(request.billingIntervalValue());
         newPlan.setDocumentUploadLimit(request.documentUploadLimit());
         newPlan.setOcrPageLimit(request.ocrPageLimit());
+        newPlan.setTrialDays(request.trialDays() != null ? request.trialDays() : 10);
         newPlan.setActive(true);
         newPlan.setCreatedAt(now);
         newPlan.setUpdatedAt(now);

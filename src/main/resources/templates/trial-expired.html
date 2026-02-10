@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trial Expired</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f7; color: #51545E; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eaeaec; }
+        .header h1 { color: #e74c3c; margin: 0; font-size: 24px; }
+        .content { padding: 20px 0; line-height: 1.6; }
+        .content p { margin: 10px 0; }
+        .button-container { text-align: center; margin: 30px 0; }
+        .button { display: inline-block; padding: 12px 24px; background-color: #3869D4; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px; }
+        .footer { text-align: center; font-size: 12px; color: #a8aaaf; padding-top: 20px; border-top: 1px solid #eaeaec; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Free Trial Has Expired</h1>
+        </div>
+        <div class="content">
+            <p>Hi <span th:text="${firstName}">User</span>,</p>
+            <p>Your free trial for the <strong><span th:text="${planName}">Pro</span></strong> plan has expired.</p>
+            <p>Your account has been reverted to the Free plan. To regain access to premium features, documents, and increased limits, please upgrade your subscription.</p>
+
+            <div class="button-container">
+                <a th:href="${billingUrl}" class="button">Subscribe Now</a>
+            </div>
+            
+            <p>Thank you for trying out our premium features!</p>
+            <p>Best regards,<br>The Team</p>
+        </div>
+        <div class="footer">
+            <p>&copy; <span th:text="${#temporals.format(#temporals.createNow(), 'yyyy')}">2026</span> UnravelDocs. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
