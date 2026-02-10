@@ -50,7 +50,10 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void sendToUser(String userId, NotificationType type, String title,
             String message, Map<String, String> data) {
-        log.debug("Sending notification to user {}: {} - {}", userId, type, title);
+        log.debug("Sending notification to user {}: {} - {}",
+                sanitizer.sanitizeLogging(userId),
+                sanitizer.sanitizeLoggingObject(type),
+                sanitizer.sanitizeLogging(title));
         if (kafkaProducer != null) {
             kafkaProducer.publishNotification(userId, type, title, message, data);
         } else {

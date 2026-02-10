@@ -108,7 +108,9 @@ public class EmailMessageProducerService {
          * @return CompletableFuture with the send result
          */
         public CompletableFuture<MessageResult> sendEmailMessage(EmailNotificationMessage emailMessage) {
-                log.debug("Queueing email to: {}, subject: {} via Kafka", emailMessage.to(), emailMessage.subject());
+                log.debug("Queueing email to: {}, subject: {} via Kafka",
+                        sanitizer.sanitizeLogging(emailMessage.to()),
+                        sanitizer.sanitizeLogging(emailMessage.subject()));
 
                 Message<EmailNotificationMessage> message = Message.of(
                                 emailMessage,
