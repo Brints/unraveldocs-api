@@ -24,13 +24,31 @@ Returns all active credit packs available for purchase.
   "message": "Credit packs retrieved",
   "data": [
     {
-      "id": "uuid",
+      "id": "e2d6f74d-4422-4ace-b9cb-aa6f50067074",
+      "name": "STARTER_PACK",
+      "displayName": "Starter Pack",
+      "priceInCents": 500,
+      "currency": "USD",
+      "creditsIncluded": 20,
+      "costPerCredit": 25.00
+    },
+    {
+      "id": "bbc04958-0530-4dc0-9be7-0dc5fdabd1a3",
       "name": "VALUE_PACK",
       "displayName": "Value Pack",
       "priceInCents": 1500,
       "currency": "USD",
       "creditsIncluded": 75,
       "costPerCredit": 20.00
+    },
+    {
+      "id": "8ac54c55-6bed-4d02-8924-4cc98aad1d4f",
+      "name": "POWER_PACK",
+      "displayName": "Power Pack",
+      "priceInCents": 3000,
+      "currency": "USD",
+      "creditsIncluded": 200,
+      "costPerCredit": 15.00
     }
   ]
 }
@@ -72,7 +90,7 @@ Initializes a credit pack purchase. Supports optional coupon code for discounts.
 ```json
 {
   "creditPackId": "uuid",
-  "gateway": "STRIPE",
+  "gateway": "STRIPE or PAYPAL or PAYSTACK",
   "couponCode": "SAVE10",
   "callbackUrl": "https://example.com/callback",
   "cancelUrl": "https://example.com/cancel"
@@ -133,11 +151,11 @@ Transfers credits to another user by email. Both sender and receiver receive pus
   "status": "success",
   "message": "Credits transferred successfully",
   "data": {
-    "transferId": "uuid",
-    "creditsTransferred": 10,
-    "senderBalanceAfter": 35,
-    "recipientEmail": "jane@example.com",
-    "recipientName": "Jane Doe"
+    "transferId": "3127d38f-4a9c-46ab-aaee-e274ec91110e",
+    "creditsTransferred": 80,
+    "senderBalanceAfter": 2147483567,
+    "recipientEmail": "afiaaniebiet0@gmail.com",
+    "recipientName": "Michael Whyte"
   }
 }
 ```
@@ -179,7 +197,31 @@ Returns paginated credit transaction history.
   "data": {
     "content": [
       {
-        "transactionId": "uuid",
+        "transactionId": "cc5e0b85-cf64-4256-a944-02714a2394bb",
+        "type": "TRANSFER_SENT",
+        "amount": 6,
+        "balanceAfter": 2147483561,
+        "description": "Transferred 6 credits to afiaaniebiet0@gmail.com",
+        "createdAt": "2026-02-16T10:09:17.82303Z"
+      },
+      {
+        "transactionId": "3127d38f-4a9c-46ab-aaee-e274ec91110e",
+        "type": "TRANSFER_SENT",
+        "amount": 80,
+        "balanceAfter": 2147483567,
+        "description": "Transferred 80 credits to afiaaniebiet0@gmail.com",
+        "createdAt": "2026-02-16T09:46:37.597739Z"
+      },
+      {
+        "transactionId": "f7cacffd-6a78-4ab8-bb0f-ed1ea3422310",
+        "type": "ADMIN_ALLOCATION",
+        "amount": 2147483647,
+        "balanceAfter": 2147483647,
+        "description": "Unlimited credits assigned to admin/super admin",
+        "createdAt": "2026-02-16T09:27:35.874245Z"
+      },
+      {
+        "transactionId": "e2d6f74d-4422-4ace-b9cb-aa6f50067074",
         "type": "PURCHASE",
         "amount": 75,
         "balanceAfter": 80,
@@ -187,10 +229,31 @@ Returns paginated credit transaction history.
         "createdAt": "2026-02-10T12:00:00Z"
       }
     ],
-    "totalElements": 1,
-    "totalPages": 1,
+    "empty": false,
+    "first": true,
+    "last": true,
     "number": 0,
-    "size": 20
+    "numberOfElements": 3,
+    "pageable": {
+      "offset": 0,
+      "pageNumber": 0,
+      "pageSize": 20,
+      "paged": true,
+      "sort": {
+        "empty": true,
+        "sorted": false,
+        "unsorted": true
+      },
+      "unpaged": false
+    },
+    "size": 20,
+    "sort": {
+      "empty": true,
+      "sorted": false,
+      "unsorted": true
+    },
+    "totalElements": 3,
+    "totalPages": 1
   }
 }
 ```
@@ -251,8 +314,27 @@ Partial update — only provided fields are changed.
 
 ```json
 {
-  "priceInCents": 600,
-  "isActive": false
+  "priceInCents": 35000,
+  "isActive": false,
+  "creditsIncluded": 250
+}
+```
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Credit pack updated",
+  "data": {
+    "id": "8ac54c55-6bed-4d02-8924-4cc98aad1d4f",
+    "name": "POWER_PACK",
+    "displayName": "Power Pack",
+    "priceInCents": 35000,
+    "currency": "USD",
+    "creditsIncluded": 250,
+    "costPerCredit": 140.00
+  }
 }
 ```
 
@@ -283,11 +365,11 @@ Allocates credits to any user without restrictions (no cap).
 }
 ```
 
-| Field    | Type    | Required | Notes                      |
-|----------|---------|----------|----------------------------|
-| `userId` | string  | ✅        | Target user's ID           |
-| `amount` | integer | ✅        | Credits to allocate (min: 1)|
-| `reason` | string  | ❌        | Optional admin note         |
+| Field    | Type    | Required | Notes                        |
+|----------|---------|----------|------------------------------|
+| `userId` | string  | ✅        | Target user's ID             |
+| `amount` | integer | ✅        | Credits to allocate (min: 1) |
+| `reason` | string  | ❌        | Optional admin note          |
 
 **Response:**
 ```json

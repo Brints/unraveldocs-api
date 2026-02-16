@@ -96,7 +96,7 @@ public class Coupon {
      * simultaneously.
      */
     @Version
-    @Column(name = "version")
+    @Column(name = "version", nullable = false)
     private Long version;
 
     /**

@@ -115,8 +115,9 @@
                 <a th:href="${dashboardUrl}" class="button">Go to Dashboard</a>
             </div>
 
-            <p>If you have any questions, feel free to reply to this email.</p>
-            <p>Best regards,<br>The Team</p>
+            <p>If you have any questions, feel free to reply to <a th:href="${'mailto:' + supportEmail}"
+                                                                   style="color: #2563eb; font-weight: 500;">[[${supportEmail}]]</a></p>
+            <p>Best regards,<br>ReDraft Support Team</p>
         </div>
         <div class="footer">
             <p>&copy; <span th:text="${#temporals.format(#temporals.createNow(), 'yyyy')}">2026</span> UnravelDocs. All

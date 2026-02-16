@@ -229,8 +229,6 @@ public class CreditBalanceService {
         // Send notifications to both parties
         sendTransferNotifications(sender, recipient, amount, senderBalance.getBalance(), recipientBalance.getBalance());
 
-        log.info("Credit transfer: {} sent {} credits to {}", sender.getEmail(), amount, recipient.getEmail());
-
         return CreditTransferData.builder()
                 .transferId(senderTx.getId())
                 .creditsTransferred(amount)
@@ -268,8 +266,6 @@ public class CreditBalanceService {
                 .sender(admin)
                 .build();
         transactionRepository.save(transaction);
-
-        log.info("Admin {} allocated {} credits to user {}", admin.getEmail(), amount, targetUser.getEmail());
     }
 
     /**

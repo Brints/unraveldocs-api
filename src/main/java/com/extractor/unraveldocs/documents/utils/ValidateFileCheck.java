@@ -12,13 +12,12 @@ public class ValidateFileCheck {
             throw new IllegalArgumentException("File is empty: " + file.getOriginalFilename());
         }
         String contentType = file.getContentType();
-        if (!FileType.IMAGE.isValid(contentType)) {
+        if (!fileType.isValid(contentType)) {
             throw new BadRequestException(
                     "Invalid file type: " + contentType +
-                    " for file " + file.getOriginalFilename() +
-                    ". Allowed types are: " +
-                    String.join(", ", fileType.getMimeTypes())
-            );
+                            " for file " + file.getOriginalFilename() +
+                            ". Allowed types are: " +
+                            String.join(", ", fileType.getMimeTypes()));
         }
     }
 }
