@@ -8,7 +8,11 @@ import com.extractor.unraveldocs.ocrprocessing.interfaces.ExtractTextFromDocumen
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
 import com.extractor.unraveldocs.ocrprocessing.utils.FindAndValidateFileEntry;
+import com.extractor.unraveldocs.credit.service.CreditBalanceService;
+import com.extractor.unraveldocs.subscription.service.SubscriptionFeatureService;
 import com.extractor.unraveldocs.storage.service.StorageAllocationService;
+import com.extractor.unraveldocs.user.model.User;
+import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.tess4j.TesseractException;
@@ -31,6 +35,9 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
     private final FindAndValidateFileEntry validateFileEntry;
     private final SanitizeLogging sanitizeLogging;
     private final StorageAllocationService storageAllocationService;
+    private final CreditBalanceService creditBalanceService;
+    private final SubscriptionFeatureService subscriptionFeatureService;
+    private final UserRepository userRepository;
 
     @Value("${tesseract.datapath}")
     private String tesseractDataPath;
@@ -61,17 +68,37 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
                 // Update OCR pages used (for monthly quota tracking)
                 storageAllocationService.updateOcrUsage(userId, 1);
             } catch (Exception e) {
-                log.error("Failed to update OCR usage for user {}: {}", sanitizeLogging.sanitizeLogging(userId), e.getMessage(), e);
+                log.error("Failed to update OCR usage for user {}: {}", sanitizeLogging.sanitizeLogging(userId),
+                        e.getMessage(), e);
+            }
+
+            // Deduct credits for users without an active paid subscription
+            try {
+                if (!subscriptionFeatureService.hasPaidSubscription(userId)) {
+                    User user = userRepository.findById(userId).orElse(null);
+                    if (user != null && creditBalanceService.hasEnoughCredits(userId, 1)) {
+                        creditBalanceService.deductCredits(user, 1, documentId,
+                                "OCR processing: 1 page for document " + documentId);
+                        log.info("Deducted 1 credit for OCR processing of document {} for user {}",
+                                sanitizeLogging.sanitizeLogging(documentId), sanitizeLogging.sanitizeLogging(userId));
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to deduct credit for user {}: {}", sanitizeLogging.sanitizeLogging(userId),
+                        e.getMessage(), e);
             }
         } catch (IOException | TesseractException e) {
-            log.error("OCR processing failed for document {}: {}", sanitizeLogging.sanitizeLogging(documentId), e.getMessage(), e);
+            log.error("OCR processing failed for document {}: {}", sanitizeLogging.sanitizeLogging(documentId),
+                    e.getMessage(), e);
             ocrData.setStatus(OcrStatus.FAILED);
             ocrData.setErrorMessage(e.getMessage());
         } catch (Exception e) {
-            log.error("An unexpected error occurred while processing document {}: {}", sanitizeLogging.sanitizeLogging(documentId), e.getMessage(), e);
+            log.error("An unexpected error occurred while processing document {}: {}",
+                    sanitizeLogging.sanitizeLogging(documentId), e.getMessage(), e);
             ocrData.setStatus(OcrStatus.FAILED);
             ocrData.setErrorMessage("An unexpected error occurred: " + e.getMessage());
-            throw new ServiceException("Failed to process OCR for document: " + sanitizeLogging.sanitizeLogging(documentId), e);
+            throw new ServiceException(
+                    "Failed to process OCR for document: " + sanitizeLogging.sanitizeLogging(documentId), e);
         }
 
         return ocrDataRepository.save(ocrData);

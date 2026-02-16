@@ -7,5 +7,6 @@ public enum PaymentType {
     ONE_TIME,
     SUBSCRIPTION,
     REFUND,
-    SETUP
+    SETUP,
+    CREDIT_PURCHASE
 }
