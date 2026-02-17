@@ -94,6 +94,7 @@ public class CreditPackController {
                         @AuthenticationPrincipal User user,
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "20") int size) {
+                size = Math.min(size, 100); // Limit page size to 100
                 Page<CreditTransactionData> transactions = transactionRepository
                                 .findByUserIdOrderByCreatedAtDesc(user.getId(), PageRequest.of(page, size))
                                 .map(this::toTransactionData);

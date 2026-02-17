@@ -81,8 +81,6 @@ public class CreditPackManagementService {
                 .build();
 
         CreditPack saved = creditPackRepository.save(pack);
-        log.info("Created credit pack: {} with {} credits at {} cents", packName, request.getCreditsIncluded(),
-                request.getPriceInCents());
         return toPackData(saved);
     }
 
@@ -108,7 +106,6 @@ public class CreditPackManagementService {
         }
 
         CreditPack updated = creditPackRepository.save(pack);
-        log.info("Updated credit pack: {}", packId);
         return toPackData(updated);
     }
 
@@ -120,7 +117,6 @@ public class CreditPackManagementService {
         CreditPack pack = findPackOrThrow(packId);
         pack.setIsActive(false);
         creditPackRepository.save(pack);
-        log.info("Deactivated credit pack: {}", packId);
     }
 
     private CreditPack findPackOrThrow(String packId) {

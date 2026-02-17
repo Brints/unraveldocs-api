@@ -82,61 +82,41 @@ public class AdminUserInitializer implements CommandLineRunner {
             log.info("Default subscription assigned to admin user: {}", sanitizer.sanitizeLogging(adminEmail));
         }
 
-        // Assign unlimited credits to admin/super admin
-        if (adminUser != null) {
-            assignUnlimitedCreditsToAdmins(adminUser);
-        }
-
-        // Grant free credits to existing users who don't have any
-        grantFreeCreditsToExistingUsers();
+        // Assign unlimited credits to admins and free credits to regular users
+        initializeUserCredits(adminUser);
     }
 
     /**
-     * Assigns unlimited credits to admin and super admin users.
+     * Single-pass credit initialization for all users:
+     * - Admin/Super Admin: unlimited credits
+     * - Regular users without a balance: 5 free signup bonus credits
      */
-    private void assignUnlimitedCreditsToAdmins(User adminUser) {
+    private void initializeUserCredits(User primaryAdmin) {
         try {
-            if (adminUser.getRole() == Role.ADMIN || adminUser.getRole() == Role.SUPER_ADMIN) {
-                creditBalanceService.grantUnlimitedCredits(adminUser);
-            }
-
-            // Also assign to any other admin/super admin users
             List<User> allUsers = userRepository.findAll();
+            int adminCount = 0;
+            int bonusCount = 0;
+
             for (User user : allUsers) {
-                if ((user.getRole() == Role.ADMIN || user.getRole() == Role.SUPER_ADMIN)
-                        && !user.getId().equals(adminUser.getId())) {
+                boolean isAdmin = user.getRole() == Role.ADMIN || user.getRole() == Role.SUPER_ADMIN;
+
+                if (isAdmin) {
                     creditBalanceService.grantUnlimitedCredits(user);
+                    adminCount++;
+                } else {
+                    boolean hasBalance = creditBalanceRepository.findByUserId(user.getId()).isPresent();
+                    if (!hasBalance) {
+                        creditBalanceService.grantSignupBonus(user);
+                        bonusCount++;
+                    }
                 }
             }
-            log.info("Unlimited credits assigned to all admin/super admin users");
-        } catch (Exception e) {
-            log.error("Failed to assign unlimited credits to admins: {}", e.getMessage());
-        }
-    }
 
-    /**
-     * Grants 5 free credits to existing users who don't have a credit balance
-     * record.
-     */
-    private void grantFreeCreditsToExistingUsers() {
-        try {
-            List<User> allUsers = userRepository.findAll();
-            int count = 0;
-            for (User user : allUsers) {
-                // Skip admins (they get unlimited)
-                if (user.getRole() == Role.ADMIN || user.getRole() == Role.SUPER_ADMIN) {
-                    continue;
-                }
-
-                // Check if user already has a credit balance
-                boolean hasBalance = creditBalanceRepository.findByUserId(user.getId()).isPresent();
-                if (!hasBalance) {
-                    creditBalanceService.grantSignupBonus(user);
-                    count++;
-                }
+            if (adminCount > 0) {
+                log.info("Unlimited credits assigned to {} admin/super admin user(s)", adminCount);
             }
-            if (count > 0) {
-                log.info("Granted free signup bonus credits to {} existing users", count);
+            if (bonusCount > 0) {
+                log.info("Granted free signup bonus credits to {} existing user(s)", bonusCount);
             }
         } catch (Exception e) {
             log.error("Failed to grant free credits to existing users: {}", e.getMessage());

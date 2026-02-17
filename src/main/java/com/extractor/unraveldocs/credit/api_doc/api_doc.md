@@ -399,6 +399,7 @@ Allocates credits to any user without restrictions (no cap).
 | **Transfer floor**          | Sender must retain at least 5 credits after any transfer                                   |
 
 ## Credit Pack Pricing Examples
+
 | Pack Name    | Price (USD) | Credits Included | Cost per Credit (USD) | User Perception      |
 |--------------|-------------|------------------|-----------------------|----------------------|
 | Starter Pack | $5.00       | 20               | $0.25                 | Just trying it out   |

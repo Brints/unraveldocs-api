@@ -9,6 +9,7 @@ import com.extractor.unraveldocs.credit.dto.response.CreditPurchaseData;
 import com.extractor.unraveldocs.credit.model.CreditPack;
 import com.extractor.unraveldocs.credit.model.UserCreditBalance;
 import com.extractor.unraveldocs.credit.repository.CreditPackRepository;
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.messaging.emailtemplates.UserEmailTemplateService;
@@ -43,6 +44,7 @@ public class CreditPurchaseService {
     private final CouponValidationService couponValidationService;
     private final NotificationService notificationService;
     private final UserEmailTemplateService emailTemplateService;
+    private final SanitizeLogging sanitizer;
 
     /**
      * Initialize a credit pack purchase.
@@ -85,9 +87,6 @@ public class CreditPurchaseService {
             DiscountCalculationData discountData = couponValidationService.applyCouponToAmount(couponRequest, user);
             finalAmountInCents = discountData.getFinalAmount().longValue();
             discountApplied = originalAmountInCents - finalAmountInCents;
-
-            log.info("Coupon {} applied to credit purchase. Original: {}, Discount: {}, Final: {}",
-                    request.getCouponCode(), originalAmountInCents, discountApplied, finalAmountInCents);
         }
 
         // Create one-time payment via payment gateway
@@ -155,7 +154,7 @@ public class CreditPurchaseService {
                     Map.of("packName", pack.getDisplayName(),
                             "creditsAdded", String.valueOf(pack.getCreditsIncluded())));
         } catch (Exception e) {
-            log.error("Failed to send credit purchase push notification for user {}: {}", user.getId(), e.getMessage());
+            log.error("Failed to send credit purchase push notification for user {}: {}", sanitizer.sanitizeLogging(user.getId()), e.getMessage());
         }
 
         // Send email notification
@@ -168,10 +167,7 @@ public class CreditPurchaseService {
                     pack.getCreditsIncluded(),
                     balance.getBalance());
         } catch (Exception e) {
-            log.error("Failed to send credit purchase email for user {}: {}", user.getId(), e.getMessage());
+            log.error("Failed to send credit purchase email for user {}: {}", sanitizer.sanitizeLogging(user.getId()), e.getMessage());
         }
-
-        log.info("Completed credit purchase for user {}. Pack: {}, Credits: {}, Reference: {}",
-                user.getId(), pack.getDisplayName(), pack.getCreditsIncluded(), paymentReference);
     }
 }

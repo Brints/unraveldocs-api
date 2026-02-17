@@ -193,14 +193,20 @@ public class CreditBalanceService {
         }
 
         // Deduct from sender
-        senderBalance.setBalance(senderBalance.getBalance() - amount);
-        senderBalance.setTotalUsed(senderBalance.getTotalUsed() + amount);
+        int remainingBalanceAfterTransfer = senderBalance.getBalance() - amount;
+        senderBalance.setBalance(remainingBalanceAfterTransfer);
+
+        int totalUsedAfterTransfer = senderBalance.getTotalUsed() + amount;
+        senderBalance.setTotalUsed(totalUsedAfterTransfer);
         creditBalanceRepository.save(senderBalance);
 
         // Add to recipient
         UserCreditBalance recipientBalance = getOrCreateBalance(recipient.getId());
-        recipientBalance.setBalance(recipientBalance.getBalance() + amount);
-        recipientBalance.setTotalPurchased(recipientBalance.getTotalPurchased() + amount);
+        int recipientNewBalance = recipientBalance.getBalance() + amount;
+        recipientBalance.setBalance(recipientNewBalance);
+
+        int recipientTotalPurchasedAfterTransfer = recipientBalance.getTotalPurchased() + amount;
+        recipientBalance.setTotalPurchased(recipientTotalPurchasedAfterTransfer);
         creditBalanceRepository.save(recipientBalance);
 
         // Log sender transaction
@@ -247,8 +253,11 @@ public class CreditBalanceService {
                 .orElseThrow(() -> new NotFoundException("User not found: " + targetUserId));
 
         UserCreditBalance balance = getOrCreateBalance(targetUserId);
-        balance.setBalance(balance.getBalance() + amount);
-        balance.setTotalPurchased(balance.getTotalPurchased() + amount);
+        int newBalance = balance.getBalance() + amount;
+        balance.setBalance(newBalance);
+
+        int newTotalPurchased = balance.getTotalPurchased() + amount;
+        balance.setTotalPurchased(newTotalPurchased);
         creditBalanceRepository.save(balance);
 
         String description = "Admin allocation of " + amount + " credits by " + admin.getEmail();

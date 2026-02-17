@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.credit.service;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -23,6 +24,7 @@ public class PageCountService {
             "png", "jpg", "jpeg", "tiff", "tif", "bmp", "gif", "webp");
 
     private static final String PDF_EXTENSION = "pdf";
+    private final SanitizeLogging sanitizer = new SanitizeLogging();
 
     /**
      * Calculate the total number of pages across all uploaded files.
@@ -59,10 +61,13 @@ public class PageCountService {
     private int countPdfPages(MultipartFile file, String filename) {
         try (PDDocument document = Loader.loadPDF(file.getBytes())) {
             int pages = document.getNumberOfPages();
-            log.debug("PDF '{}' has {} pages", filename, pages);
+            log.debug("PDF '{}' has {} pages",
+                    sanitizer.sanitizeLogging(filename),
+                    sanitizer.sanitizeLoggingInteger(pages));
             return pages;
         } catch (IOException e) {
-            log.warn("Failed to count pages for PDF '{}', defaulting to 1: {}", filename, e.getMessage());
+            log.warn("Failed to count pages for PDF '{}', defaulting to 1: {}",
+                    sanitizer.sanitizeLogging(filename), e.getMessage());
             return 1;
         }
     }

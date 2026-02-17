@@ -203,8 +203,7 @@ public class UserEmailTemplateService {
                                                 "dashboardUrl", dashboardUrl));
         }
 
-        public void sendCreditTransferSentEmail(String email, String firstName, String lastName,
-                        int creditsTransferred, String recipientName, int newBalance) {
+        public void sendCreditTransferSentEmail(String email, String firstName, String lastName, int creditsTransferred, String recipientName, int newBalance) {
                 var dashboardUrl = UriComponentsBuilder.fromUriString(frontendUrl)
                                 .path("/dashboard")
                                 .toUriString();
@@ -225,8 +224,7 @@ public class UserEmailTemplateService {
                                                 "dashboardUrl", dashboardUrl));
         }
 
-        public void sendCreditTransferReceivedEmail(String email, String firstName, String lastName,
-                        int creditsReceived, String senderName, int newBalance) {
+        public void sendCreditTransferReceivedEmail(String email, String firstName, String lastName, int creditsReceived, String senderName, int newBalance) {
                 var dashboardUrl = UriComponentsBuilder.fromUriString(frontendUrl)
                                 .path("/dashboard")
                                 .toUriString();
