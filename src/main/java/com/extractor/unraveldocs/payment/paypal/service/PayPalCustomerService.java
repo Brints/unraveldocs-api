@@ -40,7 +40,6 @@ public class PayPalCustomerService {
      */
     @Transactional
     public PayPalCustomer createCustomer(User user) {
-        log.info("Creating PayPal customer record for user: {}", user.getId());
 
         PayPalCustomer customer = PayPalCustomer.builder()
                 .user(user)

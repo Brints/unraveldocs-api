@@ -83,7 +83,7 @@ public class AdminUserInitializer implements CommandLineRunner {
         }
 
         // Assign unlimited credits to admins and free credits to regular users
-        initializeUserCredits(adminUser);
+        initializeUserCredits();
     }
 
     /**
@@ -91,7 +91,7 @@ public class AdminUserInitializer implements CommandLineRunner {
      * - Admin/Super Admin: unlimited credits
      * - Regular users without a balance: 5 free signup bonus credits
      */
-    private void initializeUserCredits(User primaryAdmin) {
+    private void initializeUserCredits() {
         try {
             List<User> allUsers = userRepository.findAll();
             int adminCount = 0;
