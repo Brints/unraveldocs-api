@@ -260,10 +260,10 @@ public class CreditBalanceService {
                                 .orElseThrow(() -> new NotFoundException("User not found: " + targetUserId));
 
                 UserCreditBalance balance = getOrCreateBalance(targetUserId);
-                int newBalance = balance.getBalance() + amount;
+                int newBalance = Math.addExact(balance.getBalance(), amount);
                 balance.setBalance(newBalance);
 
-                int newTotalPurchased = balance.getTotalPurchased() + amount;
+                int newTotalPurchased = Math.addExact(balance.getTotalPurchased(), amount);
                 balance.setTotalPurchased(newTotalPurchased);
                 creditBalanceRepository.save(balance);
 
