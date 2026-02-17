@@ -22,7 +22,11 @@ public final class FileUploadValidationUtil {
     }
 
     public static void validateIndividualFile(MultipartFile file) {
-        validateFileCheck(file, FileType.IMAGE);
+        validateIndividualFile(file, FileType.FILE);
+    }
+
+    public static void validateIndividualFile(MultipartFile file, FileType fileType) {
+        validateFileCheck(file, fileType);
         if (!FileSize.isValidFileSize(file.getSize(), false)) {
             throw new BadRequestException(FileSize.getFileSizeLimitMessage(false));
         }

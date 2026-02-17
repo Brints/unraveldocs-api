@@ -51,12 +51,12 @@ public class FileEntry {
     private String encryptionIv;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     @Builder.Default
     private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private OffsetDateTime updatedAt = OffsetDateTime.now();
 }

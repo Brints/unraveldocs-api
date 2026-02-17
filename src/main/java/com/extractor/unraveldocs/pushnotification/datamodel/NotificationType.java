@@ -52,6 +52,12 @@ public enum NotificationType {
     COUPON_EXPIRED("Coupon Expired", "coupon"),
     COUPON_APPLIED("Coupon Applied", "coupon"),
 
+    // Credit events
+    CREDIT_PURCHASE_SUCCESS("Credit Purchase Success", "credit"),
+    CREDIT_BALANCE_LOW("Credit Balance Low", "credit"),
+    CREDIT_TRANSFER_SENT("Credit Transfer Sent", "credit"),
+    CREDIT_TRANSFER_RECEIVED("Credit Transfer Received", "credit"),
+
     // System
     SYSTEM_ANNOUNCEMENT("System Announcement", "system"),
     WELCOME("Welcome", "system");

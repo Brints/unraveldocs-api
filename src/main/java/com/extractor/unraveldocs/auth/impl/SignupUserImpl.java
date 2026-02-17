@@ -6,6 +6,7 @@ import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.interfaces.SignupUserService;
 import com.extractor.unraveldocs.auth.model.UserVerification;
+import com.extractor.unraveldocs.credit.service.CreditBalanceService;
 import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
 import com.extractor.unraveldocs.brokers.kafka.events.EventMetadata;
 import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
@@ -56,6 +57,7 @@ public class SignupUserImpl implements SignupUserService {
         private final UserRepository userRepository;
         private final Optional<ElasticsearchIndexingService> elasticsearchIndexingService;
         private final NotificationService notificationService;
+        private final CreditBalanceService creditBalanceService;
 
         @Override
         @Transactional
@@ -141,6 +143,15 @@ public class SignupUserImpl implements SignupUserService {
 
                                 // Send WELCOME push notification
                                 sendWelcomeNotification(savedUser);
+
+                                // Grant sign-up bonus credits
+                                try {
+                                        creditBalanceService.grantSignupBonus(savedUser);
+                                        log.info("Granted sign-up bonus credits to user {}", savedUser.getId());
+                                } catch (Exception e) {
+                                        log.error("Failed to grant sign-up bonus credits to user {}: {}",
+                                                        savedUser.getId(), e.getMessage());
+                                }
                         }
                 });
 

@@ -3,6 +3,11 @@ package com.extractor.unraveldocs.admin.config;
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.datamodel.VerifiedStatus;
 import com.extractor.unraveldocs.auth.model.UserVerification;
+import com.extractor.unraveldocs.credit.datamodel.CreditPackName;
+import com.extractor.unraveldocs.credit.model.CreditPack;
+import com.extractor.unraveldocs.credit.repository.CreditPackRepository;
+import com.extractor.unraveldocs.credit.repository.UserCreditBalanceRepository;
+import com.extractor.unraveldocs.credit.service.CreditBalanceService;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;
 import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
@@ -25,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.EnumSet;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -32,6 +38,9 @@ import java.util.EnumSet;
 public class AdminUserInitializer implements CommandLineRunner {
 
     private final AssignSubscriptionService subscriptionService;
+    private final CreditPackRepository creditPackRepository;
+    private final CreditBalanceService creditBalanceService;
+    private final UserCreditBalanceRepository creditBalanceRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final SubscriptionPlanRepository planRepository;
@@ -53,10 +62,12 @@ public class AdminUserInitializer implements CommandLineRunner {
 
         // Create plans FIRST so they exist when assigning subscriptions
         createDefaultSubscriptionPlans();
+        createDefaultCreditPacks();
 
         User adminUser = null;
         if (userRepository.existsByEmail(adminEmail)) {
             log.info("Admin user already exists with email: {}", adminEmail);
+            adminUser = userRepository.findByEmail(adminEmail).orElse(null);
         } else {
             log.info("Creating admin user with email: {}", adminEmail);
             adminUser = createAdminUser();
@@ -69,6 +80,46 @@ public class AdminUserInitializer implements CommandLineRunner {
             adminUser.setSubscription(subscription);
             userRepository.save(adminUser);
             log.info("Default subscription assigned to admin user: {}", sanitizer.sanitizeLogging(adminEmail));
+        }
+
+        // Assign unlimited credits to admins and free credits to regular users
+        initializeUserCredits();
+    }
+
+    /**
+     * Single-pass credit initialization for all users:
+     * - Admin/Super Admin: unlimited credits
+     * - Regular users without a balance: 5 free signup bonus credits
+     */
+    private void initializeUserCredits() {
+        try {
+            List<User> allUsers = userRepository.findAll();
+            int adminCount = 0;
+            int bonusCount = 0;
+
+            for (User user : allUsers) {
+                boolean isAdmin = user.getRole() == Role.ADMIN || user.getRole() == Role.SUPER_ADMIN;
+
+                if (isAdmin) {
+                    creditBalanceService.grantUnlimitedCredits(user);
+                    adminCount++;
+                } else {
+                    boolean hasBalance = creditBalanceRepository.findByUserId(user.getId()).isPresent();
+                    if (!hasBalance) {
+                        creditBalanceService.grantSignupBonus(user);
+                        bonusCount++;
+                    }
+                }
+            }
+
+            if (adminCount > 0) {
+                log.info("Unlimited credits assigned to {} admin/super admin user(s)", adminCount);
+            }
+            if (bonusCount > 0) {
+                log.info("Granted free signup bonus credits to {} existing user(s)", bonusCount);
+            }
+        } catch (Exception e) {
+            log.error("Failed to grant free credits to existing users: {}", e.getMessage());
         }
     }
 
@@ -119,70 +170,98 @@ public class AdminUserInitializer implements CommandLineRunner {
 
         switch (planEnum) {
             case FREE:
-                // Free tier - limited features for trial/evaluation
                 plan.setPrice(BigDecimal.ZERO);
                 plan.setBillingIntervalUnit(BillingIntervalUnit.MONTH);
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(5);
                 plan.setOcrPageLimit(25);
-                plan.setStorageLimit(120L * 1024 * 1024); // 120 MB
+                plan.setStorageLimit(120L * 1024 * 1024);
                 break;
             case STARTER_MONTHLY:
-                // Starter tier - for individual light users ($9/mo)
                 plan.setPrice(new BigDecimal("9.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.MONTH);
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(30);
                 plan.setOcrPageLimit(150);
-                plan.setStorageLimit((long) (2.6 * 1024 * 1024 * 1024)); // 2.6 GB
+                plan.setStorageLimit((long) (2.6 * 1024 * 1024 * 1024));
                 break;
             case STARTER_YEARLY:
-                // Starter yearly - 17% savings ($90/year = $7.50/mo)
                 plan.setPrice(new BigDecimal("90.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.YEAR);
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(360);
                 plan.setOcrPageLimit(1800);
-                plan.setStorageLimit((long) (2.6 * 1024 * 1024 * 1024)); // 2.6 GB
+                plan.setStorageLimit((long) (2.6 * 1024 * 1024 * 1024));
                 break;
             case PRO_MONTHLY:
-                // Pro tier - for power users ($19/mo)
                 plan.setPrice(new BigDecimal("19.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.MONTH);
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(100);
                 plan.setOcrPageLimit(500);
-                plan.setStorageLimit((long) (12.3 * 1024 * 1024 * 1024)); // 12.3 GB
+                plan.setStorageLimit((long) (12.3 * 1024 * 1024 * 1024));
                 break;
             case PRO_YEARLY:
-                // Pro yearly - 17% savings ($190/year = $15.83/mo)
                 plan.setPrice(new BigDecimal("190.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.YEAR);
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(1200);
                 plan.setOcrPageLimit(6000);
-                plan.setStorageLimit((long) (12.3 * 1024 * 1024 * 1024)); // 12.3 GB
+                plan.setStorageLimit((long) (12.3 * 1024 * 1024 * 1024));
                 break;
             case BUSINESS_MONTHLY:
-                // Business tier - for heavy users ($49/mo)
                 plan.setPrice(new BigDecimal("49.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.MONTH);
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(500);
                 plan.setOcrPageLimit(2500);
-                plan.setStorageLimit(30L * 1024 * 1024 * 1024); // 30 GB
+                plan.setStorageLimit(30L * 1024 * 1024 * 1024);
                 break;
             case BUSINESS_YEARLY:
-                // Business yearly - 17% savings ($490/year = $40.83/mo)
                 plan.setPrice(new BigDecimal("490.00"));
                 plan.setBillingIntervalUnit(BillingIntervalUnit.YEAR);
                 plan.setBillingIntervalValue(1);
                 plan.setDocumentUploadLimit(6000);
                 plan.setOcrPageLimit(30000);
-                plan.setStorageLimit(30L * 1024 * 1024 * 1024); // 30 GB
+                plan.setStorageLimit(30L * 1024 * 1024 * 1024);
                 break;
         }
         return plan;
+    }
+
+    private void createDefaultCreditPacks() {
+        EnumSet.allOf(CreditPackName.class).forEach(packName -> {
+            boolean exists = creditPackRepository.findByName(packName).isPresent();
+            if (!exists) {
+                CreditPack newPack = createDefaultCreditPack(packName);
+                creditPackRepository.save(newPack);
+                log.info("Created default credit pack: {}", packName.getDisplayName());
+            }
+        });
+    }
+
+    private CreditPack createDefaultCreditPack(CreditPackName packName) {
+        CreditPack pack = new CreditPack();
+        pack.setName(packName);
+        pack.setDisplayName(packName.getDisplayName());
+        pack.setCurrency("USD");
+        pack.setIsActive(true);
+
+        switch (packName) {
+            case STARTER_PACK:
+                pack.setPriceInCents(500L);
+                pack.setCreditsIncluded(20);
+                break;
+            case VALUE_PACK:
+                pack.setPriceInCents(1500L);
+                pack.setCreditsIncluded(75);
+                break;
+            case POWER_PACK:
+                pack.setPriceInCents(3000L);
+                pack.setCreditsIncluded(200);
+                break;
+        }
+        return pack;
     }
 
     private static UserVerification getVerification(User adminUser, OffsetDateTime now) {

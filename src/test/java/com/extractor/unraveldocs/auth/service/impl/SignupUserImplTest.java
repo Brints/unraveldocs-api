@@ -11,6 +11,7 @@ import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ConflictException;
 import com.extractor.unraveldocs.pushnotification.interfaces.NotificationService;
+import com.extractor.unraveldocs.credit.service.CreditBalanceService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.loginattempts.model.LoginAttempts;
@@ -65,6 +66,8 @@ class SignupUserImplTest {
         private ElasticsearchIndexingService elasticsearchIndexingService;
         @Mock
         private NotificationService notificationService;
+        @Mock
+        private CreditBalanceService creditBalanceService;
 
         @InjectMocks
         private SignupUserImpl signupUserService;
@@ -92,7 +95,8 @@ class SignupUserImplTest {
                                 userLibrary,
                                 userRepository,
                                 Optional.of(elasticsearchIndexingService),
-                                notificationService);
+                                notificationService,
+                                creditBalanceService);
 
                 request = new SignupRequestDto(
                                 "john",

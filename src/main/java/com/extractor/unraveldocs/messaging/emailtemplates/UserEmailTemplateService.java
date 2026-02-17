@@ -183,4 +183,66 @@ public class UserEmailTemplateService {
                                                 "planName", planName,
                                                 "billingUrl", billingUrl));
         }
+
+        public void sendCreditPurchaseEmail(String email, String firstName, String lastName,
+                        String packName, int creditsAdded, int newBalance) {
+                var dashboardUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                                .path("/dashboard")
+                                .toUriString();
+
+                emailMessageProducerService.queueEmail(
+                                email,
+                                "Credit Pack Purchase Successful!",
+                                "credit-purchase",
+                                Map.of(
+                                                "firstName", firstName,
+                                                "lastName", lastName,
+                                                "packName", packName,
+                                                "creditsAdded", String.valueOf(creditsAdded),
+                                                "newBalance", String.valueOf(newBalance),
+                                                "dashboardUrl", dashboardUrl));
+        }
+
+        public void sendCreditTransferSentEmail(String email, String firstName, int creditsTransferred,
+                        String recipientName, int newBalance) {
+                var dashboardUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                                .path("/dashboard")
+                                .toUriString();
+
+                emailMessageProducerService.queueEmail(
+                                email,
+                                "Credit Transfer Sent",
+                                "credit-transfer",
+                                Map.of(
+                                                "firstName", firstName,
+                                                "headerTitle", "Credits Sent Successfully",
+                                                "summaryMessage",
+                                                "You have successfully transferred credits to another user.",
+                                                "creditsAmount", String.valueOf(creditsTransferred),
+                                                "otherPartyLabel", "Sent To:",
+                                                "otherPartyName", recipientName,
+                                                "newBalance", String.valueOf(newBalance),
+                                                "dashboardUrl", dashboardUrl));
+        }
+
+        public void sendCreditTransferReceivedEmail(String email, String firstName, int creditsReceived,
+                        String senderName, int newBalance) {
+                var dashboardUrl = UriComponentsBuilder.fromUriString(frontendUrl)
+                                .path("/dashboard")
+                                .toUriString();
+
+                emailMessageProducerService.queueEmail(
+                                email,
+                                "Credits Received!",
+                                "credit-transfer",
+                                Map.of(
+                                                "firstName", firstName,
+                                                "headerTitle", "Credits Received! \uD83C\uDF89",
+                                                "summaryMessage", "You have received credits from another user.",
+                                                "creditsAmount", String.valueOf(creditsReceived),
+                                                "otherPartyLabel", "From:",
+                                                "otherPartyName", senderName,
+                                                "newBalance", String.valueOf(newBalance),
+                                                "dashboardUrl", dashboardUrl));
+        }
 }
