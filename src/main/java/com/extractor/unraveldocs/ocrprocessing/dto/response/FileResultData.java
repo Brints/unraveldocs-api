@@ -3,6 +3,7 @@ package com.extractor.unraveldocs.ocrprocessing.dto.response;
 import lombok.Data;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Data
 public class FileResultData {
@@ -12,4 +13,7 @@ public class FileResultData {
     private String errorMessage;
     private OffsetDateTime createdAt;
     private String extractedText;
+    private String aiSummary;
+    private String documentType;
+    private List<String> aiTags;
 }

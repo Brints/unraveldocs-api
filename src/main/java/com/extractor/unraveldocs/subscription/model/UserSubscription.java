@@ -58,6 +58,9 @@ public class UserSubscription {
     @Column(name = "monthly_documents_uploaded", nullable = false)
     private Integer monthlyDocumentsUploaded = 0; // Documents uploaded in current billing period (resets monthly)
 
+    @Column(name = "ai_operations_used", nullable = false)
+    private Integer aiOperationsUsed = 0; // AI operations used in current billing period (resets monthly)
+
     @Column(name = "quota_reset_date")
     private OffsetDateTime quotaResetDate; // Date when monthly quotas should be reset
 

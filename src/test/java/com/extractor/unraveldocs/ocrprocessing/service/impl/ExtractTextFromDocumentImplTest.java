@@ -77,7 +77,8 @@ class ExtractTextFromDocumentImplTest {
     @Test
     void extractTextFromDocument_Success_NewOcrData() throws TesseractException, IOException {
         // Arrange
-        when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId, documentCollectionRepository))
+        when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId,
+                documentCollectionRepository))
                 .thenReturn(fileEntry);
         when(ocrDataRepository.findByDocumentId(documentId)).thenReturn(Optional.empty());
 
@@ -92,9 +93,11 @@ class ExtractTextFromDocumentImplTest {
                     ocrData.getStatus(),
                     ocrData.getExtractedText(),
                     ocrData.getErrorMessage(),
+                    ocrData.getAiSummary(),
+                    ocrData.getDocumentType(),
+                    ocrData.getAiTags(),
                     ocrData.getCreatedAt(),
-                    ocrData.getUpdatedAt()
-            );
+                    ocrData.getUpdatedAt());
             capturedData.add(copy);
 
             if (ocrData.getStatus() == OcrStatus.COMPLETED) {
@@ -138,7 +141,8 @@ class ExtractTextFromDocumentImplTest {
         completedOcrData.setStatus(OcrStatus.COMPLETED);
         completedOcrData.setExtractedText("already done");
 
-        when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId, documentCollectionRepository))
+        when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId,
+                documentCollectionRepository))
                 .thenReturn(fileEntry);
         when(ocrDataRepository.findByDocumentId(documentId)).thenReturn(Optional.of(completedOcrData));
         when(sanitizeLogging.sanitizeLogging(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -156,7 +160,8 @@ class ExtractTextFromDocumentImplTest {
     @Test
     void extractTextFromDocument_Failure_TesseractException() throws TesseractException, IOException {
         // Arrange
-        when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId, documentCollectionRepository))
+        when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId,
+                documentCollectionRepository))
                 .thenReturn(fileEntry);
         when(ocrDataRepository.findByDocumentId(documentId)).thenReturn(Optional.empty());
         when(ocrDataRepository.save(any(OcrData.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -182,13 +187,13 @@ class ExtractTextFromDocumentImplTest {
     @Test
     void extractTextFromDocument_Failure_FileEntryNotFound() {
         // Arrange
-        when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId, documentCollectionRepository))
+        when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId,
+                documentCollectionRepository))
                 .thenThrow(new NotFoundException("Document not found"));
 
         // Act & Assert
-        assertThrows(NotFoundException.class, () ->
-                extractTextFromDocumentService.extractTextFromDocument(collectionId, documentId, userId)
-        );
+        assertThrows(NotFoundException.class,
+                () -> extractTextFromDocumentService.extractTextFromDocument(collectionId, documentId, userId));
 
         verify(ocrDataRepository, never()).findByDocumentId(anyString());
         verify(ocrDataRepository, never()).save(any());
