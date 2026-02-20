@@ -25,7 +25,8 @@ public class GetOcrDataImpl implements GetOcrDataService {
 
     @Override
     @Transactional(readOnly = true)
-    public DocumentCollectionResponse<FileResultData> getOcrData(String collectionId, String documentId, String userId) {
+    public DocumentCollectionResponse<FileResultData> getOcrData(String collectionId, String documentId,
+            String userId) {
         FileEntry fileEntry = validateFileEntry
                 .findAndValidateFileEntry(collectionId, documentId, userId, documentCollectionRepository);
 
@@ -53,6 +54,16 @@ public class GetOcrDataImpl implements GetOcrDataService {
         fileResultData.setErrorMessage(ocrData.getErrorMessage());
         fileResultData.setCreatedAt(ocrData.getCreatedAt());
         fileResultData.setExtractedText(ocrData.getExtractedText());
+        fileResultData.setAiSummary(ocrData.getAiSummary());
+        fileResultData.setDocumentType(ocrData.getDocumentType());
+
+        if (ocrData.getAiTags() != null && !ocrData.getAiTags().isBlank()) {
+            fileResultData.setAiTags(
+                    java.util.Arrays.stream(ocrData.getAiTags().split(","))
+                            .map(String::trim)
+                            .filter(tag -> !tag.isEmpty())
+                            .toList());
+        }
 
         return fileResultData;
     }
