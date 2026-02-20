@@ -17,10 +17,12 @@ import java.util.List;
  * Scheduled job to reset monthly quotas for user subscriptions.
  *
  * This job resets the following quotas monthly:
- * - monthlyDocumentsUploaded: Number of documents uploaded in the current billing period
+ * - monthlyDocumentsUploaded: Number of documents uploaded in the current
+ * billing period
  * - ocrPagesUsed: Number of OCR pages used in the current billing period
  *
- * Storage usage (storageUsed) is NOT reset as it represents cumulative storage consumption.
+ * Storage usage (storageUsed) is NOT reset as it represents cumulative storage
+ * consumption.
  */
 @Slf4j
 @Component
@@ -72,7 +74,8 @@ public class MonthlyQuotaResetJob {
 
     /**
      * Initialize quota reset dates for subscriptions that don't have one.
-     * This runs at startup and periodically to ensure all subscriptions have a reset date.
+     * This runs at startup and periodically to ensure all subscriptions have a
+     * reset date.
      */
     @Scheduled(cron = "0 30 0 * * *") // Run daily at 00:30 to initialize any new subscriptions
     @Transactional
@@ -109,25 +112,32 @@ public class MonthlyQuotaResetJob {
         String userId = subscription.getUser() != null ? subscription.getUser().getId() : "unknown";
 
         int previousDocuments = subscription.getMonthlyDocumentsUploaded() != null
-                ? subscription.getMonthlyDocumentsUploaded() : 0;
+                ? subscription.getMonthlyDocumentsUploaded()
+                : 0;
         int previousOcrPages = subscription.getOcrPagesUsed() != null
-                ? subscription.getOcrPagesUsed() : 0;
+                ? subscription.getOcrPagesUsed()
+                : 0;
+        int previousAiOps = subscription.getAiOperationsUsed() != null
+                ? subscription.getAiOperationsUsed()
+                : 0;
 
         // Reset monthly quotas
         subscription.setMonthlyDocumentsUploaded(0);
         subscription.setOcrPagesUsed(0);
+        subscription.setAiOperationsUsed(0);
 
         // Set next reset date to first of next month
         subscription.setQuotaResetDate(calculateNextResetDate());
 
         userSubscriptionRepository.save(subscription);
 
-        log.info("Reset quotas for user {}: documents {} -> 0, OCR pages {} -> 0, next reset: {}",
-                userId, previousDocuments, previousOcrPages, subscription.getQuotaResetDate());
+        log.info("Reset quotas for user {}: documents {} -> 0, OCR pages {} -> 0, AI ops {} -> 0, next reset: {}",
+                userId, previousDocuments, previousOcrPages, previousAiOps, subscription.getQuotaResetDate());
     }
 
     /**
-     * Calculate the next quota reset date (first day of next month at midnight UTC).
+     * Calculate the next quota reset date (first day of next month at midnight
+     * UTC).
      */
     private OffsetDateTime calculateNextResetDate() {
         return OffsetDateTime.now(ZoneOffset.UTC)

@@ -76,4 +76,7 @@ public class SubscriptionPlan {
 
     @Column(name = "trial_days", nullable = false)
     private Integer trialDays = 10; // Trial period in days (default 10 days, matching team subscriptions)
+
+    @Column(name = "ai_operations_limit", nullable = false)
+    private Integer aiOperationsLimit = 0; // Monthly AI operations allowance per tier
 }
