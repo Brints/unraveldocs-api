@@ -119,7 +119,7 @@ public class PdfPageRange {
         if (isDiscrete()) {
             // Convert 1-indexed to 0-indexed, sort, and deduplicate
             return pages.stream()
-                    .map(p -> p - 1)
+                    .map(p -> Math.max(0, p - 1))
                     .distinct()
                     .sorted()
                     .toList();
