@@ -119,14 +119,14 @@ public class PdfPageRange {
         if (isDiscrete()) {
             // Convert 1-indexed to 0-indexed, sort, and deduplicate
             return pages.stream()
-                    .map(p -> Math.max(0, p - 1))
+                    .map(p -> Math.subtractExact(p, 1))
                     .distinct()
                     .sorted()
                     .toList();
         }
 
         // Range mode
-        int start = (startPage != null ? startPage : 1) - 1;
+        int start = Math.subtractExact(startPage != null ? startPage : 1, 1);
         int end = endPage != null ? endPage : totalPages;
         return IntStream.range(start, end).boxed().toList();
     }
@@ -135,7 +135,7 @@ public class PdfPageRange {
      * Get effective start page (0-indexed for PDFBox). Only for range mode.
      */
     public int getEffectiveStartPage() {
-        return (startPage != null ? startPage : 1) - 1;
+        return Math.subtractExact(startPage != null ? startPage : 1, 1);
     }
 
     /**
