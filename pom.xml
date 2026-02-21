@@ -214,6 +214,13 @@
             </exclusions>
         </dependency>
 
+        <!-- HTML Sanitization -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.22.1</version>
+        </dependency>
+
         <!-- Email and Notification -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

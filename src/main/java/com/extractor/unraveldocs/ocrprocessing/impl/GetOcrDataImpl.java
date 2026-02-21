@@ -54,6 +54,11 @@ public class GetOcrDataImpl implements GetOcrDataService {
         fileResultData.setErrorMessage(ocrData.getErrorMessage());
         fileResultData.setCreatedAt(ocrData.getCreatedAt());
         fileResultData.setExtractedText(ocrData.getExtractedText());
+        fileResultData.setEditedContent(ocrData.getEditedContent());
+        fileResultData.setContentFormat(
+                ocrData.getContentFormat() != null ? ocrData.getContentFormat().name() : null);
+        fileResultData.setEditedBy(ocrData.getEditedBy());
+        fileResultData.setEditedAt(ocrData.getEditedAt());
         fileResultData.setAiSummary(ocrData.getAiSummary());
         fileResultData.setDocumentType(ocrData.getDocumentType());
 
