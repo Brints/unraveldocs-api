@@ -14,6 +14,7 @@ import com.extractor.unraveldocs.coupon.service.CouponService;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/coupons")
 @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+@Tag(name = "Admin Promo Code Management", description = "Endpoints for administrators to manage promo codes, including creation, updating, deactivation, and analytics.")
 public class AdminCouponController {
 
     private final CouponService couponService;

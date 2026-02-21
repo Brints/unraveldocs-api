@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.documents.repository.DocumentCollectionRepository;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
+import com.extractor.unraveldocs.ocrprocessing.dto.request.PdfPageRange;
 import com.extractor.unraveldocs.ocrprocessing.interfaces.ExtractTextFromDocumentService;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 import static com.extractor.unraveldocs.ocrprocessing.utils.ExtractImageURL.extractImageURL;
@@ -33,7 +35,7 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
     private final DocumentCollectionRepository documentCollectionRepository;
     private final OcrDataRepository ocrDataRepository;
     private final FindAndValidateFileEntry validateFileEntry;
-    private final SanitizeLogging sanitizeLogging;
+    private final SanitizeLogging sanitizer;
     private final StorageAllocationService storageAllocationService;
     private final CreditBalanceService creditBalanceService;
     private final SubscriptionFeatureService subscriptionFeatureService;
@@ -45,30 +47,38 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
     @Override
     @Transactional
     public OcrData extractTextFromDocument(String collectionId, String documentId, String userId) {
+        return extractTextFromDocument(collectionId, documentId, userId, null, null, null);
+    }
+
+    @Override
+    @Transactional
+    public OcrData extractTextFromDocument(String collectionId, String documentId, String userId,
+            Integer startPage, Integer endPage, List<Integer> pages) {
         FileEntry fileEntry = validateFileEntry
                 .findAndValidateFileEntry(collectionId, documentId, userId, documentCollectionRepository);
 
         Optional<OcrData> existingOcrData = ocrDataRepository.findByDocumentId(documentId);
         if (existingOcrData.isPresent()) {
-            log.info("OCR data already exists for document ID: {}", sanitizeLogging.sanitizeLogging(documentId));
+            log.info("OCR data already exists for document ID: {}", sanitizer.sanitizeLogging(documentId));
             return existingOcrData.get();
         }
 
         OcrData ocrData = new OcrData();
         ocrData.setDocumentId(documentId);
         try {
-            log.info("Starting OCR text extraction for document: {}", sanitizeLogging.sanitizeLogging(documentId));
+            log.info("Starting OCR text extraction for document: {}", sanitizer.sanitizeLogging(documentId));
             ocrData.setStatus(OcrStatus.PROCESSING);
             ocrDataRepository.save(ocrData);
 
-            extractImageURL(fileEntry, ocrData, tesseractDataPath);
-            log.info("OCR text extraction completed for document: {}", sanitizeLogging.sanitizeLogging(documentId));
+            extractImageURL(fileEntry, ocrData, tesseractDataPath,
+                    buildPageRange(startPage, endPage, pages));
+            log.info("OCR text extraction completed for document: {}", sanitizer.sanitizeLogging(documentId));
 
             try {
                 // Update OCR pages used (for monthly quota tracking)
                 storageAllocationService.updateOcrUsage(userId, 1);
             } catch (Exception e) {
-                log.error("Failed to update OCR usage for user {}: {}", sanitizeLogging.sanitizeLogging(userId),
+                log.error("Failed to update OCR usage for user {}: {}", sanitizer.sanitizeLogging(userId),
                         e.getMessage(), e);
             }
 
@@ -80,27 +90,37 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
                         creditBalanceService.deductCredits(user, 1, documentId,
                                 "OCR processing: 1 page for document " + documentId);
                         log.info("Deducted 1 credit for OCR processing of document {} for user {}",
-                                sanitizeLogging.sanitizeLogging(documentId), sanitizeLogging.sanitizeLogging(userId));
+                                sanitizer.sanitizeLogging(documentId), sanitizer.sanitizeLogging(userId));
                     }
                 }
             } catch (Exception e) {
-                log.error("Failed to deduct credit for user {}: {}", sanitizeLogging.sanitizeLogging(userId),
+                log.error("Failed to deduct credit for user {}: {}", sanitizer.sanitizeLogging(userId),
                         e.getMessage(), e);
             }
         } catch (IOException | TesseractException e) {
-            log.error("OCR processing failed for document {}: {}", sanitizeLogging.sanitizeLogging(documentId),
+            log.error("OCR processing failed for document {}: {}", sanitizer.sanitizeLogging(documentId),
                     e.getMessage(), e);
             ocrData.setStatus(OcrStatus.FAILED);
             ocrData.setErrorMessage(e.getMessage());
         } catch (Exception e) {
             log.error("An unexpected error occurred while processing document {}: {}",
-                    sanitizeLogging.sanitizeLogging(documentId), e.getMessage(), e);
+                    sanitizer.sanitizeLogging(documentId), e.getMessage(), e);
             ocrData.setStatus(OcrStatus.FAILED);
             ocrData.setErrorMessage("An unexpected error occurred: " + e.getMessage());
             throw new ServiceException(
-                    "Failed to process OCR for document: " + sanitizeLogging.sanitizeLogging(documentId), e);
+                    "Failed to process OCR for document: " + sanitizer.sanitizeLogging(documentId), e);
         }
 
         return ocrDataRepository.save(ocrData);
+    }
+
+    private PdfPageRange buildPageRange(Integer startPage, Integer endPage, List<Integer> pages) {
+        if (pages != null && !pages.isEmpty()) {
+            return new PdfPageRange(pages);
+        }
+        if (startPage != null || endPage != null) {
+            return new PdfPageRange(startPage, endPage);
+        }
+        return null;
     }
 }

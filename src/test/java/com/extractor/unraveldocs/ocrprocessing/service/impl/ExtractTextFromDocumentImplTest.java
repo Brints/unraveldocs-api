@@ -107,7 +107,7 @@ class ExtractTextFromDocumentImplTest {
         });
 
         try (MockedStatic<ExtractImageURL> mockedStatic = mockStatic(ExtractImageURL.class)) {
-            mockedStatic.when(() -> ExtractImageURL.extractImageURL(any(), any(), anyString()))
+            mockedStatic.when(() -> ExtractImageURL.extractImageURL(any(), any(), anyString(), any()))
                     .thenAnswer(invocation -> {
                         OcrData ocrData = invocation.getArgument(1);
                         ocrData.setStatus(OcrStatus.COMPLETED);
@@ -129,7 +129,8 @@ class ExtractTextFromDocumentImplTest {
             assertEquals(OcrStatus.PROCESSING, capturedData.get(0).getStatus());
             assertEquals(OcrStatus.COMPLETED, capturedData.get(1).getStatus());
 
-            mockedStatic.verify(() -> ExtractImageURL.extractImageURL(eq(fileEntry), any(OcrData.class), anyString()));
+            mockedStatic.verify(
+                    () -> ExtractImageURL.extractImageURL(eq(fileEntry), any(OcrData.class), anyString(), any()));
         }
     }
 
@@ -168,7 +169,7 @@ class ExtractTextFromDocumentImplTest {
 
         try (MockedStatic<ExtractImageURL> mockedStatic = mockStatic(ExtractImageURL.class)) {
             TesseractException tesseractException = new TesseractException("OCR failed");
-            mockedStatic.when(() -> ExtractImageURL.extractImageURL(any(), any(), anyString()))
+            mockedStatic.when(() -> ExtractImageURL.extractImageURL(any(), any(), anyString(), any()))
                     .thenThrow(tesseractException);
 
             // Act
