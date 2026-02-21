@@ -87,17 +87,17 @@ class ExtractTextFromDocumentImplTest {
             OcrData ocrData = invocation.getArgument(0);
 
             // Create a copy to capture the state at this moment
-            OcrData copy = new OcrData(
-                    ocrData.getId(),
-                    ocrData.getDocumentId(),
-                    ocrData.getStatus(),
-                    ocrData.getExtractedText(),
-                    ocrData.getErrorMessage(),
-                    ocrData.getAiSummary(),
-                    ocrData.getDocumentType(),
-                    ocrData.getAiTags(),
-                    ocrData.getCreatedAt(),
-                    ocrData.getUpdatedAt());
+            OcrData copy = new OcrData();
+            copy.setId(ocrData.getId());
+            copy.setDocumentId(ocrData.getDocumentId());
+            copy.setStatus(ocrData.getStatus());
+            copy.setExtractedText(ocrData.getExtractedText());
+            copy.setErrorMessage(ocrData.getErrorMessage());
+            copy.setAiSummary(ocrData.getAiSummary());
+            copy.setDocumentType(ocrData.getDocumentType());
+            copy.setAiTags(ocrData.getAiTags());
+            copy.setCreatedAt(ocrData.getCreatedAt());
+            copy.setUpdatedAt(ocrData.getUpdatedAt());
             capturedData.add(copy);
 
             if (ocrData.getStatus() == OcrStatus.COMPLETED) {

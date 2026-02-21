@@ -13,6 +13,10 @@ public class FileResultData {
     private String errorMessage;
     private OffsetDateTime createdAt;
     private String extractedText;
+    private String editedContent;
+    private String contentFormat;
+    private String editedBy;
+    private OffsetDateTime editedAt;
     private String aiSummary;
     private String documentType;
     private List<String> aiTags;

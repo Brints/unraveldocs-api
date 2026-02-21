@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.ocrprocessing.model;
 
+import com.extractor.unraveldocs.ocrprocessing.datamodel.ContentFormat;
 import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,6 +29,20 @@ public class OcrData {
     @Lob
     @Column(name = "extracted_text", columnDefinition = "TEXT")
     private String extractedText;
+
+    @Lob
+    @Column(name = "edited_content", columnDefinition = "TEXT")
+    private String editedContent;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "content_format", length = 20)
+    private ContentFormat contentFormat;
+
+    @Column(name = "edited_by")
+    private String editedBy;
+
+    @Column(name = "edited_at")
+    private OffsetDateTime editedAt;
 
     @Column(name = "error_message")
     private String errorMessage;

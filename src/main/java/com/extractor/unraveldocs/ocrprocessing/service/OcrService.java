@@ -2,6 +2,7 @@ package com.extractor.unraveldocs.ocrprocessing.service;
 
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionResponse;
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionUploadData;
+import com.extractor.unraveldocs.ocrprocessing.datamodel.ContentFormat;
 import com.extractor.unraveldocs.ocrprocessing.dto.response.CollectionResultResponse;
 import com.extractor.unraveldocs.ocrprocessing.dto.response.FileResultData;
 import com.extractor.unraveldocs.ocrprocessing.interfaces.*;
@@ -18,10 +19,7 @@ public class OcrService {
     private final GetOcrDataService getOcrDataService;
     private final GetCollectionResultService getCollectionResultService;
     private final BulkDocumentUploadExtractionService extractionService;
-
-    public OcrData extractTextFromDocument(String collectionId, String documentId, String userId) {
-        return extractTextFromDocumentService.extractTextFromDocument(collectionId, documentId, userId);
-    }
+    private final UpdateOcrContentService updateOcrContentService;
 
     public OcrData extractTextFromDocument(String collectionId, String documentId, String userId,
             Integer startPage, Integer endPage, java.util.List<Integer> pages) {
@@ -40,5 +38,12 @@ public class OcrService {
 
     public DocumentCollectionResponse<DocumentCollectionUploadData> uploadDocuments(MultipartFile[] files, User user) {
         return extractionService.uploadDocuments(files, user);
+    }
+
+    public DocumentCollectionResponse<FileResultData> updateOcrContent(
+            String collectionId, String documentId, String userId,
+            String editedContent, ContentFormat contentFormat) {
+        return updateOcrContentService.updateOcrContent(collectionId, documentId, userId,
+                editedContent, contentFormat);
     }
 }

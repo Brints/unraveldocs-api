@@ -172,7 +172,9 @@ public class ElasticsearchIndexingService {
                 .fileSize(file.getFileSize())
                 .status(collection.getCollectionStatus().name())
                 .ocrStatus(ocrData != null ? ocrData.getStatus().name() : null)
-                .extractedText(ocrData != null ? ocrData.getExtractedText() : null)
+                .extractedText(ocrData != null
+                        ? (ocrData.getEditedContent() != null ? ocrData.getEditedContent() : ocrData.getExtractedText())
+                        : null)
                 .fileUrl(file.getFileUrl())
                 .uploadTimestamp(collection.getUploadTimestamp())
                 .createdAt(file.getCreatedAt())

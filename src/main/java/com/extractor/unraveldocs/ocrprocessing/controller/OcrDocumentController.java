@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionRespon
 import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionUploadData;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
+import com.extractor.unraveldocs.ocrprocessing.dto.request.UpdateOcrContentRequest;
 import com.extractor.unraveldocs.ocrprocessing.dto.response.CollectionResultResponse;
 import com.extractor.unraveldocs.ocrprocessing.dto.response.FileResultData;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -126,6 +128,27 @@ public class OcrDocumentController {
                 User user = getAuthenticatedUser(authenticatedUser);
                 DocumentCollectionResponse<FileResultData> response = ocrService.getOcrData(collectionId, documentId,
                                 user.getId());
+
+                return ResponseEntity.ok(response);
+        }
+
+        @Operation(summary = "Update edited content for a document", description = "Allows users to save their reviewed and edited version of the OCR-extracted text. Supports HTML and Markdown formats.", responses = {
+                        @ApiResponse(responseCode = "200", description = "Successfully updated document content", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileResultData.class))),
+                        @ApiResponse(responseCode = "400", description = "Bad Request - Document OCR not completed or invalid input"),
+                        @ApiResponse(responseCode = "403", description = "Forbidden - User not authorized or not logged in"),
+                        @ApiResponse(responseCode = "404", description = "Not Found - Collection or document not found")
+        })
+        @PutMapping("/{collectionId}/document/{documentId}/content")
+        public ResponseEntity<DocumentCollectionResponse<FileResultData>> updateDocumentContent(
+                        @Parameter(description = "ID of the document collection", required = true) @PathVariable String collectionId,
+                        @Parameter(description = "ID of the document to update content for", required = true) @PathVariable String documentId,
+                        @Valid @RequestBody UpdateOcrContentRequest request,
+                        Authentication authenticatedUser) {
+                User user = getAuthenticatedUser(authenticatedUser);
+
+                DocumentCollectionResponse<FileResultData> response = ocrService.updateOcrContent(
+                                collectionId, documentId, user.getId(),
+                                request.getEditedContent(), request.getContentFormat());
 
                 return ResponseEntity.ok(response);
         }
