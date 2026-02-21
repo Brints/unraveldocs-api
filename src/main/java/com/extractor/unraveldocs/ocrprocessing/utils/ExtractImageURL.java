@@ -2,6 +2,7 @@ package com.extractor.unraveldocs.ocrprocessing.utils;
 
 import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
+import com.extractor.unraveldocs.ocrprocessing.dto.request.PdfPageRange;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
@@ -15,11 +16,44 @@ import java.net.URL;
 
 @Component
 public class ExtractImageURL {
-    public static void extractImageURL(FileEntry fileEntry, OcrData ocrData, String tesseractDataPath) throws IOException, TesseractException {
-        URL imageUrl = URI.create(fileEntry.getFileUrl()).toURL();
+
+    /**
+     * Extract text from a file URL (image or PDF).
+     * For backward compatibility, this overload processes all pages of a PDF.
+     */
+    public static void extractImageURL(FileEntry fileEntry, OcrData ocrData,
+            String tesseractDataPath)
+            throws IOException, TesseractException {
+        extractImageURL(fileEntry, ocrData, tesseractDataPath, null);
+    }
+
+    /**
+     * Extract text from a file URL (image or PDF) with optional page range for
+     * PDFs.
+     *
+     * @param fileEntry         the file entry containing the URL
+     * @param ocrData           the OCR data entity to update
+     * @param tesseractDataPath path to Tesseract data files
+     * @param pageRange         optional page range for PDFs (null = all pages)
+     */
+    public static void extractImageURL(FileEntry fileEntry, OcrData ocrData,
+            String tesseractDataPath, PdfPageRange pageRange)
+            throws IOException, TesseractException {
+        String fileUrl = fileEntry.getFileUrl();
+
+        if (isPdf(fileUrl)) {
+            String extractedText = PdfTextExtractor.extractTextFromUrl(
+                    fileUrl, pageRange, tesseractDataPath, "eng");
+            ocrData.setExtractedText(extractedText);
+            ocrData.setStatus(OcrStatus.COMPLETED);
+            return;
+        }
+
+        // Existing image-based extraction
+        URL imageUrl = URI.create(fileUrl).toURL();
         BufferedImage image = ImageIO.read(imageUrl);
         if (image == null) {
-            throw new IOException("Failed to read image from URL: " + fileEntry.getFileUrl());
+            throw new IOException("Failed to read image from URL: " + fileUrl);
         }
 
         Tesseract tesseract = new Tesseract();
@@ -30,5 +64,17 @@ public class ExtractImageURL {
 
         ocrData.setExtractedText(extractedText);
         ocrData.setStatus(OcrStatus.COMPLETED);
+    }
+
+    /**
+     * Check if a URL points to a PDF file.
+     */
+    private static boolean isPdf(String url) {
+        if (url == null) {
+            return false;
+        }
+        // Remove query parameters before checking extension
+        String path = url.contains("?") ? url.substring(0, url.indexOf('?')) : url;
+        return path.toLowerCase().endsWith(".pdf");
     }
 }

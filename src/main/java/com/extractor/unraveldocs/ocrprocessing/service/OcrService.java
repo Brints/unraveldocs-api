@@ -23,7 +23,14 @@ public class OcrService {
         return extractTextFromDocumentService.extractTextFromDocument(collectionId, documentId, userId);
     }
 
-    public DocumentCollectionResponse<FileResultData> getOcrData(String collectionId, String documentId, String userId) {
+    public OcrData extractTextFromDocument(String collectionId, String documentId, String userId,
+            Integer startPage, Integer endPage, java.util.List<Integer> pages) {
+        return extractTextFromDocumentService.extractTextFromDocument(collectionId, documentId, userId,
+                startPage, endPage, pages);
+    }
+
+    public DocumentCollectionResponse<FileResultData> getOcrData(String collectionId, String documentId,
+            String userId) {
         return getOcrDataService.getOcrData(collectionId, documentId, userId);
     }
 

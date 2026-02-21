@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.ocrprocessing.provider;
 
+import com.extractor.unraveldocs.ocrprocessing.dto.request.PdfPageRange;
 import lombok.Builder;
 import lombok.Data;
 
@@ -80,6 +81,38 @@ public class OcrRequest {
     private boolean fallbackEnabled = true;
 
     /**
+     * Start page for PDF extraction (1-indexed, inclusive). Null = start from first
+     * page.
+     */
+    private Integer startPage;
+
+    /**
+     * End page for PDF extraction (1-indexed, inclusive). Null = process to last
+     * page.
+     */
+    private Integer endPage;
+
+    /**
+     * Specific pages for PDF extraction (1-indexed). Null = use range or all pages.
+     * Takes priority over startPage/endPage when set.
+     */
+    private java.util.List<Integer> pages;
+
+    /**
+     * Build a PdfPageRange from the page selection fields.
+     * Returns null if no page selection is specified.
+     */
+    public PdfPageRange getPdfPageRange() {
+        if (pages != null && !pages.isEmpty()) {
+            return new PdfPageRange(pages);
+        }
+        if (startPage == null && endPage == null) {
+            return null;
+        }
+        return new PdfPageRange(startPage, endPage);
+    }
+
+    /**
      * Check if the request has image data via URL.
      */
     public boolean hasImageUrl() {
@@ -98,13 +131,5 @@ public class OcrRequest {
      */
     public boolean isValid() {
         return hasImageUrl() || hasImageBytes();
-    }
-
-    /**
-     * Add a metadata entry.
-     */
-    public OcrRequest withMetadata(String key, Object value) {
-        this.metadata.put(key, value);
-        return this;
     }
 }

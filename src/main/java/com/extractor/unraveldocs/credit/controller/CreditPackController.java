@@ -32,7 +32,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/credits")
 @RequiredArgsConstructor
-@Tag(name = "Credits", description = "Credit pack purchase and balance management")
+@Tag(name = "Credit Pack", description = "Credit pack purchase and balance management")
 public class CreditPackController {
 
         private final CreditPackManagementService packManagementService;

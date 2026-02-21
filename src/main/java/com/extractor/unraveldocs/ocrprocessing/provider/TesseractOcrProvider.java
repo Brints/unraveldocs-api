@@ -1,7 +1,9 @@
 package com.extractor.unraveldocs.ocrprocessing.provider;
 
 import com.extractor.unraveldocs.ocrprocessing.config.OcrProperties;
+import com.extractor.unraveldocs.ocrprocessing.dto.request.PdfPageRange;
 import com.extractor.unraveldocs.ocrprocessing.exception.OcrProcessingException;
+import com.extractor.unraveldocs.ocrprocessing.utils.PdfTextExtractor;
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
@@ -10,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -20,6 +21,7 @@ import java.util.Set;
 /**
  * Tesseract OCR provider implementation.
  * Uses the local Tesseract engine for OCR processing.
+ * Supports both images and PDF files.
  */
 @Slf4j
 @Component
@@ -33,7 +35,8 @@ public class TesseractOcrProvider implements OcrProvider {
             "image/gif",
             "image/bmp",
             "image/tiff",
-            "image/webp");
+            "image/webp",
+            "application/pdf");
 
     private static final List<String> SUPPORTED_LANGUAGES = List.of(
             "eng", "deu", "fra", "spa", "ita", "por", "nld", "pol", "rus", "jpn", "kor", "chi_sim", "chi_tra");
@@ -66,7 +69,12 @@ public class TesseractOcrProvider implements OcrProvider {
                         false);
             }
 
-            // Load image
+            // Check if this is a PDF
+            if (isPdfRequest(request)) {
+                return extractTextFromPdf(request, startTime);
+            }
+
+            // Image-based extraction
             BufferedImage image = loadImage(request);
             if (image == null) {
                 throw new OcrProcessingException(
@@ -82,9 +90,6 @@ public class TesseractOcrProvider implements OcrProvider {
             // Perform OCR
             String extractedText = tesseract.doOCR(image);
             long processingTime = System.currentTimeMillis() - startTime;
-
-            log.debug("Tesseract OCR completed for document {} in {}ms, extracted {} characters",
-                    request.getDocumentId(), processingTime, extractedText.length());
 
             return OcrResult.builder()
                     .extractedText(extractedText)
@@ -138,11 +143,60 @@ public class TesseractOcrProvider implements OcrProvider {
     }
 
     /**
+     * Check if the request is for a PDF file.
+     */
+    private boolean isPdfRequest(OcrRequest request) {
+        if (request.getMimeType() != null && request.getMimeType().equalsIgnoreCase("application/pdf")) {
+            return true;
+        }
+        if (request.hasImageUrl()) {
+            String url = request.getImageUrl();
+            String path = url.contains("?") ? url.substring(0, url.indexOf('?')) : url;
+            return path.toLowerCase().endsWith(".pdf");
+        }
+        return false;
+    }
+
+    /**
+     * Extract text from a PDF using PdfTextExtractor.
+     */
+    private OcrResult extractTextFromPdf(OcrRequest request, long startTime)
+            throws IOException, TesseractException {
+        String language = request.getLanguage();
+        if (language == null || language.isBlank()) {
+            language = ocrProperties.getTesseract().getLanguage();
+        }
+
+        PdfPageRange pageRange = request.getPdfPageRange();
+        String extractedText;
+
+        if (request.hasImageBytes()) {
+            extractedText = PdfTextExtractor.extractTextFromBytes(
+                    request.getImageBytes(), pageRange, tesseractDataPath, language);
+        } else if (request.hasImageUrl()) {
+            extractedText = PdfTextExtractor.extractTextFromUrl(
+                    request.getImageUrl(), pageRange, tesseractDataPath, language);
+        } else {
+            throw new IOException("No PDF source available");
+        }
+
+        long processingTime = System.currentTimeMillis() - startTime;
+
+        return OcrResult.builder()
+                .extractedText(extractedText)
+                .providerType(OcrProviderType.TESSERACT)
+                .processingTimeMs(processingTime)
+                .documentId(request.getDocumentId())
+                .success(true)
+                .build();
+    }
+
+    /**
      * Load image from the request (URL or bytes).
      */
     private BufferedImage loadImage(OcrRequest request) throws IOException {
         if (request.hasImageBytes()) {
-            return ImageIO.read(new ByteArrayInputStream(request.getImageBytes()));
+            return ImageIO.read(new java.io.ByteArrayInputStream(request.getImageBytes()));
         } else if (request.hasImageUrl()) {
             URL imageUrl = URI.create(request.getImageUrl()).toURL();
             return ImageIO.read(imageUrl);

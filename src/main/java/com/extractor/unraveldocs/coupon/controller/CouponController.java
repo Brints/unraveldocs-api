@@ -9,6 +9,7 @@ import com.extractor.unraveldocs.coupon.service.CouponValidationService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/coupons")
 @RequiredArgsConstructor
+@Tag(name = "Promo Codes (Coupon Code)", description = "Endpoints for validating and applying promo codes")
 public class CouponController {
 
     private final CouponService couponService;
