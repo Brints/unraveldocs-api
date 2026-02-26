@@ -1,5 +1,5 @@
 # Use Eclipse Temurin JDK 25 for building
-FROM eclipse-temurin:25-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk AS build
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -20,8 +20,8 @@ COPY src ./src
 # Package the application into a JAR file
 RUN ./mvnw package -DskipTests && ls -la /app/target/
 
-# Use Eclipse Temurin JRE 25 Alpine for smaller runtime image
-FROM eclipse-temurin:25-jdk-alpine
+# Use Eclipse Temurin JRE 25 for runtime (glibc-based, compatible with native libs)
+FROM eclipse-temurin:25-jre
 
 # Set the working directory inside the container
 WORKDIR /app

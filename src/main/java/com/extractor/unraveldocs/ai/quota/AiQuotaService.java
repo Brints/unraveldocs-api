@@ -47,7 +47,7 @@ public class AiQuotaService {
      */
     @Transactional
     public AiCostResult consumeAiOperation(String userId, int creditCost) {
-        Optional<UserSubscription> subscriptionOpt = userSubscriptionRepository.findByUserId(userId);
+        Optional<UserSubscription> subscriptionOpt = userSubscriptionRepository.findByUserIdWithPlan(userId);
 
         // Step 1: Try subscription allowance
         if (subscriptionOpt.isPresent()) {
@@ -105,8 +105,9 @@ public class AiQuotaService {
      * @param userId The user's ID
      * @return true if user has Pro or Business subscription
      */
+    @Transactional(readOnly = true)
     public boolean hasPremiumModelAccess(String userId) {
-        Optional<UserSubscription> subscriptionOpt = userSubscriptionRepository.findByUserId(userId);
+        Optional<UserSubscription> subscriptionOpt = userSubscriptionRepository.findByUserIdWithPlan(userId);
 
         if (subscriptionOpt.isEmpty()) {
             return false;

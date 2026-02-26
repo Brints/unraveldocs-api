@@ -57,7 +57,9 @@ public class SecurityConfig {
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 CorsConfiguration config = new CorsConfiguration();
                 config.setAllowCredentials(true);
-                config.addAllowedOriginPattern("*");
+                config.addAllowedOrigin("https://unraveldocs.xyz");
+                config.addAllowedOrigin("https://8hw23p5s-4200.uks1.devtunnels.ms");
+                config.addAllowedOriginPattern("http://localhost:[*]");
                 config.addAllowedHeader("*");
                 config.addAllowedMethod("*");
                 source.registerCorsConfiguration("/**", config);
