@@ -73,7 +73,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
      * Returns null (treated as FREE) if no subscription exists.
      */
     private SubscriptionPlans resolveUserPlan(String userId) {
-        Optional<UserSubscription> subscription = userSubscriptionRepository.findByUserId(userId);
+        Optional<UserSubscription> subscription = userSubscriptionRepository.findByUserIdWithPlan(userId);
         if (subscription.isEmpty() || subscription.get().getPlan() == null) {
             return null;
         }
