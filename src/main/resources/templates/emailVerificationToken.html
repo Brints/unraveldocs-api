@@ -412,12 +412,12 @@
                                 <tr>
                                     <td align="center">
                                         <!--[if mso]>
-                                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" th:href="@{${verificationUrl}}" style="height: 52px; v-text-anchor: middle; width: 240px;" arcsize="20%" strokecolor="#10b981" fillcolor="#10b981">
+                                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" th:href="${verificationUrl}" style="height: 52px; v-text-anchor: middle; width: 240px;" arcsize="20%" strokecolor="#10b981" fillcolor="#10b981">
                                         <w:anchorlock/>
                                         <center style="color: #ffffff; font-family: Inter, Arial, sans-serif; font-size: 16px; font-weight: 600;">Verify Email Address</center>
                                     </v:roundrect>
                                     <![endif]-->
-                                        <a th:href="@{${verificationUrl}}" target="_blank" class="btn-primary"
+                                        <a th:href="${verificationUrl}" target="_blank" class="btn-primary"
                                             style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: 600; padding: 16px 40px; text-decoration: none;">
                                             Verify Email Address
                                         </a>
@@ -438,7 +438,7 @@
                                 <p class="fallback-label" style="color: #64748b; font-size: 13px; margin: 0 0 8px 0;">
                                     Having trouble with the button? Copy and paste this link into your browser:
                                 </p>
-                                <a th:href="@{${verificationUrl}}" th:text="${verificationUrl}" class="fallback-link"
+                                <a th:href="${verificationUrl}" th:text="${verificationUrl}" class="fallback-link"
                                     style="color: #1e3a5f; font-size: 12px; word-break: break-all;" target="_blank">
                                     https://example.com/verify
                                 </a>
