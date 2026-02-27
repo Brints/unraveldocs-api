@@ -109,6 +109,15 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
             ocrData.setErrorMessage("An unexpected error occurred: " + e.getMessage());
             throw new ServiceException(
                     "Failed to process OCR for document: " + sanitizer.sanitizeLogging(documentId), e);
+        } catch (Throwable t) {
+            log.error("Fatal error during OCR processing for document {} (possible native library issue): {}",
+                    sanitizer.sanitizeLogging(documentId), t.getMessage(), t);
+            ocrData.setStatus(OcrStatus.FAILED);
+            ocrData.setErrorMessage("Fatal OCR error: " + t.getMessage());
+            ocrDataRepository.save(ocrData);
+            throw new ServiceException(
+                    "Fatal error processing OCR for document: " + sanitizer.sanitizeLogging(documentId),
+                    new RuntimeException(t));
         }
 
         return ocrDataRepository.save(ocrData);

@@ -29,10 +29,14 @@ FROM eclipse-temurin:25-jre
 # Set the working directory inside the container
 WORKDIR /app
 
-# Install Tesseract and its C++ libraries here
+# Install Tesseract OCR engine and English language data (libtesseract-dev not needed at runtime)
 RUN apt-get update && \
-    apt-get install -y tesseract-ocr libtesseract-dev && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng && \
+    rm -rf /var/lib/apt/lists/* && \
+    echo "--- Tesseract verification ---" && \
+    tesseract --version && \
+    find /usr/share/tesseract-ocr -name "eng.traineddata" 2>/dev/null && \
+    echo "--- End verification ---"
 
 # Copy the packaged JAR from the build stage
 COPY --from=build /app/target/*.jar UnravelDocs.jar

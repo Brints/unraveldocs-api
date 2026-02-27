@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
 import com.extractor.unraveldocs.ocrprocessing.dto.request.PdfPageRange;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 
+@Slf4j
 @Component
 public class ExtractImageURL {
 
@@ -56,11 +58,15 @@ public class ExtractImageURL {
             throw new IOException("Failed to read image from URL: " + fileUrl);
         }
 
+        log.info("Initializing Tesseract with datapath: {}", tesseractDataPath);
         Tesseract tesseract = new Tesseract();
         tesseract.setDatapath(tesseractDataPath);
         tesseract.setLanguage("eng");
+        log.info("Tesseract initialized successfully. Performing OCR on image...");
 
         String extractedText = tesseract.doOCR(image);
+        log.info("Tesseract OCR completed, extracted {} characters",
+                extractedText != null ? extractedText.length() : 0);
 
         ocrData.setExtractedText(extractedText);
         ocrData.setStatus(OcrStatus.COMPLETED);
