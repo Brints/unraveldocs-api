@@ -20,13 +20,21 @@ COPY src ./src
 # Package the application into a JAR file
 RUN ./mvnw package -DskipTests && ls -la /app/target/
 
-# Use Eclipse Temurin JRE 25 for runtime (glibc-based, compatible with native libs)
+# ==========================================
+# RUNTIME STAGE
+# ==========================================
+# Use Eclipse Temurin JRE 25 for runtime
 FROM eclipse-temurin:25-jre
 
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the Maven wrapper and the project definition file from the build stage
+# Install Tesseract and its C++ libraries here
+RUN apt-get update && \
+    apt-get install -y tesseract-ocr libtesseract-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy the packaged JAR from the build stage
 COPY --from=build /app/target/*.jar UnravelDocs.jar
 
 # Expose the port your application runs on
