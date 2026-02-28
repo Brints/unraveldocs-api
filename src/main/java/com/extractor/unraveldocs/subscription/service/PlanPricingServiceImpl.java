@@ -9,10 +9,9 @@ import com.extractor.unraveldocs.team.model.TeamSubscriptionPlan;
 import com.extractor.unraveldocs.team.repository.TeamSubscriptionPlanRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +32,6 @@ public class PlanPricingServiceImpl implements PlanPricingService {
 
     @Override
     public AllPlansWithPricingResponse getAllPlansWithPricing(SubscriptionCurrency currency) {
-        log.info("Fetching all plans with pricing in currency: {}", currency.getCode());
 
         // Fetch all active individual plans
         List<SubscriptionPlan> individualPlans = subscriptionPlanRepository.findAll()
@@ -56,7 +54,7 @@ public class PlanPricingServiceImpl implements PlanPricingService {
 
         // Get the exchange rate timestamp
         ConvertedPrice sampleConversion = currencyConversionService.convert(
-                java.math.BigDecimal.ONE, currency);
+                BigDecimal.ONE, currency);
 
         return AllPlansWithPricingResponse.builder()
                 .individualPlans(individualPlanDtos)

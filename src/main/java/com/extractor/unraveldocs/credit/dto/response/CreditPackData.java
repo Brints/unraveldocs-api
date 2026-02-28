@@ -22,4 +22,11 @@ public class CreditPackData {
     private String currency;
     private Integer creditsIncluded;
     private BigDecimal costPerCredit;
+
+    // Optional currency conversion fields (populated when ?currency= is provided)
+    private Long convertedPriceInCents;
+    private String convertedCurrency;
+    private String formattedPrice;
+    private String formattedOriginalPrice;
+    private BigDecimal exchangeRate;
 }

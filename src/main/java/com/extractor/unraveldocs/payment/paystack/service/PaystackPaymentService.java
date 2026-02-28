@@ -111,7 +111,8 @@ public class PaystackPaymentService {
 
             String internalPlanCode = request.getPlanCode();
 
-            // Build metadata DTO
+            // Build metadata DTO — include custom fields from request (e.g., creditPackId,
+            // type)
             TransactionMetadata metadata = TransactionMetadata.builder()
                     .userId(user.getId())
                     .customerCode(customer.getCustomerCode())
@@ -119,6 +120,7 @@ public class PaystackPaymentService {
                     .couponCode(appliedCouponCode)
                     .originalAmount(appliedCouponCode != null ? originalAmount.toString() : null)
                     .discountAmount(appliedCouponCode != null ? discountAmount.toString() : null)
+                    .customFields(request.getMetadata())
                     .build();
 
             // Build request payload DTO
@@ -126,10 +128,13 @@ public class PaystackPaymentService {
                     .email(user.getEmail())
                     .amount(amountInKobo)
                     .reference(reference)
-                    .currency(request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency())
-                    .callbackUrl(request.getCallbackUrl() != null ? request.getCallbackUrl() : paystackConfig.getCallbackUrl())
+                    .currency(
+                            request.getCurrency() != null ? request.getCurrency() : paystackConfig.getDefaultCurrency())
+                    .callbackUrl(request.getCallbackUrl() != null ? request.getCallbackUrl()
+                            : paystackConfig.getCallbackUrl())
                     .plan(internalPlanCode != null && internalPlanCode.startsWith("PLN_") ? internalPlanCode : null)
-                    .channels(request.getChannels() != null && request.getChannels().length > 0 ? request.getChannels() : null)
+                    .channels(request.getChannels() != null && request.getChannels().length > 0 ? request.getChannels()
+                            : null)
                     .metadata(metadata)
                     .build();
 
@@ -151,7 +156,14 @@ public class PaystackPaymentService {
 
             InitializeTransactionData data = response.getData();
 
-            PaymentType paymentType = request.getPlanCode() != null ? PaymentType.SUBSCRIPTION : PaymentType.ONE_TIME;
+            PaymentType paymentType;
+            if (request.getMetadata() != null && "CREDIT_PURCHASE".equals(request.getMetadata().get("type"))) {
+                paymentType = PaymentType.CREDIT_PURCHASE;
+            } else if (request.getPlanCode() != null) {
+                paymentType = PaymentType.SUBSCRIPTION;
+            } else {
+                paymentType = PaymentType.ONE_TIME;
+            }
             BigDecimal amountInMajorUnits = finalAmount.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             BigDecimal originalAmountInMajorUnits = appliedCouponCode != null
                     ? originalAmount.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)

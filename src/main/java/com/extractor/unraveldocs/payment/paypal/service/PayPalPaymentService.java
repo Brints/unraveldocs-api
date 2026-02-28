@@ -303,7 +303,8 @@ public class PayPalPaymentService {
                 .user(user)
                 .paypalCustomer(customer)
                 .orderId(orderResponse.getId())
-                .paymentType(PaymentType.ONE_TIME)
+                .paymentType(
+                        isCreditPurchase(request.getMetadata()) ? PaymentType.CREDIT_PURCHASE : PaymentType.ONE_TIME)
                 .status(PaymentStatus.PENDING)
                 .amount(finalAmount) // Store the discounted amount
                 .originalAmount(originalAmount)
@@ -433,5 +434,12 @@ public class PayPalPaymentService {
         }
         return Map.of("note_to_payer",
                 request.getNoteToPayer() != null ? request.getNoteToPayer() : "Refund processed");
+    }
+
+    /**
+     * Check if the payment metadata indicates a credit pack purchase.
+     */
+    private boolean isCreditPurchase(Map<String, ?> metadata) {
+        return metadata != null && "CREDIT_PURCHASE".equals(metadata.get("type"));
     }
 }

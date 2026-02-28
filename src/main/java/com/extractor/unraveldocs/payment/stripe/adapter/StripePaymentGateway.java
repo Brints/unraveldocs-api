@@ -15,6 +15,7 @@ import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.user.model.User;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -65,8 +66,7 @@ public class StripePaymentGateway implements PaymentGatewayService {
                     1L,
                     null, // Trial days not supported in SubscriptionPlan model yet
                     null,
-                    metadata
-            );
+                    metadata);
 
             return InitializePaymentResponse.builder()
                     .gateway(PaymentGateway.STRIPE)
@@ -89,6 +89,12 @@ public class StripePaymentGateway implements PaymentGatewayService {
     @Override
     public PaymentResponse createPayment(User user, PaymentRequest request) {
         try {
+            // Use Checkout Sessions for redirect-based flows (e.g., credit purchases)
+            if (request.getCallbackUrl() != null && !request.getCallbackUrl().isBlank()) {
+                return createCheckoutPayment(user, request);
+            }
+
+            // Default: use Payment Intents for client-side confirmation
             CreatePaymentIntentRequest stripeRequest = new CreatePaymentIntentRequest();
             stripeRequest.setAmount(request.getAmount());
             stripeRequest.setCurrency(request.getCurrency());
@@ -117,6 +123,62 @@ public class StripePaymentGateway implements PaymentGatewayService {
                     .errorMessage(e.getMessage())
                     .build();
         }
+    }
+
+    /**
+     * Create a Stripe Checkout Session for redirect-based one-time payments (e.g.,
+     * credit packs).
+     * Uses price_data so no pre-created Stripe Price is needed.
+     */
+    private PaymentResponse createCheckoutPayment(User user, PaymentRequest request) throws StripeException {
+        StripeCustomer customer = customerService.getOrCreateCustomer(user);
+
+        Map<String, String> metadata = request.getMetadata() != null
+                ? new HashMap<>(request.getMetadata())
+                : new HashMap<>();
+
+        SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
+                .setCustomer(customer.getStripeCustomerId())
+                .setSuccessUrl(request.getCallbackUrl())
+                .setCancelUrl(request.getCancelUrl() != null && !request.getCancelUrl().isBlank()
+                        ? request.getCancelUrl()
+                        : request.getCallbackUrl())
+                .addLineItem(
+                        SessionCreateParams.LineItem.builder()
+                                .setPriceData(
+                                        SessionCreateParams.LineItem.PriceData.builder()
+                                                .setCurrency(
+                                                        request.getCurrency() != null ? request.getCurrency() : "usd")
+                                                .setUnitAmount(request.getAmount())
+                                                .setProductData(
+                                                        SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                                .setName(request.getDescription() != null
+                                                                        ? request.getDescription()
+                                                                        : "Credit Pack Purchase")
+                                                                .build())
+                                                .build())
+                                .setQuantity(1L)
+                                .build())
+                .setMode(SessionCreateParams.Mode.PAYMENT);
+
+        if (!metadata.isEmpty()) {
+            paramsBuilder.putAllMetadata(metadata);
+        }
+
+        Session session = Session.create(paramsBuilder.build());
+
+        log.info("Created Stripe checkout session {} for credit purchase by user {}",
+                session.getId(), user.getId());
+
+        return PaymentResponse.builder()
+                .provider(PaymentGateway.STRIPE)
+                .providerPaymentId(session.getId())
+                .paymentUrl(session.getUrl())
+                .status(PaymentStatus.PENDING)
+                .amount(BigDecimal.valueOf(request.getAmount()).divide(BigDecimal.valueOf(100)))
+                .currency(request.getCurrency())
+                .success(true)
+                .build();
     }
 
     @Override
@@ -148,8 +210,7 @@ public class StripePaymentGateway implements PaymentGatewayService {
     @Override
     public RefundResponse refundPayment(RefundRequest request) {
         try {
-            com.extractor.unraveldocs.payment.stripe.dto.request.RefundRequest stripeRequest =
-                    new com.extractor.unraveldocs.payment.stripe.dto.request.RefundRequest();
+            com.extractor.unraveldocs.payment.stripe.dto.request.RefundRequest stripeRequest = new com.extractor.unraveldocs.payment.stripe.dto.request.RefundRequest();
             stripeRequest.setPaymentIntentId(request.getPaymentId());
             stripeRequest.setAmount(request.getAmount());
             stripeRequest.setReason(request.getReason());
@@ -334,7 +395,8 @@ public class StripePaymentGateway implements PaymentGatewayService {
     }
 
     private OffsetDateTime convertToOffsetDateTime(Long timestamp) {
-        if (timestamp == null) return null;
+        if (timestamp == null)
+            return null;
         return Instant.ofEpochSecond(timestamp).atOffset(ZoneOffset.UTC);
     }
 }

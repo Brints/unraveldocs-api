@@ -3,6 +3,7 @@ package com.extractor.unraveldocs.payment.paystack.service;
 import com.extractor.unraveldocs.coupon.model.Coupon;
 import com.extractor.unraveldocs.coupon.repository.CouponRepository;
 import com.extractor.unraveldocs.coupon.service.CouponValidationService;
+import com.extractor.unraveldocs.credit.service.CreditPurchaseService;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.enums.PaymentStatus;
 import com.extractor.unraveldocs.payment.enums.PaymentType;
@@ -60,6 +61,7 @@ public class PaystackWebhookService {
     private final SanitizeLogging sanitize;
     private final CouponValidationService couponValidationService;
     private final CouponRepository couponRepository;
+    private final CreditPurchaseService creditPurchaseService;
 
     private ReceiptEventPublisher receiptEventPublisher;
 
@@ -157,6 +159,11 @@ public class PaystackWebhookService {
                     updateUserSubscriptionFromPayment(payment);
                 }
 
+                // Complete credit pack purchase
+                if (payment.getPaymentType() == PaymentType.CREDIT_PURCHASE) {
+                    completeCreditPurchase(payment);
+                }
+
                 // Record coupon usage if a coupon was applied
                 recordCouponUsageIfApplicable(payment);
 
@@ -177,7 +184,8 @@ public class PaystackWebhookService {
         try {
             User user = payment.getUser();
 
-            // Try to get plan code from metadata first (internal plan code like "STARTER_MONTHLY")
+            // Try to get plan code from metadata first (internal plan code like
+            // "STARTER_MONTHLY")
             // then fall back to payment.getPlanCode() which may be a Paystack plan code
             String planCode = extractPlanFromMetadata(payment.getMetadata());
             if (planCode == null || planCode.isBlank()) {
@@ -608,6 +616,50 @@ public class PaystackWebhookService {
                     sanitize.sanitizeLogging(payment.getReference()),
                     e.getMessage());
             // Don't rethrow - coupon usage recording failure shouldn't fail the webhook
+        }
+    }
+
+    /**
+     * Complete credit pack purchase after payment confirmation.
+     * Extracts creditPackId from payment metadata and delegates to
+     * CreditPurchaseService.
+     */
+    private void completeCreditPurchase(PaystackPayment payment) {
+        try {
+            String metadataJson = payment.getMetadata();
+            if (metadataJson == null || metadataJson.isBlank()) {
+                log.error("No metadata found for credit purchase payment: {}",
+                        sanitize.sanitizeLogging(payment.getReference()));
+                return;
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> metadata = objectMapper.readValue(metadataJson, Map.class);
+            String creditPackId = metadata.get("creditPackId") != null
+                    ? String.valueOf(metadata.get("creditPackId"))
+                    : null;
+
+            if (creditPackId == null || creditPackId.isBlank()) {
+                log.error("No creditPackId in metadata for credit purchase payment: {}",
+                        sanitize.sanitizeLogging(payment.getReference()));
+                return;
+            }
+
+            User user = payment.getUser();
+            log.info("Completing credit pack purchase for user {}, pack {}, payment {}",
+                    sanitize.sanitizeLogging(user.getId()),
+                    sanitize.sanitizeLogging(creditPackId),
+                    sanitize.sanitizeLogging(payment.getReference()));
+
+            creditPurchaseService.completePurchase(user, creditPackId, payment.getReference());
+
+            log.info("Successfully completed credit pack purchase for user {}",
+                    sanitize.sanitizeLogging(user.getId()));
+
+        } catch (Exception e) {
+            log.error("Failed to complete credit pack purchase for payment {}: {}",
+                    sanitize.sanitizeLogging(payment.getReference()), e.getMessage(), e);
+            // Don't rethrow - credit fulfillment failure shouldn't fail the entire webhook
         }
     }
 }

@@ -42,4 +42,14 @@ public class PaymentRequest {
      * Idempotency key to prevent duplicate payments
      */
     private String idempotencyKey;
+
+    /**
+     * Success redirect URL (for redirect-based flows like Stripe Checkout, PayPal)
+     */
+    private String callbackUrl;
+
+    /**
+     * Cancel redirect URL (for redirect-based flows like Stripe Checkout, PayPal)
+     */
+    private String cancelUrl;
 }

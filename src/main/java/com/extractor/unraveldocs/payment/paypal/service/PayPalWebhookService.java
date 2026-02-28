@@ -3,8 +3,10 @@ package com.extractor.unraveldocs.payment.paypal.service;
 import com.extractor.unraveldocs.coupon.model.Coupon;
 import com.extractor.unraveldocs.coupon.repository.CouponRepository;
 import com.extractor.unraveldocs.coupon.service.CouponValidationService;
+import com.extractor.unraveldocs.credit.service.CreditPurchaseService;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.payment.enums.PaymentStatus;
+import com.extractor.unraveldocs.payment.enums.PaymentType;
 import com.extractor.unraveldocs.payment.paypal.exception.PayPalWebhookException;
 import com.extractor.unraveldocs.payment.paypal.model.PayPalPayment;
 import com.extractor.unraveldocs.payment.paypal.model.PayPalSubscription;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 
 /**
  * Service for processing PayPal webhook events.
@@ -42,6 +45,7 @@ public class PayPalWebhookService {
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final CouponValidationService couponValidationService;
     private final CouponRepository couponRepository;
+    private final CreditPurchaseService creditPurchaseService;
     private final ObjectMapper objectMapper;
     private final SanitizeLogging sanitizer;
 
@@ -153,8 +157,13 @@ public class PayPalWebhookService {
                 // Record coupon usage if applicable
                 recordCouponUsageIfApplicable(payment);
 
-                // Update user subscription from payment (for one-time payments with plan)
-                updateUserSubscriptionFromPayment(payment);
+                // Complete credit pack purchase or update user subscription
+                if (payment.getPaymentType() == PaymentType.CREDIT_PURCHASE) {
+                    completeCreditPurchase(payment);
+                } else {
+                    // Update user subscription from payment (for one-time payments with plan)
+                    updateUserSubscriptionFromPayment(payment);
+                }
             });
 
         } catch (Exception e) {
@@ -551,6 +560,50 @@ public class PayPalWebhookService {
                     sanitizer.sanitizeLogging(payment.getOrderId()),
                     sanitizer.sanitizeLogging(e.getMessage()), e);
             // Don't throw - coupon usage recording should not fail the webhook
+        }
+    }
+
+    /**
+     * Complete credit pack purchase after payment confirmation.
+     * Extracts creditPackId from payment metadata and delegates to
+     * CreditPurchaseService.
+     */
+    private void completeCreditPurchase(PayPalPayment payment) {
+        try {
+            String metadataJson = payment.getMetadata();
+            if (metadataJson == null || metadataJson.isBlank()) {
+                log.error("No metadata found for credit purchase payment: {}",
+                        sanitizer.sanitizeLogging(payment.getOrderId()));
+                return;
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> metadata = objectMapper.readValue(metadataJson, Map.class);
+            String creditPackId = metadata.get("creditPackId") != null
+                    ? String.valueOf(metadata.get("creditPackId"))
+                    : null;
+
+            if (creditPackId == null || creditPackId.isBlank()) {
+                log.error("No creditPackId in metadata for credit purchase payment: {}",
+                        sanitizer.sanitizeLogging(payment.getOrderId()));
+                return;
+            }
+
+            User user = payment.getUser();
+            log.info("Completing credit pack purchase for user {}, pack {}, payment {}",
+                    sanitizer.sanitizeLogging(user.getId()),
+                    sanitizer.sanitizeLogging(creditPackId),
+                    sanitizer.sanitizeLogging(payment.getOrderId()));
+
+            creditPurchaseService.completePurchase(user, creditPackId, payment.getOrderId());
+
+            log.info("Successfully completed credit pack purchase for user {}",
+                    sanitizer.sanitizeLogging(user.getId()));
+
+        } catch (Exception e) {
+            log.error("Failed to complete credit pack purchase for payment {}: {}",
+                    sanitizer.sanitizeLogging(payment.getOrderId()), e.getMessage(), e);
+            // Don't rethrow - credit fulfillment failure shouldn't fail the entire webhook
         }
     }
 }

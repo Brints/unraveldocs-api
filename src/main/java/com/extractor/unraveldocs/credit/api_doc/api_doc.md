@@ -2,9 +2,9 @@
 
 ## Base URLs
 
-| Audience | Base Path              |
-|----------|------------------------|
-| User     | `/api/v1/credits`      |
+| Audience | Base Path               |
+|----------|-------------------------|
+| User     | `/api/v1/credits`       |
 | Admin    | `/api/v1/admin/credits` |
 
 ---
@@ -13,10 +13,15 @@
 
 ### 1. List Available Credit Packs
 **`GET /api/v1/credits/packs`**
+**`GET /api/v1/credits/packs?currency=NGN`**
 
-Returns all active credit packs available for purchase.
+Returns all active credit packs. Use `?currency=NGN` to include converted prices.
 
-**Response:**
+| Param      | Type   | Required | Notes                                         |
+|------------|--------|----------|-----------------------------------------------|
+| `currency` | string | ❌        | ISO currency code (e.g., `NGN`, `EUR`, `GBP`) |
+
+**Response (USD, no currency param):**
 ```json
 {
   "statusCode": 200,
@@ -30,7 +35,12 @@ Returns all active credit packs available for purchase.
       "priceInCents": 500,
       "currency": "USD",
       "creditsIncluded": 20,
-      "costPerCredit": 25.00
+      "costPerCredit": 25.00,
+      "convertedPriceInCents": 775000,
+      "convertedCurrency": "NGN",
+      "formattedPrice": "₦7,750.00",
+      "formattedOriginalPrice": "$5.00",
+      "exchangeRate": 1550.00
     },
     {
       "id": "bbc04958-0530-4dc0-9be7-0dc5fdabd1a3",
@@ -39,7 +49,12 @@ Returns all active credit packs available for purchase.
       "priceInCents": 1500,
       "currency": "USD",
       "creditsIncluded": 75,
-      "costPerCredit": 20.00
+      "costPerCredit": 20.00,
+      "convertedPriceInCents": 2325000,
+      "convertedCurrency": "NGN",
+      "formattedPrice": "₦23,250.00",
+      "formattedOriginalPrice": "$15.00",
+      "exchangeRate": 1550.00
     },
     {
       "id": "8ac54c55-6bed-4d02-8924-4cc98aad1d4f",
@@ -48,7 +63,65 @@ Returns all active credit packs available for purchase.
       "priceInCents": 3000,
       "currency": "USD",
       "creditsIncluded": 200,
-      "costPerCredit": 15.00
+      "costPerCredit": 15.00,
+      "convertedPriceInCents": 4650000,
+      "convertedCurrency": "NGN",
+      "formattedPrice": "₦46,500.00",
+      "formattedOriginalPrice": "$30.00",
+      "exchangeRate": 1550.00
+    }
+  ]
+}
+```
+
+**Response (with `?currency=GBP`):**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Credit packs retrieved",
+  "data": [
+    {
+      "id": "e2d6f74d-4422-4ace-b9cb-aa6f50067074",
+      "name": "STARTER_PACK",
+      "displayName": "Starter Pack",
+      "priceInCents": 500,
+      "currency": "USD",
+      "creditsIncluded": 20,
+      "costPerCredit": 25.00,
+      "convertedPriceInCents": 395,
+      "convertedCurrency": "GBP",
+      "formattedPrice": "£3.95",
+      "formattedOriginalPrice": "$5.00",
+      "exchangeRate": 0.79
+    },
+    {
+      "id": "bbc04958-0530-4dc0-9be7-0dc5fdabd1a3",
+      "name": "VALUE_PACK",
+      "displayName": "Value Pack",
+      "priceInCents": 1500,
+      "currency": "USD",
+      "creditsIncluded": 75,
+      "costPerCredit": 20.00,
+      "convertedPriceInCents": 1185,
+      "convertedCurrency": "GBP",
+      "formattedPrice": "£11.85",
+      "formattedOriginalPrice": "$15.00",
+      "exchangeRate": 0.79
+    },
+    {
+      "id": "8ac54c55-6bed-4d02-8924-4cc98aad1d4f",
+      "name": "POWER_PACK",
+      "displayName": "Power Pack",
+      "priceInCents": 3000,
+      "currency": "USD",
+      "creditsIncluded": 200,
+      "costPerCredit": 15.00,
+      "convertedPriceInCents": 2370,
+      "convertedCurrency": "GBP",
+      "formattedPrice": "£23.70",
+      "formattedOriginalPrice": "$30.00",
+      "exchangeRate": 0.79
     }
   ]
 }
@@ -89,11 +162,12 @@ Initializes a credit pack purchase. Supports optional coupon code for discounts.
 **Request Body:**
 ```json
 {
-  "creditPackId": "uuid",
+  "creditPackId": "e2d6f74d-4422-4ace-b9cb-aa6f50067074",
   "gateway": "STRIPE or PAYPAL or PAYSTACK",
   "couponCode": "SAVE10",
   "callbackUrl": "https://example.com/callback",
-  "cancelUrl": "https://example.com/cancel"
+  "cancelUrl": "https://example.com/cancel",
+  "currency": "NGN"
 }
 ```
 
@@ -104,24 +178,138 @@ Initializes a credit pack purchase. Supports optional coupon code for discounts.
 | `couponCode`   | string | ❌        | Optional discount coupon          |
 | `callbackUrl`  | string | ❌        | Success redirect URL              |
 | `cancelUrl`    | string | ❌        | Cancel redirect URL               |
+| `currency`     | string | ✅        | Payment currency (e.g., `NGN`).   |
 
-**Response:**
+**Request Body (Paystack Example):**
+```json
+{
+  "creditPackId": "e2d6f74d-4422-4ace-b9cb-aa6f50067074",
+  "gateway": "PAYSTACK",
+  "couponCode": "",
+  "callbackUrl": "https://8hw23p5s-8080.uks1.devtunnels.ms/payment/callback",
+  "cancelUrl": "",
+  "currency": "NGN"
+}
+```
+**Response (Paystack NGN Example):**
 ```json
 {
   "statusCode": 200,
   "status": "success",
   "message": "Payment initialized",
   "data": {
-    "paymentUrl": "https://checkout.stripe.com/...",
-    "reference": "pi_abc123",
-    "packName": "Value Pack",
-    "creditsToReceive": 75,
-    "amountInCents": 1350,
-    "discountApplied": 150
+    "paymentUrl": "https://checkout.paystack.com/sz7hd0pgg1plfth",
+    "reference": "PAY_C2692DAD5D344214",
+    "packName": "Starter Pack",
+    "creditsToReceive": 20,
+    "amountInCents": 775000,
+    "discountApplied": 0,
+    "currency": "NGN",
+    "formattedAmount": "₦7,750.00",
+    "exchangeRate": 1550.00
   }
 }
 ```
 
+**Response (Paystack KES Example — with currency conversion):**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Payment initialized",
+  "data": {
+    "paymentUrl": "https://checkout.paystack.com/g89w5qoguzgruvt",
+    "reference": "PAY_DB33E9B306AF4610",
+    "packName": "Starter Pack",
+    "creditsToReceive": 20,
+    "amountInCents": 76500,
+    "discountApplied": 0,
+    "currency": "KES",
+    "formattedAmount": "Ksh765.00",
+    "exchangeRate": 153.00
+  }
+}
+```
+
+**Stripe Response Example:**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Payment initialized",
+  "data": {
+    "paymentUrl": "https://checkout.stripe.com/c/pay/cs_test_a1PiwMllMKQSd2ASaAWtMIlbbd2jWSPjMu4lit0ljxdycuUDShI3dnolUT#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blpxYHZxWjA0S1NIbDBPVWBQSEY3T0lfSE1ufGk0fH19SmE0QExrXz1uQUx2bTxHSzF3ZFVUSFROPEF3TGNEX2xqYjR8aDRdYzdKcnB2PTNfSE9mT2I9ZzVGRzA3aUQwNTU9akdIT11sVicpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl",
+    "reference": "cs_test_a1PiwMllMKQSd2ASaAWtMIlbbd2jWSPjMu4lit0ljxdycuUDShI3dnolUT",
+    "packName": "Starter Pack",
+    "creditsToReceive": 20,
+    "amountInCents": 500,
+    "discountApplied": 0,
+    "currency": "USD",
+    "formattedAmount": "$5.00",
+    "exchangeRate": 1
+  }
+}
+```
+
+**Stripe Response Example (with currency conversion):**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Payment initialized",
+  "data": {
+    "paymentUrl": "https://checkout.stripe.com/c/pay/cs_test_a1o4A0Wqj5ZNimR07PTVGp5f9PG6OnhNJouyTPwRYxn6hvJGZLMZOzXBJY#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdkdWxOYHwnPyd1blpxYHZxWjA0S1NIbDBPVWBQSEY3T0lfSE1ufGk0fH19SmE0QExrXz1uQUx2bTxHSzF3ZFVUSFROPEF3TGNEX2xqYjR8aDRdYzdKcnB2PTNfSE9mT2I9ZzVGRzA3aUQwNTU9akdIT11sVicpJ2N3amhWYHdzYHcnP3F3cGApJ2dkZm5id2pwa2FGamlqdyc%2FJyZjY2NjY2MnKSdpZHxqcHFRfHVgJz8ndmxrYmlgWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl",
+    "reference": "cs_test_a1o4A0Wqj5ZNimR07PTVGp5f9PG6OnhNJouyTPwRYxn6hvJGZLMZOzXBJY",
+    "packName": "Starter Pack",
+    "creditsToReceive": 20,
+    "amountInCents": 460,
+    "discountApplied": 0,
+    "currency": "EUR",
+    "formattedAmount": "4,60 €",
+    "exchangeRate": 0.92
+  }
+}
+```
+
+**Paypal Response Example:**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Payment initialized",
+  "data": {
+    "paymentUrl": "https://www.sandbox.paypal.com/checkoutnow?token=21F722126U3384446",
+    "reference": "21F722126U3384446",
+    "packName": "Starter Pack",
+    "creditsToReceive": 20,
+    "amountInCents": 500,
+    "discountApplied": 0,
+    "currency": "USD",
+    "formattedAmount": "$5.00",
+    "exchangeRate": 1
+  }
+}
+```
+
+**Paypal Response Example (with currency conversion):**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Payment initialized",
+  "data": {
+    "paymentUrl": "https://www.sandbox.paypal.com/checkoutnow?token=9E373121MN466550E",
+    "reference": "9E373121MN466550E",
+    "packName": "Starter Pack",
+    "creditsToReceive": 20,
+    "amountInCents": 395,
+    "discountApplied": 0,
+    "currency": "GBP",
+    "formattedAmount": "£3.95",
+    "exchangeRate": 0.79
+  }
+}
+```
 ---
 
 ### 4. Transfer Credits to Another User
@@ -397,6 +585,41 @@ Allocates credits to any user without restrictions (no cap).
 | **Transfer notifications**  | Push notification + email sent to **both** sender and receiver on successful transfer      |
 | **Transfer cap**            | Regular users: max 30 credits/month. Admin/Super Admin: no cap                             |
 | **Transfer floor**          | Sender must retain at least 5 credits after any transfer                                   |
+
+## Credit Purchase Flow
+
+The purchase endpoint (`POST /api/v1/credits/purchase`) initializes payment with the chosen gateway. **Credits are automatically added to the user's balance** when the payment gateway sends a success webhook — no additional frontend action is needed after redirect.
+
+### Flow
+
+1. Frontend calls `POST /api/v1/credits/purchase` with pack ID and gateway
+2. Backend returns a `paymentUrl` — frontend redirects the user there
+3. User completes payment on the gateway's checkout page
+4. Gateway sends a webhook to the backend confirming payment success
+5. Backend webhook handler detects `PaymentType.CREDIT_PURCHASE` and calls `CreditPurchaseService.completePurchase()`
+6. Credits are added to the user's balance, and push + email notifications are sent
+
+### Required Metadata
+
+When using gateway-specific endpoints directly (instead of `/api/v1/credits/purchase`), the frontend **must** include these fields in the payment metadata so the webhook can identify and fulfill the credit purchase:
+
+| Field             | Type   | Required | Description                          |
+|-------------------|--------|----------|--------------------------------------|
+| `type`            | string | ✅        | Must be `"CREDIT_PURCHASE"`          |
+| `creditPackId`    | string | ✅        | UUID of the credit pack being bought |
+| `creditsIncluded` | number | ❌        | Number of credits in the pack        |
+
+> **Note:** The `/api/v1/credits/purchase` endpoint sets this metadata automatically.
+
+### Supported Gateways
+
+| Gateway  | Webhook Event                                             | Detection Method                         |
+|----------|-----------------------------------------------------------|------------------------------------------|
+| Paystack | `charge.success`                                          | `PaymentType.CREDIT_PURCHASE` + metadata |
+| PayPal   | `PAYMENT.CAPTURE.COMPLETED`                               | `PaymentType.CREDIT_PURCHASE` + metadata |
+| Stripe   | `payment_intent.succeeded` / `checkout.session.completed` | Metadata `type` field                    |
+
+---
 
 ## Credit Pack Pricing Examples
 

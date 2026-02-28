@@ -30,4 +30,12 @@ public class PurchaseCreditPackRequest {
      * Optional coupon code for discount.
      */
     private String couponCode;
+
+    /**
+     * Optional payment currency (e.g., "NGN", "EUR"). Defaults to USD if not
+     * provided.
+     * The amount will be converted from USD to this currency before sending to the
+     * gateway.
+     */
+    private String currency;
 }

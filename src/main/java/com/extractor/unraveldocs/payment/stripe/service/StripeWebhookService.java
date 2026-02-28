@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.payment.stripe.service;
 
+import com.extractor.unraveldocs.credit.service.CreditPurchaseService;
 import com.extractor.unraveldocs.payment.enums.PaymentStatus;
 import com.extractor.unraveldocs.payment.enums.PaymentType;
 import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
@@ -30,6 +31,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -45,6 +47,7 @@ public class StripeWebhookService {
     private final StripePaymentService paymentService;
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
+    private final CreditPurchaseService creditPurchaseService;
 
     // Optional dependency - only available when Kafka is configured
     private ReceiptEventPublisher receiptEventPublisher;
@@ -113,8 +116,18 @@ public class StripeWebhookService {
 
             User user = stripeCustomer.getUser();
 
-            // Determine payment type
-            PaymentType paymentType = subscriptionId != null ? PaymentType.SUBSCRIPTION : PaymentType.ONE_TIME;
+            // Determine payment type from metadata or subscription presence
+            Map<String, String> metadata = session.getMetadata();
+            boolean isCreditPurchase = metadata != null && "CREDIT_PURCHASE".equals(metadata.get("type"));
+
+            PaymentType paymentType;
+            if (isCreditPurchase) {
+                paymentType = PaymentType.CREDIT_PURCHASE;
+            } else if (subscriptionId != null) {
+                paymentType = PaymentType.SUBSCRIPTION;
+            } else {
+                paymentType = PaymentType.ONE_TIME;
+            }
 
             // Record the payment
             BigDecimal amount = BigDecimal.valueOf(session.getAmountTotal()).divide(BigDecimal.valueOf(100), 2,
@@ -134,6 +147,11 @@ public class StripeWebhookService {
                     null,
                     "Checkout session completed",
                     null);
+
+            // Complete credit pack purchase if applicable
+            if (isCreditPurchase) {
+                completeCreditPurchase(user, metadata, session.getId());
+            }
 
             log.info("Successfully processed checkout session completed for user {}", user.getId());
         } catch (Exception e) {
@@ -156,6 +174,11 @@ public class StripeWebhookService {
 
             User user = stripeCustomer.getUser();
 
+            // Detect credit purchase from metadata
+            Map<String, String> metadata = paymentIntent.getMetadata();
+            boolean isCreditPurchase = metadata != null && "CREDIT_PURCHASE".equals(metadata.get("type"));
+            PaymentType paymentType = isCreditPurchase ? PaymentType.CREDIT_PURCHASE : PaymentType.ONE_TIME;
+
             // Check if payment already exists
             if (!paymentService.paymentExists(paymentIntent.getId())) {
                 BigDecimal amount = BigDecimal.valueOf(paymentIntent.getAmount()).divide(BigDecimal.valueOf(100), 2,
@@ -164,7 +187,7 @@ public class StripeWebhookService {
                 paymentService.recordPayment(
                         user,
                         stripeCustomer,
-                        PaymentType.ONE_TIME,
+                        paymentType,
                         paymentIntent.getId(),
                         null,
                         null,
@@ -184,9 +207,14 @@ public class StripeWebhookService {
                         null);
             }
 
-            // Update user subscription from payment metadata (for one-time payments with
-            // plan)
-            updateUserSubscriptionFromPayment(user, paymentIntent);
+            // Route to credit purchase fulfillment or subscription update
+            if (isCreditPurchase) {
+                completeCreditPurchase(user, metadata, paymentIntent.getId());
+            } else {
+                // Update user subscription from payment metadata (for one-time payments with
+                // plan)
+                updateUserSubscriptionFromPayment(user, paymentIntent);
+            }
 
             // Generate receipt
             generateReceipt(user, paymentIntent);
@@ -613,5 +641,32 @@ public class StripeWebhookService {
             case MONTH -> now.plusMonths(intervalValue);
             case YEAR -> now.plusYears(intervalValue);
         };
+    }
+
+    /**
+     * Complete credit pack purchase after payment confirmation.
+     * Extracts creditPackId from metadata and delegates to CreditPurchaseService.
+     */
+    private void completeCreditPurchase(User user, Map<String, String> metadata, String paymentReference) {
+        try {
+            String creditPackId = metadata.get("creditPackId");
+
+            if (creditPackId == null || creditPackId.isBlank()) {
+                log.error("No creditPackId in metadata for credit purchase payment: {}", paymentReference);
+                return;
+            }
+
+            log.info("Completing credit pack purchase for user {}, pack {}, payment {}",
+                    user.getId(), creditPackId, paymentReference);
+
+            creditPurchaseService.completePurchase(user, creditPackId, paymentReference);
+
+            log.info("Successfully completed credit pack purchase for user {}", user.getId());
+
+        } catch (Exception e) {
+            log.error("Failed to complete credit pack purchase for payment {}: {}",
+                    paymentReference, e.getMessage(), e);
+            // Don't rethrow - credit fulfillment failure shouldn't fail the entire webhook
+        }
     }
 }
