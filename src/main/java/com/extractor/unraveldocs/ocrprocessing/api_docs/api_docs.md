@@ -518,14 +518,25 @@ Returned after bulk upload — contains the new collection ID and uploaded file 
 
 ### OCR Providers
 
-The system uses a **provider abstraction** pattern for OCR processing, allowing pluggable engines:
+The system uses a **provider abstraction** pattern for OCR processing, with automatic provider selection based on subscription plan and credit balance:
 
-| Provider              | Description                             | Fallback |
-| --------------------- | --------------------------------------- | -------- |
-| **Tesseract**         | Open-source OCR engine (default)        | No       |
-| **Google Cloud Vision** | Cloud-based OCR with superior accuracy | Yes      |
+| Provider              | Description                             | Used When                          |
+| --------------------- | --------------------------------------- | ---------------------------------- |
+| **Tesseract**         | Open-source OCR engine (local)          | Free plan users without credits    |
+| **Google Cloud Vision** | Cloud-based OCR with superior accuracy | Paid plan users, or free users with credits |
 
-The `OcrProviderFactory` selects the appropriate provider based on configuration. If the primary provider fails and `fallbackEnabled` is `true`, the system falls back to the secondary provider.
+#### Provider Selection Rules
+
+| User Plan | Has Credits? | Provider Used    | Credits Deducted? |
+| --------- | ------------ | ---------------- | ----------------- |
+| Free      | No           | Tesseract        | No                |
+| Free      | Not enough   | Tesseract        | No                |
+| Free      | Yes          | Google Vision    | **Yes** (1 credit per document) |
+| Paid      | Any          | Google Vision    | **No**            |
+
+The `OcrProcessingService.resolveProvider(userId)` method implements this logic by checking the user's subscription via `SubscriptionFeatureService` and credit balance via `CreditBalanceService`.
+
+If the primary provider fails and `fallbackEnabled` is `true`, the system falls back to the secondary provider via the `OcrProviderFactory`.
 
 #### OcrRequest
 
@@ -537,8 +548,11 @@ Input to OCR providers:
 | `collectionId`    | `String`  | Collection identifier                    |
 | `imageUrl`        | `String`  | URL of the file to process               |
 | `mimeType`        | `String`  | MIME type of the file                    |
-| `userId`          | `String`  | User ID (for quota tracking)             |
+| `userId`          | `String`  | User ID (for provider resolution & quota)|
 | `fallbackEnabled` | `boolean` | Whether fallback to secondary is enabled |
+| `startPage`       | `Integer` | Start page for PDFs (1-indexed, optional)|
+| `endPage`         | `Integer` | End page for PDFs (1-indexed, optional)  |
+| `pages`           | `List<Integer>` | Specific pages for PDFs (optional) |
 
 #### OcrResult
 
@@ -569,10 +583,13 @@ Output from OCR providers:
    ├─ Sets OcrData status → PROCESSING
    ├─ Sends "OCR Started" push notification
    ├─ Builds OcrRequest and calls OcrProcessingService
-   │   └─ OcrProviderFactory selects provider
-   │       ├─ Primary provider (Tesseract / Google Vision)
-   │       └─ Fallback if primary fails
+   │   └─ resolveProvider(userId) selects provider:
+   │       ├─ Paid plan → Google Vision
+   │       ├─ Free + credits → Google Vision
+   │       └─ Free + no credits → Tesseract
+   │       (Fallback to secondary provider if primary fails)
    ├─ Updates OcrData with extracted text or error
+   ├─ Deducts 1 credit (only if free plan + Google Vision used)
    ├─ Updates collection status (PROCESSED / FAILED_OCR / PROCESSING)
    ├─ Indexes in Elasticsearch (on COMPLETED)
    └─ Sends "OCR Completed" or "OCR Failed" push notification

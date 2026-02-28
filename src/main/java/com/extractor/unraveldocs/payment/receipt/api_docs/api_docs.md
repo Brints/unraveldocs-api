@@ -24,7 +24,6 @@ The Receipt API provides endpoints for users to view and download their payment 
 | STRIPE | Stripe payment gateway |
 | PAYPAL | PayPal payment gateway |
 | PAYSTACK | Paystack payment gateway |
-| CHAPA | Chapa payment gateway |
 
 ---
 
@@ -69,17 +68,30 @@ Retrieves a paginated list of receipts for the authenticated user.
   "message": "Receipts retrieved successfully",
   "data": [
     {
-      "id": "c5960b7d-58d4-4ab0-9db7-8015d929e54a",
-      "receiptNumber": "RCP-20260116-108835",
+      "id": "98a2933e-100f-456c-9b50-e9f40e2e7ccc",
+      "receiptNumber": "RCP-20260227-081629",
       "paymentProvider": "PAYSTACK",
-      "amount": 2945000.00,
+      "amount": 7750.00,
       "currency": "NGN",
       "paymentMethod": "card",
       "paymentMethodDetails": "**** 4081 (VISA )",
       "description": null,
-      "receiptUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/receipts/RCP-20260116-108835.pdf",
-      "paidAt": "2026-01-16T21:47:40.859287Z",
-      "createdAt": "2026-01-16T21:47:47.263663Z"
+      "receiptUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/receipts/RCP-20260227-081629.pdf",
+      "paidAt": "2026-02-27T22:47:22.493082Z",
+      "createdAt": "2026-02-27T22:47:26.795232Z"
+    },
+    {
+      "id": "66334ac0-4331-438c-9032-a511e8c45175",
+      "receiptNumber": "RCP-20260227-436360",
+      "paymentProvider": "PAYSTACK",
+      "amount": 7750.00,
+      "currency": "NGN",
+      "paymentMethod": "card",
+      "paymentMethodDetails": "**** 4081 (VISA )",
+      "description": null,
+      "receiptUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/receipts/RCP-20260227-436360.pdf",
+      "paidAt": "2026-02-27T15:01:24.492119Z",
+      "createdAt": "2026-02-27T15:01:27.861099Z"
     }
   ]
 }
