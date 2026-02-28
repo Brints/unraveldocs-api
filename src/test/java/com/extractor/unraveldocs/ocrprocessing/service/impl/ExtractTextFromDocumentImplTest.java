@@ -8,21 +8,23 @@ import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
 import com.extractor.unraveldocs.ocrprocessing.impl.ExtractTextFromDocumentImpl;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
-import com.extractor.unraveldocs.ocrprocessing.utils.ExtractImageURL;
+import com.extractor.unraveldocs.ocrprocessing.service.OcrProcessingService;
+import com.extractor.unraveldocs.ocrprocessing.provider.OcrRequest;
+import com.extractor.unraveldocs.ocrprocessing.provider.OcrResult;
+import com.extractor.unraveldocs.ocrprocessing.provider.OcrProviderType;
 import com.extractor.unraveldocs.ocrprocessing.utils.FindAndValidateFileEntry;
 import com.extractor.unraveldocs.storage.service.StorageAllocationService;
-import net.sourceforge.tess4j.TesseractException;
+import com.extractor.unraveldocs.credit.service.CreditBalanceService;
+import com.extractor.unraveldocs.subscription.service.SubscriptionFeatureService;
+import com.extractor.unraveldocs.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +53,18 @@ class ExtractTextFromDocumentImplTest {
     @Mock
     private StorageAllocationService storageAllocationService;
 
+    @Mock
+    private OcrProcessingService ocrProcessingService;
+
+    @Mock
+    private CreditBalanceService creditBalanceService;
+    
+    @Mock
+    private SubscriptionFeatureService subscriptionFeatureService;
+
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private ExtractTextFromDocumentImpl extractTextFromDocumentService;
 
@@ -69,13 +83,10 @@ class ExtractTextFromDocumentImplTest {
                 .documentId(documentId)
                 .fileUrl("https://example.com/image.png")
                 .build();
-
-        // Set the value for the @Value annotated field
-        ReflectionTestUtils.setField(extractTextFromDocumentService, "tesseractDataPath", "/path/to/tessdata");
     }
 
     @Test
-    void extractTextFromDocument_Success_NewOcrData() throws TesseractException, IOException {
+    void extractTextFromDocument_Success_NewOcrData() {
         // Arrange
         when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId,
                 documentCollectionRepository))
@@ -93,45 +104,32 @@ class ExtractTextFromDocumentImplTest {
             copy.setStatus(ocrData.getStatus());
             copy.setExtractedText(ocrData.getExtractedText());
             copy.setErrorMessage(ocrData.getErrorMessage());
-            copy.setAiSummary(ocrData.getAiSummary());
-            copy.setDocumentType(ocrData.getDocumentType());
-            copy.setAiTags(ocrData.getAiTags());
             copy.setCreatedAt(ocrData.getCreatedAt());
             copy.setUpdatedAt(ocrData.getUpdatedAt());
             capturedData.add(copy);
 
-            if (ocrData.getStatus() == OcrStatus.COMPLETED) {
-                ocrData.setExtractedText("extracted text");
-            }
             return ocrData;
         });
 
-        try (MockedStatic<ExtractImageURL> mockedStatic = mockStatic(ExtractImageURL.class)) {
-            mockedStatic.when(() -> ExtractImageURL.extractImageURL(any(), any(), anyString(), any()))
-                    .thenAnswer(invocation -> {
-                        OcrData ocrData = invocation.getArgument(1);
-                        ocrData.setStatus(OcrStatus.COMPLETED);
-                        ocrData.setExtractedText("extracted text");
-                        return null;
-                    });
+        OcrResult mockResult = OcrResult.success("extracted text", OcrProviderType.TESSERACT, 100);
+        when(ocrProcessingService.processOcr(any(OcrRequest.class), eq(userId))).thenReturn(mockResult);
+        when(ocrProcessingService.shouldDeductCredits(eq(userId), any())).thenReturn(false);
 
-            // Act
-            OcrData result = extractTextFromDocumentService.extractTextFromDocument(collectionId, documentId, userId);
+        // Act
+        OcrData result = extractTextFromDocumentService.extractTextFromDocument(collectionId, documentId, userId);
 
-            // Assert
-            assertNotNull(result);
-            assertEquals(OcrStatus.COMPLETED, result.getStatus());
-            assertEquals("extracted text", result.getExtractedText());
-            assertEquals(documentId, result.getDocumentId());
+        // Assert
+        assertNotNull(result);
+        assertEquals(OcrStatus.COMPLETED, result.getStatus());
+        assertEquals("extracted text", result.getExtractedText());
+        assertEquals(documentId, result.getDocumentId());
 
-            verify(ocrDataRepository, times(2)).save(any(OcrData.class));
-            assertEquals(2, capturedData.size());
-            assertEquals(OcrStatus.PROCESSING, capturedData.get(0).getStatus());
-            assertEquals(OcrStatus.COMPLETED, capturedData.get(1).getStatus());
-
-            mockedStatic.verify(
-                    () -> ExtractImageURL.extractImageURL(eq(fileEntry), any(OcrData.class), anyString(), any()));
-        }
+        verify(ocrDataRepository, times(2)).save(any(OcrData.class));
+        assertEquals(2, capturedData.size());
+        assertEquals(OcrStatus.PROCESSING, capturedData.get(0).getStatus());
+        assertEquals(OcrStatus.COMPLETED, capturedData.get(1).getStatus());
+        
+        verify(ocrProcessingService).processOcr(any(OcrRequest.class), eq(userId));
     }
 
     @Test
@@ -159,7 +157,7 @@ class ExtractTextFromDocumentImplTest {
     }
 
     @Test
-    void extractTextFromDocument_Failure_TesseractException() throws TesseractException, IOException {
+    void extractTextFromDocument_Failure_OcrFailed() {
         // Arrange
         when(findAndValidateFileEntry.findAndValidateFileEntry(collectionId, documentId, userId,
                 documentCollectionRepository))
@@ -167,22 +165,19 @@ class ExtractTextFromDocumentImplTest {
         when(ocrDataRepository.findByDocumentId(documentId)).thenReturn(Optional.empty());
         when(ocrDataRepository.save(any(OcrData.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        try (MockedStatic<ExtractImageURL> mockedStatic = mockStatic(ExtractImageURL.class)) {
-            TesseractException tesseractException = new TesseractException("OCR failed");
-            mockedStatic.when(() -> ExtractImageURL.extractImageURL(any(), any(), anyString(), any()))
-                    .thenThrow(tesseractException);
+        OcrResult mockResult = OcrResult.failure("OCR failed", OcrProviderType.TESSERACT, 100);
+        when(ocrProcessingService.processOcr(any(OcrRequest.class), eq(userId))).thenReturn(mockResult);
 
-            // Act
-            extractTextFromDocumentService.extractTextFromDocument(collectionId, documentId, userId);
+        // Act
+        extractTextFromDocumentService.extractTextFromDocument(collectionId, documentId, userId);
 
-            // Assert
-            ArgumentCaptor<OcrData> ocrDataCaptor = ArgumentCaptor.forClass(OcrData.class);
-            verify(ocrDataRepository, times(2)).save(ocrDataCaptor.capture());
+        // Assert
+        ArgumentCaptor<OcrData> ocrDataCaptor = ArgumentCaptor.forClass(OcrData.class);
+        verify(ocrDataRepository, times(2)).save(ocrDataCaptor.capture());
 
-            OcrData finalOcrData = ocrDataCaptor.getAllValues().get(1);
-            assertEquals(OcrStatus.FAILED, finalOcrData.getStatus());
-            assertEquals(tesseractException.getMessage(), finalOcrData.getErrorMessage());
-        }
+        OcrData finalOcrData = ocrDataCaptor.getAllValues().get(1);
+        assertEquals(OcrStatus.FAILED, finalOcrData.getStatus());
+        assertEquals("OCR failed", finalOcrData.getErrorMessage());
     }
 
     @Test
