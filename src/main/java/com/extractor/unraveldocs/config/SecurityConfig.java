@@ -99,7 +99,8 @@ public class SecurityConfig {
                                                                 "/api/v1/paypal/webhook",
                                                                 "/api/v1/paypal/plans",
                                                                 "/api/v1/paypal/return",
-                                                                "/api/v1/paypal/cancel")
+                                                                "/api/v1/paypal/cancel",
+                                                                "/api/v1/currency/**")
                                                 .permitAll()
                                                 .requestMatchers(
                                                                 "/api/v1/admin/**")

@@ -42,10 +42,19 @@ public class CreditPackController {
         private final CreditTransactionRepository transactionRepository;
         private final ResponseBuilderService responseBuilderService;
 
-        @Operation(summary = "List available credit packs", description = "Returns all active credit packs available for purchase")
+        @Operation(
+                summary = "List available credit packs",
+                description = "Returns all active credit packs available for purchase. Use ?currency=NGN to see prices in local currency."
+        )
         @GetMapping("/packs")
-        public ResponseEntity<UnravelDocsResponse<List<CreditPackData>>> getAvailablePacks() {
-                List<CreditPackData> packs = packManagementService.getActivePacks();
+        public ResponseEntity<UnravelDocsResponse<List<CreditPackData>>> getAvailablePacks(
+                        @RequestParam(required = false) String currency) {
+                List<CreditPackData> packs;
+                if (currency != null && !currency.isBlank() && !currency.equalsIgnoreCase("USD")) {
+                        packs = packManagementService.getActivePacksWithCurrency(currency);
+                } else {
+                        packs = packManagementService.getActivePacks();
+                }
                 return ResponseEntity.ok(
                                 responseBuilderService.buildUserResponse(
                                                 packs,
@@ -65,7 +74,10 @@ public class CreditPackController {
                                                 "Credit balance retrieved"));
         }
 
-        @Operation(summary = "Purchase a credit pack", description = "Initializes a credit pack purchase with optional coupon code")
+        @Operation(
+                summary = "Purchase a credit pack",
+                description = "Initializes a credit pack purchase with optional coupon code"
+        )
         @PostMapping("/purchase")
         public ResponseEntity<UnravelDocsResponse<CreditPurchaseData>> purchasePack(
                         @AuthenticationPrincipal User user,
@@ -76,7 +88,10 @@ public class CreditPackController {
                                                 "Payment initialized"));
         }
 
-        @Operation(summary = "Transfer credits to another user", description = "Transfers credits to another user by email. Sender must retain at least 5 credits. Regular users are limited to 30 credits per month.")
+        @Operation(
+                summary = "Transfer credits to another user",
+                description = "Transfers credits to another user by email. Sender must retain at least 5 credits. Regular users are limited to 30 credits per month."
+        )
         @PostMapping("/transfer")
         public ResponseEntity<UnravelDocsResponse<CreditTransferData>> transferCredits(
                         @AuthenticationPrincipal User user,
@@ -88,7 +103,10 @@ public class CreditPackController {
                                                 "Credits transferred successfully"));
         }
 
-        @Operation(summary = "Get transaction history", description = "Returns paginated credit transaction history")
+        @Operation(
+                summary = "Get transaction history",
+                description = "Returns paginated credit transaction history"
+        )
         @GetMapping("/transactions")
         public ResponseEntity<UnravelDocsResponse<Page<CreditTransactionData>>> getTransactions(
                         @AuthenticationPrincipal User user,
@@ -103,7 +121,10 @@ public class CreditPackController {
                                                 "Transactions retrieved"));
         }
 
-        @Operation(summary = "Calculate credit cost", description = "Calculates how many credits are needed to process the uploaded files")
+        @Operation(
+                summary = "Calculate credit cost",
+                description = "Calculates how many credits are needed to process the uploaded files"
+        )
         @PostMapping("/calculate")
         public ResponseEntity<UnravelDocsResponse<PageCountData>> calculateCost(
                         @AuthenticationPrincipal User user,

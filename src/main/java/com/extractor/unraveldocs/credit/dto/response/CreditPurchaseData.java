@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 /**
  * Response DTO for credit pack purchase initialization.
  */
@@ -19,4 +21,9 @@ public class CreditPurchaseData {
     private Integer creditsToReceive;
     private Long amountInCents;
     private Long discountApplied;
+
+    // Currency info
+    private String currency;
+    private String formattedAmount;
+    private BigDecimal exchangeRate;
 }

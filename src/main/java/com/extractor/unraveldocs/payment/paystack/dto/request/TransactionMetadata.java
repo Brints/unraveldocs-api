@@ -1,11 +1,14 @@
 package com.extractor.unraveldocs.payment.paystack.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Map;
 
 /**
  * DTO for transaction metadata sent to Paystack.
@@ -47,4 +50,12 @@ public class TransactionMetadata {
      */
     @JsonProperty("discount_amount")
     private String discountAmount;
+
+    /**
+     * Additional custom fields from the payment request (e.g., creditPackId, type).
+     * These are serialized as top-level fields in the metadata JSON
+     * using @JsonAnyGetter.
+     */
+    @JsonAnyGetter
+    private Map<String, Object> customFields;
 }

@@ -100,6 +100,8 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .currency(request.getCurrency())
                     .description(request.getDescription())
                     .metadata(request.getMetadata())
+                    .returnUrl(request.getCallbackUrl())
+                    .cancelUrl(request.getCancelUrl())
                     .build();
 
             PayPalOrderResponse order = paymentService.createOrder(user, orderRequest);

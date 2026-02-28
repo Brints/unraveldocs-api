@@ -8,6 +8,9 @@ import com.extractor.unraveldocs.credit.model.CreditPack;
 import com.extractor.unraveldocs.credit.repository.CreditPackRepository;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionCurrency;
+import com.extractor.unraveldocs.subscription.dto.ConvertedPrice;
+import com.extractor.unraveldocs.subscription.service.CurrencyConversionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ import java.util.List;
 public class CreditPackManagementService {
 
     private final CreditPackRepository creditPackRepository;
+    private final CurrencyConversionService currencyConversionService;
 
     /**
      * Get all active credit packs (for user-facing listing).
@@ -34,6 +38,20 @@ public class CreditPackManagementService {
     public List<CreditPackData> getActivePacks() {
         return creditPackRepository.findByIsActiveTrue().stream()
                 .map(this::toPackData)
+                .toList();
+    }
+
+    /**
+     * Get all active credit packs with prices converted to the specified currency.
+     *
+     * @param targetCurrencyCode The currency code (e.g., "NGN", "EUR")
+     * @return Packs with both USD and converted prices
+     */
+    public List<CreditPackData> getActivePacksWithCurrency(String targetCurrencyCode) {
+        SubscriptionCurrency targetCurrency = SubscriptionCurrency.fromIdentifier(targetCurrencyCode);
+
+        return creditPackRepository.findByIsActiveTrue().stream()
+                .map(pack -> toPackDataWithCurrency(pack, targetCurrency))
                 .toList();
     }
 
@@ -140,5 +158,30 @@ public class CreditPackManagementService {
                 .creditsIncluded(pack.getCreditsIncluded())
                 .costPerCredit(costPerCredit)
                 .build();
+    }
+
+    private CreditPackData toPackDataWithCurrency(CreditPack pack, SubscriptionCurrency targetCurrency) {
+        CreditPackData data = toPackData(pack);
+
+        // Convert from cents to dollars for the conversion service
+        BigDecimal amountInUsd = BigDecimal.valueOf(pack.getPriceInCents())
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+        ConvertedPrice converted = currencyConversionService.convert(amountInUsd, targetCurrency);
+
+        // Convert back to cents for the response
+        long convertedCents = converted.getConvertedAmount()
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(0, RoundingMode.HALF_UP)
+                .longValue();
+
+        data.setConvertedPriceInCents(convertedCents);
+        data.setConvertedCurrency(targetCurrency.getCode());
+        data.setFormattedPrice(converted.getFormattedPrice());
+        data.setFormattedOriginalPrice(
+                currencyConversionService.formatPrice(amountInUsd, SubscriptionCurrency.USD));
+        data.setExchangeRate(converted.getExchangeRate());
+
+        return data;
     }
 }
