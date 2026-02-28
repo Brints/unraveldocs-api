@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.payment.paypal.controller;
 
+import com.extractor.unraveldocs.payment.paypal.config.PayPalConfig;
 import com.extractor.unraveldocs.payment.paypal.dto.request.CreateOrderRequest;
 import com.extractor.unraveldocs.payment.paypal.dto.request.CreateSubscriptionRequest;
 import com.extractor.unraveldocs.payment.paypal.dto.request.RefundOrderRequest;
@@ -28,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.Map;
 
 /**
@@ -44,6 +46,7 @@ public class PayPalPaymentController {
         private final PayPalSubscriptionService subscriptionService;
         private final PayPalPlanSetupService planSetupService;
         private final UserSubscriptionService userSubscriptionService;
+        private final PayPalConfig payPalConfig;
 
         // ==================== PLAN ENDPOINTS (PUBLIC) ====================
 
@@ -265,31 +268,85 @@ public class PayPalPaymentController {
         // ==================== CALLBACK ENDPOINTS ====================
 
         @GetMapping("/return")
-        @Operation(summary = "Payment return callback", description = "Handle return after PayPal approval")
-        public ResponseEntity<Map<String, Object>> handleReturn(
+        @Operation(summary = "Payment return callback", description = "Handle return after PayPal approval - captures the order and redirects to frontend")
+        public ResponseEntity<Void> handleReturn(
                         @RequestParam(required = false) String token,
-                        @RequestParam(required = false) String PayerID) {
+                        @RequestParam(required = false) String PayerID,
+                        @RequestParam(value = "redirect_url", required = false) String redirectUrlParam) {
 
-                log.info("PayPal returns callback with token and PayerID");
+                log.info("PayPal return callback - token: {}, PayerID: {}, redirect_url: {}", token, PayerID,
+                                redirectUrlParam);
 
-                return ResponseEntity.ok(Map.of(
-                                "status", true,
-                                "message", "Return callback received",
-                                "data", Map.of(
-                                                "token", token != null ? token : "",
-                                                "payerId", PayerID != null ? PayerID : "")));
+                String baseRedirectUrl = (redirectUrlParam != null && !redirectUrlParam.isBlank())
+                                ? redirectUrlParam
+                                : payPalConfig.getFrontendSuccessUrl();
+                String redirectUrl = baseRedirectUrl;
+
+                if (token == null || token.isBlank()) {
+                        log.warn("PayPal return callback received without token");
+                        String cancelBase = (redirectUrlParam != null && !redirectUrlParam.isBlank())
+                                        ? redirectUrlParam
+                                        : payPalConfig.getFrontendCancelUrl();
+                        return ResponseEntity.status(HttpStatus.FOUND)
+                                        .location(URI.create(appendQueryParam(cancelBase, "error", "missing_token")))
+                                        .build();
+                }
+
+                try {
+                        // The token IS the PayPal order ID - capture the payment
+                        PayPalCaptureResponse capture = paymentService.captureOrder(token);
+
+                        log.info("PayPal order captured: orderId={}, captureId={}, status={}",
+                                        token, capture.getId(), capture.getStatus());
+
+                        // Redirect to frontend success page with order details
+                        redirectUrl = appendQueryParam(redirectUrl, "orderId", token);
+                        redirectUrl = appendQueryParam(redirectUrl, "captureId",
+                                        capture.getId() != null ? capture.getId() : "");
+                        redirectUrl = appendQueryParam(redirectUrl, "status", capture.getStatus());
+
+                } catch (Exception e) {
+                        log.error("Failed to capture PayPal order {}: {}", token, e.getMessage(), e);
+                        String cancelBase = (redirectUrlParam != null && !redirectUrlParam.isBlank())
+                                        ? redirectUrlParam.replace("success", "cancel") // Rough guess for fallback if
+                                                                                        // it's a success url
+                                        : payPalConfig.getFrontendCancelUrl();
+                        redirectUrl = appendQueryParam(cancelBase, "error", "capture_failed");
+                        redirectUrl = appendQueryParam(redirectUrl, "orderId", token);
+                }
+
+                return ResponseEntity.status(HttpStatus.FOUND)
+                                .location(URI.create(redirectUrl))
+                                .build();
         }
 
         @GetMapping("/cancel")
         @Operation(summary = "Payment cancel callback", description = "Handle cancellation from PayPal")
-        public ResponseEntity<Map<String, Object>> handleCancel(@RequestParam(required = false) String token) {
+        public ResponseEntity<Void> handleCancel(
+                        @RequestParam(required = false) String token,
+                        @RequestParam(value = "redirect_url", required = false) String redirectUrlParam) {
 
-                log.info("PayPal calls cancel callback with token");
+                log.info("PayPal cancel callback - token: {}", token);
 
-                return ResponseEntity.ok(Map.of(
-                                "status", false,
-                                "message", "Payment cancelled by user",
-                                "data", Map.of(
-                                                "token", token != null ? token : "")));
+                String redirectUrl = (redirectUrlParam != null && !redirectUrlParam.isBlank())
+                                ? redirectUrlParam
+                                : payPalConfig.getFrontendCancelUrl();
+
+                if (token != null && !token.isBlank()) {
+                        redirectUrl = appendQueryParam(redirectUrl, "orderId", token);
+                }
+
+                return ResponseEntity.status(HttpStatus.FOUND)
+                                .location(URI.create(redirectUrl))
+                                .build();
+        }
+
+        // Helper to append query parameters safely
+        private String appendQueryParam(String url, String key, String value) {
+                if (url.contains("?")) {
+                        return url + "&" + key + "=" + value;
+                } else {
+                        return url + "?" + key + "=" + value;
+                }
         }
 }
