@@ -77,7 +77,6 @@ public class StripePaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (StripeException e) {
-            log.error("Failed to initialize Stripe subscription payment: {}", e.getMessage());
             return InitializePaymentResponse.builder()
                     .gateway(PaymentGateway.STRIPE)
                     .success(false)
@@ -116,7 +115,6 @@ public class StripePaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (StripeException e) {
-            log.error("Failed to create Stripe payment: {}", e.getMessage());
             return PaymentResponse.builder()
                     .provider(PaymentGateway.STRIPE)
                     .success(false)
@@ -166,9 +164,6 @@ public class StripePaymentGateway implements PaymentGatewayService {
         }
 
         Session session = Session.create(paramsBuilder.build());
-
-        log.info("Created Stripe checkout session {} for credit purchase by user {}",
-                session.getId(), user.getId());
 
         return PaymentResponse.builder()
                 .provider(PaymentGateway.STRIPE)
@@ -230,7 +225,6 @@ public class StripePaymentGateway implements PaymentGatewayService {
                     .build();
 
         } catch (StripeException e) {
-            log.error("Failed to process Stripe refund: {}", e.getMessage());
             return RefundResponse.builder()
                     .provider(PaymentGateway.STRIPE)
                     .success(false)
@@ -297,8 +291,6 @@ public class StripePaymentGateway implements PaymentGatewayService {
 
     @Override
     public SubscriptionResponse changePlan(String providerSubscriptionId, String newPriceId) {
-        // This would need to be implemented in StripeService
-        // For now, return unsupported
         return SubscriptionResponse.builder()
                 .provider(PaymentGateway.STRIPE)
                 .success(false)
@@ -344,8 +336,6 @@ public class StripePaymentGateway implements PaymentGatewayService {
 
     @Override
     public String ensurePlanExists(SubscriptionPlan plan) {
-        // Stripe plans are created via the dashboard or Products API
-        // Return the existing price ID
         return plan.getStripePriceId();
     }
 
@@ -382,7 +372,6 @@ public class StripePaymentGateway implements PaymentGatewayService {
 
     private SubscriptionStatus mapSubscriptionStatus(String stripeStatus) {
         return switch (stripeStatus.toLowerCase()) {
-            case "active" -> SubscriptionStatus.ACTIVE;
             case "trialing" -> SubscriptionStatus.TRIALING;
             case "past_due" -> SubscriptionStatus.PAST_DUE;
             case "canceled" -> SubscriptionStatus.CANCELED;
