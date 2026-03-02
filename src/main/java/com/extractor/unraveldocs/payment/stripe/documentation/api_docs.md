@@ -526,7 +526,7 @@ Cancels a subscription.
   "currentPeriodStart": 1704067200,
   "currentPeriodEnd": 1706745600,
   "cancelAtPeriodEnd": true,
-  "items": [...]
+  "items": []
 }
 ```
 
@@ -553,8 +553,7 @@ Pauses a subscription.
 ```json
 {
   "id": "sub_abc123",
-  "status": "paused",
-  ...
+  "status": "paused"
 }
 ```
 
@@ -581,8 +580,7 @@ Resumes a paused subscription.
 ```json
 {
   "id": "sub_abc123",
-  "status": "active",
-  ...
+  "status": "active"
 }
 ```
 

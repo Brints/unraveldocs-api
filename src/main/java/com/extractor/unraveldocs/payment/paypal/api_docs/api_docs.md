@@ -195,7 +195,7 @@ Retrieves PayPal order details.
     "currency": "USD",
     "approvalUrl": null,
     "captureUrl": null,
-    "links": [...],
+    "links": [],
     "createTime": "2024-01-01T12:00:00Z",
     "updateTime": "2024-01-01T12:05:00Z",
     "payer": {
@@ -325,18 +325,51 @@ Retrieves paginated payment history for the authenticated user.
 {
   "content": [
     {
-      "id": "uuid",
-      "orderId": "8MC585209K746392H",
-      "userId": "user_uuid",
-      "amount": 49.99,
+      "id": "853773b2-b96a-44df-8dd9-43df4d24400f",
+      "userId": "3e3c6fc7-e48b-4682-ab54-0e9375a039b8",
+      "userEmail": "afiaaniebiet0@gmail.com",
+      "order_id": "9Y909493UC801463M",
+      "capture_id": "3SV16510MT252460G",
+      "authorization_id": null,
+      "subscription_id": null,
+      "payment_type": "CREDIT_PURCHASE",
+      "status": "SUCCEEDED",
+      "amount": 5.00,
       "currency": "USD",
-      "status": "COMPLETED",
-      "createdAt": "2024-01-01T12:00:00Z"
+      "amount_refunded": 0.00,
+      "paypal_fee": null,
+      "net_amount": null,
+      "intent": "CAPTURE",
+      "payer_id": null,
+      "payer_email": null,
+      "description": "Credit Pack: Starter Pack (20 credits)",
+      "failure_message": null,
+      "completed_at": "2026-02-28T16:57:29.030624Z",
+      "created_at": "2026-02-28T16:56:35.921467Z"
     }
   ],
+  "empty": false,
+  "first": true,
+  "last": true,
+  "number": 0,
+  "numberOfElements": 1,
   "pageable": {
+    "offset": 0,
     "pageNumber": 0,
-    "pageSize": 20
+    "pageSize": 20,
+    "paged": true,
+    "sort": {
+      "empty": true,
+      "sorted": false,
+      "unsorted": true
+    },
+    "unpaged": false
+  },
+  "size": 20,
+  "sort": {
+    "empty": true,
+    "sorted": false,
+    "unsorted": true
   },
   "totalElements": 1,
   "totalPages": 1

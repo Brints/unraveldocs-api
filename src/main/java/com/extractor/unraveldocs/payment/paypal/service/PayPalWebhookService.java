@@ -13,6 +13,9 @@ import com.extractor.unraveldocs.payment.paypal.model.PayPalSubscription;
 import com.extractor.unraveldocs.payment.paypal.model.PayPalWebhookEvent;
 import com.extractor.unraveldocs.payment.paypal.repository.PayPalSubscriptionRepository;
 import com.extractor.unraveldocs.payment.paypal.repository.PayPalWebhookEventRepository;
+import com.extractor.unraveldocs.payment.receipt.dto.ReceiptData;
+import com.extractor.unraveldocs.payment.receipt.enums.PaymentProvider;
+import com.extractor.unraveldocs.payment.receipt.events.ReceiptEventPublisher;
 import com.extractor.unraveldocs.subscription.datamodel.BillingIntervalUnit;
 import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
@@ -23,9 +26,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
@@ -63,6 +68,13 @@ public class PayPalWebhookService {
     private static final String BILLING_SUBSCRIPTION_SUSPENDED = "BILLING.SUBSCRIPTION.SUSPENDED";
     private static final String BILLING_SUBSCRIPTION_EXPIRED = "BILLING.SUBSCRIPTION.EXPIRED";
     private static final String BILLING_SUBSCRIPTION_PAYMENT_FAILED = "BILLING.SUBSCRIPTION.PAYMENT.FAILED";
+
+    private ReceiptEventPublisher receiptEventPublisher;
+
+    @Autowired(required = false)
+    public void setReceiptEventPublisher(ReceiptEventPublisher receiptEventPublisher) {
+        this.receiptEventPublisher = receiptEventPublisher;
+    }
 
     /**
      * Check if event has already been processed (idempotency).
@@ -164,6 +176,9 @@ public class PayPalWebhookService {
                     // Update user subscription from payment (for one-time payments with plan)
                     updateUserSubscriptionFromPayment(payment);
                 }
+
+                // Generate receipt for the payment
+                generateReceipt(payment);
             });
 
         } catch (Exception e) {
@@ -604,6 +619,43 @@ public class PayPalWebhookService {
             log.error("Failed to complete credit pack purchase for payment {}: {}",
                     sanitizer.sanitizeLogging(payment.getOrderId()), e.getMessage(), e);
             // Don't rethrow - credit fulfillment failure shouldn't fail the entire webhook
+        }
+    }
+
+    /**
+     * Generate receipt for PayPal payment
+     */
+    private void generateReceipt(PayPalPayment payment) {
+        try {
+            User user = payment.getUser();
+            BigDecimal amount = payment.getAmount();
+
+            ReceiptData receiptData = ReceiptData.builder()
+                    .userId(user.getId())
+                    .customerName(user.getFirstName() + " " + user.getLastName())
+                    .customerEmail(user.getEmail())
+                    .paymentProvider(PaymentProvider.PAYPAL)
+                    .externalPaymentId(payment.getOrderId())
+                    .amount(amount)
+                    .currency(payment.getCurrency() != null ? payment.getCurrency().toUpperCase() : "USD")
+                    .paymentMethod("paypal")
+                    .paymentMethodDetails(payment.getPayerEmail() != null ? payment.getPayerEmail() : "PayPal Account")
+                    .description(payment.getDescription() != null ? payment.getDescription() : "PayPal Payment")
+                    .paidAt(payment.getCompletedAt() != null ? payment.getCompletedAt() : OffsetDateTime.now())
+                    .build();
+
+            if (receiptEventPublisher != null) {
+                receiptEventPublisher.publishReceiptRequest(receiptData);
+                log.info("Published receipt generation request for PayPal payment: {}",
+                        sanitizer.sanitizeLogging(payment.getOrderId()));
+            } else {
+                log.debug("Receipt event publisher not available, skipping receipt generation for payment: {}",
+                        sanitizer.sanitizeLogging(payment.getOrderId()));
+            }
+        } catch (Exception e) {
+            log.error("Failed to generate receipt for payment {}: {}",
+                    sanitizer.sanitizeLogging(payment.getOrderId()), e.getMessage());
+            // Don't rethrow - receipt generation failure shouldn't fail the webhook
         }
     }
 }
