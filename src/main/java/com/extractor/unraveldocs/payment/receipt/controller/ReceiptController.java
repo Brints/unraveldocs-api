@@ -28,97 +28,144 @@ import java.util.List;
 @Tag(name = "Receipts", description = "Receipt management endpoints")
 public class ReceiptController {
 
-    private final ReceiptRepository receiptRepository;
-    private final ResponseBuilderService responseBuilderService;
+        private final ReceiptRepository receiptRepository;
+        private final ResponseBuilderService responseBuilderService;
 
-    @Operation(summary = "Get user's receipts", description = "Retrieve paginated list of receipts for the authenticated user")
-    @GetMapping
-    public ResponseEntity<UnravelDocsResponse<List<ReceiptResponseDto>>> getUserReceipts(
-            @AuthenticationPrincipal User user,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+        @Operation(summary = "Get user's receipts", description = "Retrieve paginated list of receipts for the authenticated user")
+        @GetMapping
+        public ResponseEntity<UnravelDocsResponse<Page<ReceiptResponseDto>>> getUserReceipts(
+                        @AuthenticationPrincipal User user,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Receipt> receiptsPage = receiptRepository.findByUserIdOrderByCreatedAtDesc(user.getId(), pageable);
+                Pageable pageable = PageRequest.of(page, size);
+                Page<Receipt> receiptsPage = receiptRepository.findByUserIdOrderByCreatedAtDesc(user.getId(), pageable);
 
-        List<ReceiptResponseDto> receipts = receiptsPage.getContent().stream()
-                .map(this::toResponseDto)
-                .toList();
+                Page<ReceiptResponseDto> receiptsPageDto = receiptsPage.map(this::toResponseDto);
 
-        UnravelDocsResponse<List<ReceiptResponseDto>> response = responseBuilderService.buildUserResponse(
-                receipts,
-                HttpStatus.OK,
-                "Receipts retrieved successfully"
-        );
+                UnravelDocsResponse<Page<ReceiptResponseDto>> response = responseBuilderService.buildUserResponse(
+                                receiptsPageDto,
+                                HttpStatus.OK,
+                                "Receipts retrieved successfully");
 
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "Get receipt by number", description = "Retrieve a specific receipt by its receipt number")
-    @GetMapping("/{receiptNumber}")
-    public ResponseEntity<UnravelDocsResponse<ReceiptResponseDto>> getReceiptByNumber(
-            @AuthenticationPrincipal User user,
-            @PathVariable String receiptNumber) {
-
-        Receipt receipt = receiptRepository.findByReceiptNumber(receiptNumber)
-                .orElseThrow(() -> new NotFoundException("Receipt not found: " + receiptNumber));
-
-        // Verify ownership
-        if (!receipt.getUser().getId().equals(user.getId())) {
-            throw new UnauthorizedException("Access denied to receipt: " + receiptNumber);
+                return ResponseEntity.ok(response);
         }
 
-        ReceiptResponseDto responseDto = toResponseDto(receipt);
+        @Operation(summary = "Get receipt by number", description = "Retrieve a specific receipt by its receipt number")
+        @GetMapping("/{receiptNumber}")
+        public ResponseEntity<UnravelDocsResponse<ReceiptResponseDto>> getReceiptByNumber(
+                        @AuthenticationPrincipal User user,
+                        @PathVariable String receiptNumber) {
 
-        UnravelDocsResponse<ReceiptResponseDto> response = responseBuilderService.buildUserResponse(
-                responseDto,
-                HttpStatus.OK,
-                "Receipt retrieved successfully"
-        );
+                Receipt receipt = receiptRepository.findByReceiptNumber(receiptNumber)
+                                .orElseThrow(() -> new NotFoundException("Receipt not found: " + receiptNumber));
 
-        return ResponseEntity.ok(response);
-    }
+                // Verify ownership
+                if (!receipt.getUser().getId().equals(user.getId())) {
+                        throw new UnauthorizedException("Access denied to receipt: " + receiptNumber);
+                }
 
-    @Operation(summary = "Download receipt", description = "Redirect to the receipt PDF download URL")
-    @GetMapping("/{receiptNumber}/download")
-    public ResponseEntity<UnravelDocsResponse<String>> downloadReceipt(
-            @AuthenticationPrincipal User user,
-            @PathVariable String receiptNumber) {
+                ReceiptResponseDto responseDto = toResponseDto(receipt);
 
-        Receipt receipt = receiptRepository.findByReceiptNumber(receiptNumber)
-                .orElseThrow(() -> new NotFoundException("Receipt not found: " + receiptNumber));
+                UnravelDocsResponse<ReceiptResponseDto> response = responseBuilderService.buildUserResponse(
+                                responseDto,
+                                HttpStatus.OK,
+                                "Receipt retrieved successfully");
 
-        // Verify ownership
-        if (!receipt.getUser().getId().equals(user.getId())) {
-            throw new UnauthorizedException("Access denied to receipt: " + receiptNumber);
+                return ResponseEntity.ok(response);
         }
 
-        if (receipt.getReceiptUrl() == null || receipt.getReceiptUrl().isEmpty()) {
-            throw new NotFoundException("Receipt PDF not available: " + receiptNumber);
+        @Operation(summary = "Download receipt", description = "Redirect to the receipt PDF download URL")
+        @GetMapping("/{receiptNumber}/download")
+        public ResponseEntity<UnravelDocsResponse<String>> downloadReceipt(
+                        @AuthenticationPrincipal User user,
+                        @PathVariable String receiptNumber) {
+
+                Receipt receipt = receiptRepository.findByReceiptNumber(receiptNumber)
+                                .orElseThrow(() -> new NotFoundException("Receipt not found: " + receiptNumber));
+
+                // Verify ownership
+                if (!receipt.getUser().getId().equals(user.getId())) {
+                        throw new UnauthorizedException("Access denied to receipt: " + receiptNumber);
+                }
+
+                if (receipt.getReceiptUrl() == null || receipt.getReceiptUrl().isEmpty()) {
+                        throw new NotFoundException("Receipt PDF not available: " + receiptNumber);
+                }
+
+                UnravelDocsResponse<String> response = responseBuilderService.buildUserResponse(
+                                receipt.getReceiptUrl(),
+                                HttpStatus.OK,
+                                "Receipt download URL retrieved");
+
+                return ResponseEntity.ok(response);
         }
 
-        UnravelDocsResponse<String> response = responseBuilderService.buildUserResponse(
-                receipt.getReceiptUrl(),
-                HttpStatus.OK,
-                "Receipt download URL retrieved"
-        );
+        @Operation(summary = "Delete receipt", description = "Delete a specific receipt by its receipt number")
+        @DeleteMapping("/{receiptNumber}")
+        public ResponseEntity<UnravelDocsResponse<Void>> deleteReceipt(
+                        @AuthenticationPrincipal User user,
+                        @PathVariable String receiptNumber) {
 
-        return ResponseEntity.ok(response);
-    }
+                Receipt receipt = receiptRepository.findByReceiptNumber(receiptNumber)
+                                .orElseThrow(() -> new NotFoundException("Receipt not found: " + receiptNumber));
 
-    private ReceiptResponseDto toResponseDto(Receipt receipt) {
-        return ReceiptResponseDto.builder()
-                .id(receipt.getId())
-                .receiptNumber(receipt.getReceiptNumber())
-                .paymentProvider(receipt.getPaymentProvider())
-                .amount(receipt.getAmount())
-                .currency(receipt.getCurrency())
-                .paymentMethod(receipt.getPaymentMethod())
-                .paymentMethodDetails(receipt.getPaymentMethodDetails())
-                .description(receipt.getDescription())
-                .receiptUrl(receipt.getReceiptUrl())
-                .paidAt(receipt.getPaidAt())
-                .createdAt(receipt.getCreatedAt())
-                .build();
-    }
+                // Verify ownership
+                if (!receipt.getUser().getId().equals(user.getId())) {
+                        throw new UnauthorizedException("Access denied to receipt: " + receiptNumber);
+                }
+
+                receiptRepository.delete(receipt);
+
+                UnravelDocsResponse<Void> response = responseBuilderService.buildVoidResponse(
+                                HttpStatus.OK,
+                                "Receipt deleted successfully");
+
+                return ResponseEntity.ok(response);
+        }
+
+        @Operation(summary = "Delete multiple receipts", description = "Delete multiple receipts by their receipt numbers via query parameter")
+        @DeleteMapping
+        public ResponseEntity<UnravelDocsResponse<Void>> deleteReceipts(
+                        @AuthenticationPrincipal User user,
+                        @RequestParam List<String> receiptNumbers) {
+
+                List<Receipt> receipts = receiptNumbers.stream()
+                                .map(receiptNumber -> receiptRepository.findByReceiptNumber(receiptNumber)
+                                                .orElseThrow(() -> new NotFoundException(
+                                                                "Receipt not found: " + receiptNumber)))
+                                .toList();
+
+                // Verify ownership
+                boolean hasUnauthorized = receipts.stream()
+                                .anyMatch(receipt -> !receipt.getUser().getId().equals(user.getId()));
+
+                if (hasUnauthorized) {
+                        throw new UnauthorizedException("Access denied to one or more receipts");
+                }
+
+                receiptRepository.deleteAll(receipts);
+
+                UnravelDocsResponse<Void> response = responseBuilderService.buildVoidResponse(
+                                HttpStatus.OK,
+                                "Receipts deleted successfully");
+
+                return ResponseEntity.ok(response);
+        }
+
+        private ReceiptResponseDto toResponseDto(Receipt receipt) {
+                return ReceiptResponseDto.builder()
+                                .id(receipt.getId())
+                                .receiptNumber(receipt.getReceiptNumber())
+                                .paymentProvider(receipt.getPaymentProvider())
+                                .amount(receipt.getAmount())
+                                .currency(receipt.getCurrency())
+                                .paymentMethod(receipt.getPaymentMethod())
+                                .paymentMethodDetails(receipt.getPaymentMethodDetails())
+                                .description(receipt.getDescription())
+                                .receiptUrl(receipt.getReceiptUrl())
+                                .paidAt(receipt.getPaidAt())
+                                .createdAt(receipt.getCreatedAt())
+                                .build();
+        }
 }

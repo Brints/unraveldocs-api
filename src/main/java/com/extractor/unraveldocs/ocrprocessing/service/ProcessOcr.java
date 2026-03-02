@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.ocrprocessing.service;
 
+import com.extractor.unraveldocs.credit.service.CreditBalanceService;
 import com.extractor.unraveldocs.documents.datamodel.DocumentStatus;
 import com.extractor.unraveldocs.documents.model.DocumentCollection;
 import com.extractor.unraveldocs.documents.model.FileEntry;
@@ -40,6 +41,7 @@ public class ProcessOcr implements ProcessOcrService {
     private final SanitizeLogging sanitizeLogging;
     private final OcrDataRepository ocrDataRepository;
     private final OcrProcessingService ocrProcessingService;
+    private final CreditBalanceService creditBalanceService;
     private final UserRepository userRepository;
     private final Optional<ElasticsearchIndexingService> elasticsearchIndexingService;
     private final NotificationService notificationService;
@@ -79,12 +81,12 @@ public class ProcessOcr implements ProcessOcrService {
             // Build OCR request using the new abstraction
             OcrRequest ocrRequest = buildOcrRequest(fileEntry, collection);
 
-            // Get user info for quota tracking
+            // Get user ID
             String userId = collection.getUser().getId();
-            String userTier = getUserTier(userId);
 
-            // Process using the new provider abstraction
-            OcrResult result = ocrProcessingService.processOcr(ocrRequest, userId, userTier);
+            // Process using provider abstraction (provider resolved internally by plan +
+            // credits)
+            OcrResult result = ocrProcessingService.processOcr(ocrRequest, userId);
 
             // Update OCR data with result
             updateOcrDataFromResult(ocrData, result);
@@ -92,6 +94,24 @@ public class ProcessOcr implements ProcessOcrService {
             log.info("OCR text extraction completed for document: {} using provider: {}",
                     sanitizeLogging.sanitizeLogging(documentId),
                     result.getProviderType());
+
+            // Deduct credits only for free plan users when Google Vision was used
+            if (result.isSuccess() && ocrProcessingService.shouldDeductCredits(userId, result.getProviderType())) {
+                try {
+                    userRepository.findById(userId).ifPresent(user -> {
+                        if (creditBalanceService.hasEnoughCredits(userId, 1)) {
+                            creditBalanceService.deductCredits(user, 1, documentId,
+                                    "OCR processing (Google Vision) for document " + documentId);
+                            log.info("Deducted 1 credit for Google Vision OCR of document {} for user {}",
+                                    sanitizeLogging.sanitizeLogging(documentId),
+                                    sanitizeLogging.sanitizeLogging(userId));
+                        }
+                    });
+                } catch (Exception e) {
+                    log.error("Failed to deduct credit for user {}: {}",
+                            sanitizeLogging.sanitizeLogging(userId), e.getMessage(), e);
+                }
+            }
 
             // Send OCR completed notification
             sendOcrNotification(collection.getUser().getId(), NotificationType.OCR_PROCESSING_COMPLETED,
@@ -148,30 +168,6 @@ public class ProcessOcr implements ProcessOcrService {
         } else {
             ocrData.setStatus(OcrStatus.FAILED);
             ocrData.setErrorMessage(result.getErrorMessage());
-        }
-    }
-
-    /**
-     * Get user subscription tier for quota tracking.
-     */
-    private String getUserTier(String userId) {
-        if (userId == null) {
-            return "free";
-        }
-
-        try {
-            return userRepository.findById(userId)
-                    .map(user -> {
-                        if (user.getSubscription() != null &&
-                                user.getSubscription().getPlan() != null) {
-                            return user.getSubscription().getPlan().getName().name().toLowerCase();
-                        }
-                        return "free";
-                    })
-                    .orElse("free");
-        } catch (Exception e) {
-            log.warn("Failed to get user tier for {}, defaulting to free: {}", userId, e.getMessage());
-            return "free";
         }
     }
 

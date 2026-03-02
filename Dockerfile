@@ -29,13 +29,22 @@ FROM eclipse-temurin:25-jre
 # Set the working directory inside the container
 WORKDIR /app
 
-# Install Tesseract OCR engine and English language data (libtesseract-dev not needed at runtime)
+# Install Tesseract OCR engine, English language data, and native libraries for Tess4J/JNA
+# - tesseract-ocr: the OCR engine CLI
+# - tesseract-ocr-eng: English trained data
+# - libleptonica-dev: provides libleptonica.so symlink needed by JNA (lept4j)
+# - libtesseract-dev: provides libtesseract.so symlink needed by JNA (tess4j)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng && \
+    apt-get install -y --no-install-recommends \
+        tesseract-ocr \
+        tesseract-ocr-eng \
+        libleptonica-dev \
+        libtesseract-dev && \
     rm -rf /var/lib/apt/lists/* && \
     echo "--- Tesseract verification ---" && \
     tesseract --version && \
     find /usr/share/tesseract-ocr -name "eng.traineddata" 2>/dev/null && \
+    ldconfig -p | grep -E "leptonica|tesseract" && \
     echo "--- End verification ---"
 
 # Copy the packaged JAR from the build stage

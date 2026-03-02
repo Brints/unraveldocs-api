@@ -6,6 +6,7 @@ import com.extractor.unraveldocs.payment.common.enums.PaymentGateway;
 import com.extractor.unraveldocs.payment.common.service.PaymentGatewayService;
 import com.extractor.unraveldocs.payment.enums.PaymentStatus;
 import com.extractor.unraveldocs.payment.enums.SubscriptionStatus;
+import com.extractor.unraveldocs.payment.paypal.config.PayPalConfig;
 import com.extractor.unraveldocs.payment.paypal.dto.request.CreateOrderRequest;
 import com.extractor.unraveldocs.payment.paypal.dto.request.CreateSubscriptionRequest;
 import com.extractor.unraveldocs.payment.paypal.dto.request.RefundOrderRequest;
@@ -22,6 +23,7 @@ import com.extractor.unraveldocs.user.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -39,6 +41,7 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
     private final PayPalPaymentService paymentService;
     private final PayPalCustomerService customerService;
     private final PayPalSubscriptionService subscriptionService;
+    private final PayPalConfig payPalConfig;
     private final SanitizeLogging sanitizer;
 
     @Override
@@ -56,8 +59,14 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
 
             CreateSubscriptionRequest subRequest = CreateSubscriptionRequest.builder()
                     .planId(plan.getPaypalPlanCode())
-                    .returnUrl(request.getCallbackUrl())
-                    .cancelUrl(request.getCancelUrl())
+                    .returnUrl(payPalConfig.getReturnUrl() != null && !payPalConfig.getReturnUrl().isBlank()
+                            ? UriComponentsBuilder.fromUriString(payPalConfig.getReturnUrl())
+                                    .queryParam("redirect_url", request.getCallbackUrl()).build().toUriString()
+                            : request.getCallbackUrl())
+                    .cancelUrl(payPalConfig.getCancelUrl() != null && !payPalConfig.getCancelUrl().isBlank()
+                            ? UriComponentsBuilder.fromUriString(payPalConfig.getCancelUrl())
+                                    .queryParam("redirect_url", request.getCancelUrl()).build().toUriString()
+                            : request.getCancelUrl())
                     .customId(user.getId())
                     .build();
 
@@ -100,8 +109,14 @@ public class PayPalPaymentGateway implements PaymentGatewayService {
                     .currency(request.getCurrency())
                     .description(request.getDescription())
                     .metadata(request.getMetadata())
-                    .returnUrl(request.getCallbackUrl())
-                    .cancelUrl(request.getCancelUrl())
+                    .returnUrl(payPalConfig.getReturnUrl() != null && !payPalConfig.getReturnUrl().isBlank()
+                            ? UriComponentsBuilder.fromUriString(payPalConfig.getReturnUrl())
+                                    .queryParam("redirect_url", request.getCallbackUrl()).build().toUriString()
+                            : request.getCallbackUrl())
+                    .cancelUrl(payPalConfig.getCancelUrl() != null && !payPalConfig.getCancelUrl().isBlank()
+                            ? UriComponentsBuilder.fromUriString(payPalConfig.getCancelUrl())
+                                    .queryParam("redirect_url", request.getCancelUrl()).build().toUriString()
+                            : request.getCancelUrl())
                     .build();
 
             PayPalOrderResponse order = paymentService.createOrder(user, orderRequest);

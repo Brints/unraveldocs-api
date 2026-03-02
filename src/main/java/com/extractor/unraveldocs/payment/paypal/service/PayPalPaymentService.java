@@ -153,7 +153,6 @@ public class PayPalPaymentService {
      */
     @Transactional
     public PayPalCaptureResponse captureOrder(String orderId) {
-        log.info("Capturing PayPal order: {}", sanitizer.sanitizeLogging(orderId));
 
         try {
             String response = paypalRestClient.post()
@@ -168,9 +167,7 @@ public class PayPalPaymentService {
             // Update payment record
             updatePaymentAfterCapture(orderId, captureResponse);
 
-            log.info("Captured PayPal order: {}, status: {}",
-                    sanitizer.sanitizeLogging(orderId),
-                    sanitizer.sanitizeLogging(captureResponse.getStatus()));
+            log.info("Captured PayPal order: status: {}", sanitizer.sanitizeLogging(captureResponse.getStatus()));
             return captureResponse;
 
         } catch (PayPalPaymentException e) {
@@ -185,7 +182,6 @@ public class PayPalPaymentService {
      * Get order details from PayPal.
      */
     public PayPalOrderResponse getOrderDetails(String orderId) {
-        log.debug("Getting PayPal order details: {}", sanitizer.sanitizeLogging(orderId));
 
         try {
             String response = paypalRestClient.get()

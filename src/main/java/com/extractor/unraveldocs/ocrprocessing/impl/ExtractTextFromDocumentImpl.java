@@ -4,29 +4,23 @@ import com.extractor.unraveldocs.documents.model.FileEntry;
 import com.extractor.unraveldocs.documents.repository.DocumentCollectionRepository;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.ocrprocessing.datamodel.OcrStatus;
-import com.extractor.unraveldocs.ocrprocessing.dto.request.PdfPageRange;
 import com.extractor.unraveldocs.ocrprocessing.interfaces.ExtractTextFromDocumentService;
 import com.extractor.unraveldocs.ocrprocessing.model.OcrData;
+import com.extractor.unraveldocs.ocrprocessing.provider.OcrRequest;
+import com.extractor.unraveldocs.ocrprocessing.provider.OcrResult;
 import com.extractor.unraveldocs.ocrprocessing.repository.OcrDataRepository;
+import com.extractor.unraveldocs.ocrprocessing.service.OcrProcessingService;
 import com.extractor.unraveldocs.ocrprocessing.utils.FindAndValidateFileEntry;
 import com.extractor.unraveldocs.credit.service.CreditBalanceService;
-import com.extractor.unraveldocs.subscription.service.SubscriptionFeatureService;
-import com.extractor.unraveldocs.storage.service.StorageAllocationService;
-import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.sourceforge.tess4j.TesseractException;
 import org.hibernate.service.spi.ServiceException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-
-import static com.extractor.unraveldocs.ocrprocessing.utils.ExtractImageURL.extractImageURL;
 
 @Slf4j
 @Service
@@ -36,13 +30,9 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
     private final OcrDataRepository ocrDataRepository;
     private final FindAndValidateFileEntry validateFileEntry;
     private final SanitizeLogging sanitizer;
-    private final StorageAllocationService storageAllocationService;
+    private final OcrProcessingService ocrProcessingService;
     private final CreditBalanceService creditBalanceService;
-    private final SubscriptionFeatureService subscriptionFeatureService;
     private final UserRepository userRepository;
-
-    @Value("${tesseract.datapath}")
-    private String tesseractDataPath;
 
     @Override
     @Transactional
@@ -70,38 +60,52 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
             ocrData.setStatus(OcrStatus.PROCESSING);
             ocrDataRepository.save(ocrData);
 
-            extractImageURL(fileEntry, ocrData, tesseractDataPath,
-                    buildPageRange(startPage, endPage, pages));
-            log.info("OCR text extraction completed for document: {}", sanitizer.sanitizeLogging(documentId));
+            // Build OCR request and process through provider abstraction
+            OcrRequest ocrRequest = OcrRequest.builder()
+                    .documentId(documentId)
+                    .collectionId(collectionId)
+                    .imageUrl(fileEntry.getFileUrl())
+                    .mimeType(fileEntry.getFileType())
+                    .userId(userId)
+                    .startPage(startPage)
+                    .endPage(endPage)
+                    .pages(pages)
+                    .fallbackEnabled(true)
+                    .build();
 
-            try {
-                // Update OCR pages used (for monthly quota tracking)
-                storageAllocationService.updateOcrUsage(userId, 1);
-            } catch (Exception e) {
-                log.error("Failed to update OCR usage for user {}: {}", sanitizer.sanitizeLogging(userId),
-                        e.getMessage(), e);
-            }
+            // Provider selected automatically based on plan + credits
+            OcrResult result = ocrProcessingService.processOcr(ocrRequest, userId);
 
-            // Deduct credits for users without an active paid subscription
-            try {
-                if (!subscriptionFeatureService.hasPaidSubscription(userId)) {
-                    User user = userRepository.findById(userId).orElse(null);
-                    if (user != null && creditBalanceService.hasEnoughCredits(userId, 1)) {
-                        creditBalanceService.deductCredits(user, 1, documentId,
-                                "OCR processing: 1 page for document " + documentId);
-                        log.info("Deducted 1 credit for OCR processing of document {} for user {}",
-                                sanitizer.sanitizeLogging(documentId), sanitizer.sanitizeLogging(userId));
+            if (result.isSuccess()) {
+                ocrData.setExtractedText(result.getExtractedText());
+                ocrData.setStatus(OcrStatus.COMPLETED);
+                log.info("OCR text extraction completed for document: {} using provider: {}",
+                        sanitizer.sanitizeLogging(documentId), result.getProviderType());
+
+                // Deduct credits only for free plan users when Google Vision was used
+                if (ocrProcessingService.shouldDeductCredits(userId, result.getProviderType())) {
+                    try {
+                        userRepository.findById(userId).ifPresent(user -> {
+                            if (creditBalanceService.hasEnoughCredits(userId, 1)) {
+                                creditBalanceService.deductCredits(user, 1, documentId,
+                                        "OCR processing (Google Vision) for document " + documentId);
+                                log.info("Deducted 1 credit for Google Vision OCR of document {} for user {}",
+                                        sanitizer.sanitizeLogging(documentId),
+                                        sanitizer.sanitizeLogging(userId));
+                            }
+                        });
+                    } catch (Exception e) {
+                        log.error("Failed to deduct credit for user {}: {}",
+                                sanitizer.sanitizeLogging(userId), e.getMessage(), e);
                     }
                 }
-            } catch (Exception e) {
-                log.error("Failed to deduct credit for user {}: {}", sanitizer.sanitizeLogging(userId),
-                        e.getMessage(), e);
+            } else {
+                ocrData.setStatus(OcrStatus.FAILED);
+                ocrData.setErrorMessage(result.getErrorMessage());
+                log.error("OCR processing failed for document {}: {}",
+                        sanitizer.sanitizeLogging(documentId), result.getErrorMessage());
             }
-        } catch (IOException | TesseractException e) {
-            log.error("OCR processing failed for document {}: {}", sanitizer.sanitizeLogging(documentId),
-                    e.getMessage(), e);
-            ocrData.setStatus(OcrStatus.FAILED);
-            ocrData.setErrorMessage(e.getMessage());
+
         } catch (Exception e) {
             log.error("An unexpected error occurred while processing document {}: {}",
                     sanitizer.sanitizeLogging(documentId), e.getMessage(), e);
@@ -121,15 +125,5 @@ public class ExtractTextFromDocumentImpl implements ExtractTextFromDocumentServi
         }
 
         return ocrDataRepository.save(ocrData);
-    }
-
-    private PdfPageRange buildPageRange(Integer startPage, Integer endPage, List<Integer> pages) {
-        if (pages != null && !pages.isEmpty()) {
-            return new PdfPageRange(pages);
-        }
-        if (startPage != null || endPage != null) {
-            return new PdfPageRange(startPage, endPage);
-        }
-        return null;
     }
 }

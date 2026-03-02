@@ -100,24 +100,24 @@ The OCR Processing module extracts text from uploaded documents (images, PDFs, O
 
 ### Package Structure
 
-| Package          | Purpose                                           |
-| ---------------- | ------------------------------------------------- |
-| `controller`     | REST endpoints for OCR operations                 |
-| `service`        | Facade (`OcrService`), processing (`ProcessOcr`)  |
-| `impl`           | Service interface implementations                 |
-| `interfaces`     | Service contracts (one per operation)              |
-| `model`          | JPA entities                                      |
-| `dto/request`    | Inbound request DTOs                              |
-| `dto/response`   | Outbound response DTOs                            |
-| `datamodel`      | Enums (`OcrStatus`, `ContentFormat`)              |
-| `provider`       | OCR provider abstraction (Tesseract, Google Cloud) |
-| `repository`     | Spring Data JPA repositories                      |
-| `utils`          | Shared utilities (validation, file storage, etc.) |
-| `events`         | Event-driven OCR processing triggers              |
-| `config`         | OCR-specific configuration                        |
-| `metrics`        | OCR processing metrics                            |
-| `quota`          | OCR quota management                              |
-| `exception`      | OCR-specific exceptions                           |
+| Package        | Purpose                                            |
+|----------------|----------------------------------------------------|
+| `controller`   | REST endpoints for OCR operations                  |
+| `service`      | Facade (`OcrService`), processing (`ProcessOcr`)   |
+| `impl`         | Service interface implementations                  |
+| `interfaces`   | Service contracts (one per operation)              |
+| `model`        | JPA entities                                       |
+| `dto/request`  | Inbound request DTOs                               |
+| `dto/response` | Outbound response DTOs                             |
+| `datamodel`    | Enums (`OcrStatus`, `ContentFormat`)               |
+| `provider`     | OCR provider abstraction (Tesseract, Google Cloud) |
+| `repository`   | Spring Data JPA repositories                       |
+| `utils`        | Shared utilities (validation, file storage, etc.)  |
+| `events`       | Event-driven OCR processing triggers               |
+| `config`       | OCR-specific configuration                         |
+| `metrics`      | OCR processing metrics                             |
+| `quota`        | OCR quota management                               |
+| `exception`    | OCR-specific exceptions                            |
 
 ---
 
@@ -134,9 +134,9 @@ Content-Type: multipart/form-data
 
 **Request:**
 
-| Parameter | Type               | Required | Description              |
-| --------- | ------------------ | -------- | ------------------------ |
-| `files`   | `MultipartFile[]`  | ✅       | Array of files to upload |
+| Parameter | Type              | Required | Description              |
+|-----------|-------------------|----------|--------------------------|
+| `files`   | `MultipartFile[]` | ✅        | Array of files to upload |
 
 **Response:** `200 OK`
 
@@ -163,10 +163,10 @@ Content-Type: multipart/form-data
 
 **Errors:**
 
-| Code  | Condition                          |
-| ----- | ---------------------------------- |
-| `400` | No files provided                  |
-| `403` | User not authenticated             |
+| Code  | Condition              |
+|-------|------------------------|
+| `400` | No files provided      |
+| `403` | User not authenticated |
 
 ---
 
@@ -180,17 +180,17 @@ POST /api/v1/collections/{collectionId}/document/{documentId}/extract
 
 **Path Parameters:**
 
-| Parameter      | Type     | Description                 |
-| -------------- | -------- | --------------------------- |
+| Parameter      | Type     | Description                   |
+|----------------|----------|-------------------------------|
 | `collectionId` | `String` | ID of the document collection |
 | `documentId`   | `String` | ID of the document            |
 
 **Query Parameters (PDF only):**
 
-| Parameter   | Type            | Required | Description                                    |
-| ----------- | --------------- | -------- | ---------------------------------------------- |
-| `startPage` | `Integer`       | No       | Start page (1-indexed, inclusive)               |
-| `endPage`   | `Integer`       | No       | End page (1-indexed, inclusive)                 |
+| Parameter   | Type            | Required | Description                                                                          |
+|-------------|-----------------|----------|--------------------------------------------------------------------------------------|
+| `startPage` | `Integer`       | No       | Start page (1-indexed, inclusive)                                                    |
+| `endPage`   | `Integer`       | No       | End page (1-indexed, inclusive)                                                      |
 | `pages`     | `List<Integer>` | No       | Specific pages (comma-separated). Overrides start/end page. Example: `?pages=3,8,16` |
 
 **Response:** `200 OK`
@@ -221,11 +221,11 @@ POST /api/v1/collections/{collectionId}/document/{documentId}/extract
 
 **Errors:**
 
-| Code  | Condition                          |
-| ----- | ---------------------------------- |
+| Code  | Condition                           |
+|-------|-------------------------------------|
 | `403` | User not authorized / not logged in |
-| `404` | Collection or file not found       |
-| `500` | OCR processing failed              |
+| `404` | Collection or file not found        |
+| `500` | OCR processing failed               |
 
 ---
 
@@ -239,8 +239,8 @@ GET /api/v1/collections/{collectionId}/document/results
 
 **Path Parameters:**
 
-| Parameter      | Type     | Description                  |
-| -------------- | -------- | ---------------------------- |
+| Parameter      | Type     | Description                   |
+|----------------|----------|-------------------------------|
 | `collectionId` | `String` | ID of the document collection |
 
 **Response:** `200 OK`
@@ -276,10 +276,10 @@ GET /api/v1/collections/{collectionId}/document/results
 
 **Errors:**
 
-| Code  | Condition              |
-| ----- | ---------------------- |
-| `403` | User not authorized    |
-| `404` | Collection not found   |
+| Code  | Condition            |
+|-------|----------------------|
+| `403` | User not authorized  |
+| `404` | Collection not found |
 
 ---
 
@@ -293,8 +293,8 @@ GET /api/v1/collections/{collectionId}/document/{documentId}/ocr-data
 
 **Path Parameters:**
 
-| Parameter      | Type     | Description                  |
-| -------------- | -------- | ---------------------------- |
+| Parameter      | Type     | Description                   |
+|----------------|----------|-------------------------------|
 | `collectionId` | `String` | ID of the document collection |
 | `documentId`   | `String` | ID of the document            |
 
@@ -325,10 +325,10 @@ GET /api/v1/collections/{collectionId}/document/{documentId}/ocr-data
 
 **Errors:**
 
-| Code  | Condition                         |
-| ----- | --------------------------------- |
+| Code  | Condition                           |
+|-------|-------------------------------------|
 | `403` | User not authorized / not logged in |
-| `404` | Document or OCR data not found    |
+| `404` | Document or OCR data not found      |
 
 ---
 
@@ -343,8 +343,8 @@ Content-Type: application/json
 
 **Path Parameters:**
 
-| Parameter      | Type     | Description                  |
-| -------------- | -------- | ---------------------------- |
+| Parameter      | Type     | Description                   |
+|----------------|----------|-------------------------------|
 | `collectionId` | `String` | ID of the document collection |
 | `documentId`   | `String` | ID of the document            |
 
@@ -357,10 +357,10 @@ Content-Type: application/json
 }
 ```
 
-| Field           | Type            | Required | Description                            |
-| --------------- | --------------- | -------- | -------------------------------------- |
-| `editedContent` | `String`        | ✅       | The user-edited content                |
-| `contentFormat` | `ContentFormat` | ✅       | Format of the content: `HTML` or `MARKDOWN` |
+| Field           | Type            | Required | Description                                 |
+|-----------------|-----------------|----------|---------------------------------------------|
+| `editedContent` | `String`        | ✅        | The user-edited content                     |
+| `contentFormat` | `ContentFormat` | ✅        | Format of the content: `HTML` or `MARKDOWN` |
 
 **Response:** `200 OK`
 
@@ -389,11 +389,11 @@ Content-Type: application/json
 
 **Errors:**
 
-| Code  | Condition                                       |
-| ----- | ----------------------------------------------- |
-| `400` | OCR not completed, or invalid/blank input       |
-| `403` | User not authorized or not logged in            |
-| `404` | Collection, document, or OCR data not found     |
+| Code  | Condition                                   |
+|-------|---------------------------------------------|
+| `400` | OCR not completed, or invalid/blank input   |
+| `403` | User not authorized or not logged in        |
+| `404` | Collection, document, or OCR data not found |
 
 > [!IMPORTANT]
 > The original `extractedText` is **never overwritten**. Edited content is stored separately in `editedContent`.
@@ -406,22 +406,22 @@ Content-Type: application/json
 
 The core JPA entity stored in the `ocr_data` table:
 
-| Column           | Type                | Nullable | Description                                         |
-| ---------------- | ------------------- | -------- | --------------------------------------------------- |
-| `id`             | `VARCHAR (UUID)`    | No       | Primary key, auto-generated                         |
-| `document_id`    | `VARCHAR`           | No       | Foreign key to `file_entries`, unique                |
-| `status`         | `VARCHAR (enum)`    | No       | OCR processing status                               |
-| `extracted_text`  | `TEXT`             | Yes      | Raw OCR-extracted text                               |
-| `edited_content`  | `TEXT`             | Yes      | User-edited content (HTML or Markdown)               |
-| `content_format`  | `VARCHAR(20)`      | Yes      | Format of edited content (`HTML` / `MARKDOWN`)       |
-| `edited_by`       | `VARCHAR(255)`     | Yes      | User ID of the editor                                |
-| `edited_at`       | `TIMESTAMPTZ`      | Yes      | Timestamp of the last edit                           |
-| `error_message`   | `VARCHAR`          | Yes      | Error details if OCR failed                          |
-| `ai_summary`      | `TEXT`             | Yes      | AI-generated summary of the document                 |
-| `document_type`   | `VARCHAR(50)`      | Yes      | AI-classified document type (e.g., "invoice")        |
-| `ai_tags`         | `VARCHAR(500)`     | Yes      | Comma-separated AI-generated tags                    |
-| `created_at`      | `TIMESTAMPTZ`      | No       | Record creation timestamp (auto)                     |
-| `updated_at`      | `TIMESTAMPTZ`      | No       | Record update timestamp (auto)                       |
+| Column           | Type             | Nullable | Description                                    |
+|------------------|------------------|----------|------------------------------------------------|
+| `id`             | `VARCHAR (UUID)` | No       | Primary key, auto-generated                    |
+| `document_id`    | `VARCHAR`        | No       | Foreign key to `file_entries`, unique          |
+| `status`         | `VARCHAR (enum)` | No       | OCR processing status                          |
+| `extracted_text` | `TEXT`           | Yes      | Raw OCR-extracted text                         |
+| `edited_content` | `TEXT`           | Yes      | User-edited content (HTML or Markdown)         |
+| `content_format` | `VARCHAR(20)`    | Yes      | Format of edited content (`HTML` / `MARKDOWN`) |
+| `edited_by`      | `VARCHAR(255)`   | Yes      | User ID of the editor                          |
+| `edited_at`      | `TIMESTAMPTZ`    | Yes      | Timestamp of the last edit                     |
+| `error_message`  | `VARCHAR`        | Yes      | Error details if OCR failed                    |
+| `ai_summary`     | `TEXT`           | Yes      | AI-generated summary of the document           |
+| `document_type`  | `VARCHAR(50)`    | Yes      | AI-classified document type (e.g., "invoice")  |
+| `ai_tags`        | `VARCHAR(500)`   | Yes      | Comma-separated AI-generated tags              |
+| `created_at`     | `TIMESTAMPTZ`    | No       | Record creation timestamp (auto)               |
+| `updated_at`     | `TIMESTAMPTZ`    | No       | Record update timestamp (auto)                 |
 
 ### Enums
 
@@ -429,20 +429,20 @@ The core JPA entity stored in the `ocr_data` table:
 
 Represents the OCR processing lifecycle:
 
-| Value        | Description                           |
-| ------------ | ------------------------------------- |
-| `PENDING`    | OCR queued but not yet started        |
-| `PROCESSING` | OCR extraction is in progress         |
-| `COMPLETED`  | OCR extraction finished successfully  |
-| `FAILED`     | OCR extraction encountered an error   |
+| Value        | Description                          |
+|--------------|--------------------------------------|
+| `PENDING`    | OCR queued but not yet started       |
+| `PROCESSING` | OCR extraction is in progress        |
+| `COMPLETED`  | OCR extraction finished successfully |
+| `FAILED`     | OCR extraction encountered an error  |
 
 #### ContentFormat
 
 Represents the format of user-edited content:
 
-| Value      | Description                                        |
-| ---------- | -------------------------------------------------- |
-| `HTML`     | HTML content — sanitized server-side via Jsoup      |
+| Value      | Description                                           |
+|------------|-------------------------------------------------------|
+| `HTML`     | HTML content — sanitized server-side via Jsoup        |
 | `MARKDOWN` | Markdown content — stored as-is, rendered by frontend |
 
 ---
@@ -462,39 +462,39 @@ Generic wrapper for all API responses:
 }
 ```
 
-| Field        | Type      | Description                       |
-| ------------ | --------- | --------------------------------- |
-| `statusCode` | `int`     | HTTP status code                  |
-| `status`     | `String`  | `"success"` or `"error"`          |
-| `message`    | `String`  | Human-readable result message     |
-| `data`       | `T`       | Payload (varies by endpoint)      |
+| Field        | Type     | Description                   |
+|--------------|----------|-------------------------------|
+| `statusCode` | `int`    | HTTP status code              |
+| `status`     | `String` | `"success"` or `"error"`      |
+| `message`    | `String` | Human-readable result message |
+| `data`       | `T`      | Payload (varies by endpoint)  |
 
 ### FileResultData
 
 Returned when querying individual document OCR data:
 
-| Field              | Type               | Description                                  |
-| ------------------ | ------------------ | -------------------------------------------- |
-| `documentId`       | `String`           | Unique document identifier                   |
-| `originalFileName` | `String`           | Original uploaded file name                  |
-| `status`           | `String`           | OCR status (`PENDING`/`PROCESSING`/`COMPLETED`/`FAILED`) |
-| `errorMessage`     | `String`           | Error message if OCR failed                  |
-| `createdAt`        | `OffsetDateTime`   | When the OCR record was created              |
-| `extractedText`    | `String`           | Original OCR-extracted text                  |
-| `editedContent`    | `String`           | User-edited content (if any)                 |
-| `contentFormat`    | `String`           | Format of edited content (`HTML`/`MARKDOWN`) |
-| `editedBy`         | `String`           | User ID who last edited                      |
-| `editedAt`         | `OffsetDateTime`   | When the content was last edited             |
-| `aiSummary`        | `String`           | AI-generated summary                         |
-| `documentType`     | `String`           | AI-classified document type                  |
-| `aiTags`           | `List<String>`     | AI-generated tags                            |
+| Field              | Type             | Description                                              |
+|--------------------|------------------|----------------------------------------------------------|
+| `documentId`       | `String`         | Unique document identifier                               |
+| `originalFileName` | `String`         | Original uploaded file name                              |
+| `status`           | `String`         | OCR status (`PENDING`/`PROCESSING`/`COMPLETED`/`FAILED`) |
+| `errorMessage`     | `String`         | Error message if OCR failed                              |
+| `createdAt`        | `OffsetDateTime` | When the OCR record was created                          |
+| `extractedText`    | `String`         | Original OCR-extracted text                              |
+| `editedContent`    | `String`         | User-edited content (if any)                             |
+| `contentFormat`    | `String`         | Format of edited content (`HTML`/`MARKDOWN`)             |
+| `editedBy`         | `String`         | User ID who last edited                                  |
+| `editedAt`         | `OffsetDateTime` | When the content was last edited                         |
+| `aiSummary`        | `String`         | AI-generated summary                                     |
+| `documentType`     | `String`         | AI-classified document type                              |
+| `aiTags`           | `List<String>`   | AI-generated tags                                        |
 
 ### CollectionResultResponse
 
 Returned when querying all results for a collection:
 
 | Field           | Type                   | Description                         |
-| --------------- | ---------------------- | ----------------------------------- |
+|-----------------|------------------------|-------------------------------------|
 | `collectionId`  | `String`               | Collection ID                       |
 | `overallStatus` | `DocumentStatus`       | Aggregated status of the collection |
 | `files`         | `List<FileResultData>` | OCR results for each file           |
@@ -503,10 +503,10 @@ Returned when querying all results for a collection:
 
 Request body for the content update endpoint:
 
-| Field           | Type            | Required | Validation                       |
-| --------------- | --------------- | -------- | -------------------------------- |
-| `editedContent` | `String`        | ✅       | Must not be blank                |
-| `contentFormat` | `ContentFormat` | ✅       | Must be `HTML` or `MARKDOWN`     |
+| Field           | Type            | Required | Validation                   |
+|-----------------|-----------------|----------|------------------------------|
+| `editedContent` | `String`        | ✅        | Must not be blank            |
+| `contentFormat` | `ContentFormat` | ✅        | Must be `HTML` or `MARKDOWN` |
 
 ### DocumentCollectionUploadData
 
@@ -518,38 +518,52 @@ Returned after bulk upload — contains the new collection ID and uploaded file 
 
 ### OCR Providers
 
-The system uses a **provider abstraction** pattern for OCR processing, allowing pluggable engines:
+The system uses a **provider abstraction** pattern for OCR processing, with automatic provider selection based on subscription plan and credit balance:
 
-| Provider              | Description                             | Fallback |
-| --------------------- | --------------------------------------- | -------- |
-| **Tesseract**         | Open-source OCR engine (default)        | No       |
-| **Google Cloud Vision** | Cloud-based OCR with superior accuracy | Yes      |
+| Provider                | Description                            | Used When                                   |
+|-------------------------|----------------------------------------|---------------------------------------------|
+| **Tesseract**           | Open-source OCR engine (local)         | Free plan users without credits             |
+| **Google Cloud Vision** | Cloud-based OCR with superior accuracy | Paid plan users, or free users with credits |
 
-The `OcrProviderFactory` selects the appropriate provider based on configuration. If the primary provider fails and `fallbackEnabled` is `true`, the system falls back to the secondary provider.
+#### Provider Selection Rules
+
+| User Plan | Has Credits? | Provider Used | Credits Deducted?               |
+|-----------|--------------|---------------|---------------------------------|
+| Free      | No           | Tesseract     | No                              |
+| Free      | Not enough   | Tesseract     | No                              |
+| Free      | Yes          | Google Vision | **Yes** (1 credit per document) |
+| Paid      | Any          | Google Vision | **No**                          |
+
+The `OcrProcessingService.resolveProvider(userId)` method implements this logic by checking the user's subscription via `SubscriptionFeatureService` and credit balance via `CreditBalanceService`.
+
+If the primary provider fails and `fallbackEnabled` is `true`, the system falls back to the secondary provider via the `OcrProviderFactory`.
 
 #### OcrRequest
 
 Input to OCR providers:
 
-| Field             | Type      | Description                              |
-| ----------------- | --------- | ---------------------------------------- |
-| `documentId`      | `String`  | Document identifier                      |
-| `collectionId`    | `String`  | Collection identifier                    |
-| `imageUrl`        | `String`  | URL of the file to process               |
-| `mimeType`        | `String`  | MIME type of the file                    |
-| `userId`          | `String`  | User ID (for quota tracking)             |
-| `fallbackEnabled` | `boolean` | Whether fallback to secondary is enabled |
+| Field             | Type            | Description                               |
+|-------------------|-----------------|-------------------------------------------|
+| `documentId`      | `String`        | Document identifier                       |
+| `collectionId`    | `String`        | Collection identifier                     |
+| `imageUrl`        | `String`        | URL of the file to process                |
+| `mimeType`        | `String`        | MIME type of the file                     |
+| `userId`          | `String`        | User ID (for provider resolution & quota) |
+| `fallbackEnabled` | `boolean`       | Whether fallback to secondary is enabled  |
+| `startPage`       | `Integer`       | Start page for PDFs (1-indexed, optional) |
+| `endPage`         | `Integer`       | End page for PDFs (1-indexed, optional)   |
+| `pages`           | `List<Integer>` | Specific pages for PDFs (optional)        |
 
 #### OcrResult
 
 Output from OCR providers:
 
-| Field           | Type      | Description                       |
-| --------------- | --------- | --------------------------------- |
-| `extractedText` | `String`  | Extracted text content            |
-| `success`       | `boolean` | Whether extraction succeeded      |
-| `errorMessage`  | `String`  | Error details if failed           |
-| `providerType`  | `String`  | Which provider was used           |
+| Field           | Type      | Description                  |
+|-----------------|-----------|------------------------------|
+| `extractedText` | `String`  | Extracted text content       |
+| `success`       | `boolean` | Whether extraction succeeded |
+| `errorMessage`  | `String`  | Error details if failed      |
+| `providerType`  | `String`  | Which provider was used      |
 
 ### Processing Flow
 
@@ -569,10 +583,13 @@ Output from OCR providers:
    ├─ Sets OcrData status → PROCESSING
    ├─ Sends "OCR Started" push notification
    ├─ Builds OcrRequest and calls OcrProcessingService
-   │   └─ OcrProviderFactory selects provider
-   │       ├─ Primary provider (Tesseract / Google Vision)
-   │       └─ Fallback if primary fails
+   │   └─ resolveProvider(userId) selects provider:
+   │       ├─ Paid plan → Google Vision
+   │       ├─ Free + credits → Google Vision
+   │       └─ Free + no credits → Tesseract
+   │       (Fallback to secondary provider if primary fails)
    ├─ Updates OcrData with extracted text or error
+   ├─ Deducts 1 credit (only if free plan + Google Vision used)
    ├─ Updates collection status (PROCESSED / FAILED_OCR / PROCESSING)
    ├─ Indexes in Elasticsearch (on COMPLETED)
    └─ Sends "OCR Completed" or "OCR Failed" push notification
@@ -582,11 +599,11 @@ Output from OCR providers:
 
 The collection status is derived from individual file statuses:
 
-| Condition                      | Collection Status |
-| ------------------------------ | ----------------- |
-| All files completed            | `PROCESSED`       |
-| All files completed or failed  | `FAILED_OCR`      |
-| Some files still pending       | `PROCESSING`      |
+| Condition                     | Collection Status |
+|-------------------------------|-------------------|
+| All files completed           | `PROCESSED`       |
+| All files completed or failed | `FAILED_OCR`      |
+| Some files still pending      | `PROCESSING`      |
 
 ### Elasticsearch Integration
 
@@ -598,28 +615,28 @@ Successfully processed documents are indexed in Elasticsearch for full-text sear
 
 The Elasticsearch document includes:
 
-| Field              | Source                                          |
-| ------------------ | ----------------------------------------------- |
-| `id`               | `FileEntry.documentId`                          |
-| `userId`           | `DocumentCollection.user.id`                    |
-| `collectionId`     | `DocumentCollection.id`                         |
-| `fileName`         | `FileEntry.originalFileName`                    |
-| `fileType`         | `FileEntry.fileType`                            |
-| `fileSize`         | `FileEntry.fileSize`                            |
-| `status`           | `DocumentCollection.collectionStatus`           |
-| `ocrStatus`        | `OcrData.status`                                |
-| `extractedText`    | `OcrData.editedContent ?? OcrData.extractedText` |
-| `fileUrl`          | `FileEntry.fileUrl`                             |
+| Field           | Source                                           |
+|-----------------|--------------------------------------------------|
+| `id`            | `FileEntry.documentId`                           |
+| `userId`        | `DocumentCollection.user.id`                     |
+| `collectionId`  | `DocumentCollection.id`                          |
+| `fileName`      | `FileEntry.originalFileName`                     |
+| `fileType`      | `FileEntry.fileType`                             |
+| `fileSize`      | `FileEntry.fileSize`                             |
+| `status`        | `DocumentCollection.collectionStatus`            |
+| `ocrStatus`     | `OcrData.status`                                 |
+| `extractedText` | `OcrData.editedContent ?? OcrData.extractedText` |
+| `fileUrl`       | `FileEntry.fileUrl`                              |
 
 ### Notifications
 
 Push notifications are sent to users during the OCR lifecycle:
 
-| Event                    | Notification Type             |
-| ------------------------ | ----------------------------- |
-| OCR processing started   | `OCR_PROCESSING_STARTED`      |
-| OCR processing completed | `OCR_PROCESSING_COMPLETED`    |
-| OCR processing failed    | `OCR_PROCESSING_FAILED`       |
+| Event                    | Notification Type          |
+|--------------------------|----------------------------|
+| OCR processing started   | `OCR_PROCESSING_STARTED`   |
+| OCR processing completed | `OCR_PROCESSING_COMPLETED` |
+| OCR processing failed    | `OCR_PROCESSING_FAILED`    |
 
 Each notification includes `documentId` and `collectionId` as metadata.
 
@@ -631,10 +648,10 @@ Each notification includes `documentId` and `collectionId` as metadata.
 
 The system supports two content formats for user-edited text:
 
-| Format       | Server Behavior                                 | Frontend Responsibility          |
-| ------------ | ----------------------------------------------- | -------------------------------- |
-| **HTML**     | Sanitized via Jsoup before storage              | Render sanitized HTML            |
-| **MARKDOWN** | Stored as-is (no server-side processing)        | Render Markdown and sanitize XSS |
+| Format       | Server Behavior                          | Frontend Responsibility          |
+|--------------|------------------------------------------|----------------------------------|
+| **HTML**     | Sanitized via Jsoup before storage       | Render sanitized HTML            |
+| **MARKDOWN** | Stored as-is (no server-side processing) | Render Markdown and sanitize XSS |
 
 ### HTML Sanitization
 
@@ -646,12 +663,12 @@ All tags in Jsoup's `Safelist.relaxed()`, plus: `span`, `div`, `br`, `hr`, `pre`
 
 **Allowed Attributes:**
 
-| Tag    | Allowed Attributes                      |
-| ------ | --------------------------------------- |
-| `a`    | `href`, `title`, `target`, `rel`        |
-| `span` | `style`                                 |
-| `p`    | `style`                                 |
-| `div`  | `style`                                 |
+| Tag    | Allowed Attributes               |
+|--------|----------------------------------|
+| `a`    | `href`, `title`, `target`, `rel` |
+| `span` | `style`                          |
+| `p`    | `style`                          |
+| `div`  | `style`                          |
 
 **Allowed URL Protocols (for `<a href>`):** `http`, `https`, `mailto`
 
@@ -685,12 +702,12 @@ All errors follow the `DocumentCollectionResponse` format:
 
 ### Common Error Scenarios
 
-| HTTP Code | Exception              | Scenarios                                                |
-| --------- | ---------------------- | -------------------------------------------------------- |
-| `400`     | `BadRequestException`  | No files provided; OCR not completed (editing attempted) |
-| `403`     | `ForbiddenException`   | Not logged in; user doesn't own the collection           |
-| `404`     | `NotFoundException`    | Collection/document/OCR data not found                   |
-| `500`     | Internal Server Error  | OCR engine failure; Elasticsearch failure                |
+| HTTP Code | Exception             | Scenarios                                                |
+|-----------|-----------------------|----------------------------------------------------------|
+| `400`     | `BadRequestException` | No files provided; OCR not completed (editing attempted) |
+| `403`     | `ForbiddenException`  | Not logged in; user doesn't own the collection           |
+| `404`     | `NotFoundException`   | Collection/document/OCR data not found                   |
+| `500`     | Internal Server Error | OCR engine failure; Elasticsearch failure                |
 
 ### Pre-conditions for Content Editing
 
@@ -729,9 +746,9 @@ CREATE TABLE ocr_data (
 
 ### Flyway Migrations (OCR-related)
 
-| Version | Description                                     |
-| ------- | ----------------------------------------------- |
-| `V11`   | Create `ocr_data` table                         |
-| `V12`   | Add cascade delete on `ocr_data` foreign key    |
-| `V54`   | Add AI fields (`ai_summary`, `document_type`, `ai_tags`) |
+| Version | Description                                                                                 |
+|---------|---------------------------------------------------------------------------------------------|
+| `V11`   | Create `ocr_data` table                                                                     |
+| `V12`   | Add cascade delete on `ocr_data` foreign key                                                |
+| `V54`   | Add AI fields (`ai_summary`, `document_type`, `ai_tags`)                                    |
 | `V55`   | Add rich text editing fields (`edited_content`, `content_format`, `edited_by`, `edited_at`) |

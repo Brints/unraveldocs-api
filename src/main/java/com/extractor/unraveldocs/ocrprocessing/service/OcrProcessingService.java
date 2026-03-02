@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.ocrprocessing.service;
 
+import com.extractor.unraveldocs.credit.service.CreditBalanceService;
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.ocrprocessing.config.OcrProperties;
 import com.extractor.unraveldocs.ocrprocessing.exception.OcrProcessingException;
@@ -7,6 +8,7 @@ import com.extractor.unraveldocs.ocrprocessing.metrics.OcrMetrics;
 import com.extractor.unraveldocs.ocrprocessing.provider.*;
 import com.extractor.unraveldocs.ocrprocessing.quota.OcrQuotaService;
 import com.extractor.unraveldocs.storage.service.StorageAllocationService;
+import com.extractor.unraveldocs.subscription.service.SubscriptionFeatureService;
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,45 +31,44 @@ public class OcrProcessingService {
     private final OcrMetrics ocrMetrics;
     private final OcrProperties ocrProperties;
     private final SanitizeLogging sanitizer;
+    private final CreditBalanceService creditBalanceService;
+    private final SubscriptionFeatureService subscriptionFeatureService;
 
     /**
      * Process an OCR request with automatic provider selection based on
-     * subscription tier.
-     * Free tier users use Tesseract, paid subscribers use Google Cloud Vision.
+     * subscription plan and credit balance.
      *
-     * @param request  The OCR request
-     * @param userId   The user ID for quota tracking
-     * @param userTier The user's subscription tier
+     * Provider selection rules:
+     * - Paid plan (any tier) → Google Vision (no credits deducted)
+     * - Free plan + enough credits → Google Vision (credits deducted)
+     * - Free plan + not enough credits → Tesseract (no credits deducted)
+     *
+     * @param request The OCR request
+     * @param userId  The user ID for quota tracking and provider resolution
      * @return The OCR result
      * @throws OcrProcessingException if processing fails and fallback is not
      *                                available
      */
-    public OcrResult processOcr(OcrRequest request, String userId, String userTier) {
-        // Check quota
-        if (!quotaService.hasRemainingQuota(userId, userTier)) {
-            throw OcrProcessingException.quotaExceeded(userId, ocrProperties.getDefaultProvider());
-        }
-
+    public OcrResult processOcr(OcrRequest request, String userId) {
         Timer.Sample timerSample = ocrMetrics.startTimer();
         OcrProvider primaryProvider = null;
 
         try {
-            // Get provider based on user subscription tier
-            OcrProviderType providerType = getProviderForTier(userTier);
+            // Resolve provider based on subscription + credit balance
+            OcrProviderType providerType = resolveProvider(userId);
             primaryProvider = getProviderWithFallbackToDefault(providerType);
             ocrMetrics.recordRequestStart(primaryProvider.getProviderType());
 
-            log.info("Processing OCR for document {} using provider: {} (tier: {})",
+            boolean isPaid = subscriptionFeatureService.hasPaidSubscription(userId);
+            log.info("Processing OCR for document {} using provider: {} (paid: {})",
                     sanitizer.sanitizeLogging(request.getDocumentId()),
                     sanitizer.sanitizeLoggingObject(primaryProvider.getProviderType()),
-                    sanitizer.sanitizeLogging(userTier));
+                    isPaid);
 
             // Process with primary provider
             OcrResult result = primaryProvider.extractText(request);
 
             if (result.isSuccess()) {
-                // Consume quota on success
-                quotaService.consumeQuota(userId, userTier, primaryProvider.getProviderType());
                 storageAllocationService.updateOcrUsage(userId, 1);
                 ocrMetrics.recordSuccess(result);
                 return result;
@@ -76,7 +77,7 @@ public class OcrProcessingService {
             // Primary failed, try fallback if enabled
             ocrMetrics.stopTimer(timerSample, primaryProvider.getProviderType());
             timerSample = null; // Reset timer sample for fallback timing
-            return handleFailureWithFallback(request, primaryProvider, result, userId, userTier);
+            return handleFailureWithFallback(request, primaryProvider, result, userId);
 
         } catch (OcrProcessingException e) {
             // Non-retryable exception or specific error
@@ -90,7 +91,7 @@ public class OcrProcessingService {
                 ocrMetrics.stopTimer(timerSample, primaryProvider.getProviderType());
                 timerSample = null; // Reset timer sample for fallback timing
             }
-            return handleExceptionWithFallback(request, primaryProvider, e, userId, userTier);
+            return handleExceptionWithFallback(request, primaryProvider, e, userId);
 
         } finally {
             if (primaryProvider != null && timerSample != null) {
@@ -100,29 +101,50 @@ public class OcrProcessingService {
     }
 
     /**
-     * Determine the OCR provider based on user subscription tier.
-     * Free tier users get Tesseract (local), paid subscribers get Google Vision
-     * (cloud).
+     * Resolve the OCR provider based on subscription plan and credit balance.
      *
-     * @param userTier The user's subscription tier
+     * - Paid plan → Google Vision (no credits deducted)
+     * - Free plan + enough credits → Google Vision (credits deducted after OCR)
+     * - Free plan + not enough credits → Tesseract (no credits deducted)
+     *
+     * @param userId The user's ID
      * @return The appropriate OCR provider type
      */
-    private OcrProviderType getProviderForTier(String userTier) {
-        if (userTier == null || userTier.isBlank()) {
-            return OcrProviderType.TESSERACT;
+    OcrProviderType resolveProvider(String userId) {
+        boolean isPaid = subscriptionFeatureService.hasPaidSubscription(userId);
+
+        if (isPaid) {
+            log.debug("User {} has paid subscription, using Google Vision OCR",
+                    sanitizer.sanitizeLogging(userId));
+            return OcrProviderType.GOOGLE_VISION;
         }
 
-        String tier = userTier.toLowerCase();
-
-        // Free tier users use Tesseract
-        if (tier.equals("free") || tier.equals("trial")) {
-            log.debug("User tier '{}' using Tesseract OCR", sanitizer.sanitizeLogging(tier));
-            return OcrProviderType.TESSERACT;
+        // Free plan: check credit balance
+        boolean hasCredits = creditBalanceService.hasEnoughCredits(userId, 1);
+        if (hasCredits) {
+            log.debug("Free user {} has credits, using Google Vision OCR",
+                    sanitizer.sanitizeLogging(userId));
+            return OcrProviderType.GOOGLE_VISION;
         }
 
-        // Paid subscribers (basic, premium, enterprise) use Google Vision
-        log.debug("User tier '{}' using Google Cloud Vision OCR", sanitizer.sanitizeLogging(tier));
-        return OcrProviderType.GOOGLE_VISION;
+        log.debug("Free user {} has no credits, using Tesseract OCR",
+                sanitizer.sanitizeLogging(userId));
+        return OcrProviderType.TESSERACT;
+    }
+
+    /**
+     * Determine if credits should be deducted for this OCR operation.
+     * Credits are only deducted for free plan users when Google Vision is used.
+     *
+     * @param userId       The user's ID
+     * @param providerType The provider that was actually used
+     * @return true if credits should be deducted
+     */
+    public boolean shouldDeductCredits(String userId, OcrProviderType providerType) {
+        if (providerType != OcrProviderType.GOOGLE_VISION) {
+            return false;
+        }
+        return !subscriptionFeatureService.hasPaidSubscription(userId);
     }
 
     /**
@@ -151,19 +173,12 @@ public class OcrProcessingService {
      * @param request      The OCR request
      * @param providerType The specific provider to use
      * @param userId       The user ID for quota tracking
-     * @param userTier     The user's subscription tier
      * @return The OCR result
      */
     public OcrResult processOcrWithProvider(
             OcrRequest request,
             OcrProviderType providerType,
-            String userId,
-            String userTier) {
-
-        // Check quota
-        if (!quotaService.hasRemainingQuota(userId, userTier)) {
-            throw OcrProcessingException.quotaExceeded(userId, providerType);
-        }
+            String userId) {
 
         OcrProvider provider = providerFactory.getProvider(providerType);
         ocrMetrics.recordRequestStart(providerType);
@@ -174,7 +189,6 @@ public class OcrProcessingService {
             OcrResult result = provider.extractText(request);
 
             if (result.isSuccess()) {
-                quotaService.consumeQuota(userId, userTier, providerType);
                 storageAllocationService.updateOcrUsage(userId, 1);
                 ocrMetrics.recordSuccess(result);
             } else {
@@ -195,8 +209,7 @@ public class OcrProcessingService {
             OcrRequest request,
             OcrProvider failedProvider,
             OcrResult failedResult,
-            String userId,
-            String userTier) {
+            String userId) {
 
         ocrMetrics.recordError(
                 failedProvider.getProviderType(),
@@ -215,7 +228,7 @@ public class OcrProcessingService {
             return failedResult;
         }
 
-        return executeFallback(request, failedProvider.getProviderType(), fallbackProvider.get(), userId, userTier);
+        return executeFallback(request, failedProvider.getProviderType(), fallbackProvider.get(), userId);
     }
 
     /**
@@ -225,8 +238,7 @@ public class OcrProcessingService {
             OcrRequest request,
             OcrProvider failedProvider,
             OcrProcessingException exception,
-            String userId,
-            String userTier) {
+            String userId) {
 
         OcrProviderType failedType = failedProvider != null
                 ? failedProvider.getProviderType()
@@ -241,7 +253,7 @@ public class OcrProcessingService {
             throw exception;
         }
 
-        return executeFallback(request, failedType, fallbackProvider.get(), userId, userTier);
+        return executeFallback(request, failedType, fallbackProvider.get(), userId);
     }
 
     /**
@@ -251,8 +263,7 @@ public class OcrProcessingService {
             OcrRequest request,
             OcrProviderType primaryType,
             OcrProvider fallbackProvider,
-            String userId,
-            String userTier) {
+            String userId) {
 
         OcrProviderType fallbackType = fallbackProvider.getProviderType();
 
@@ -270,7 +281,6 @@ public class OcrProcessingService {
             OcrResult result = fallbackProvider.extractText(request);
 
             if (result.isSuccess()) {
-                quotaService.consumeQuota(userId, userTier, fallbackType);
                 storageAllocationService.updateOcrUsage(userId, 1);
                 ocrMetrics.recordSuccess(result);
                 result.withMetadata("fallbackFrom", primaryType.getCode());
