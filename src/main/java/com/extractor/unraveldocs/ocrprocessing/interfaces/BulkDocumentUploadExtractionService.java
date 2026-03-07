@@ -5,6 +5,11 @@ import com.extractor.unraveldocs.documents.dto.response.DocumentCollectionUpload
 import com.extractor.unraveldocs.user.model.User;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface BulkDocumentUploadExtractionService {
     DocumentCollectionResponse<DocumentCollectionUploadData> uploadDocuments(MultipartFile[] files, User user);
+
+    DocumentCollectionResponse<DocumentCollectionUploadData> uploadDocuments(MultipartFile[] files, User user,
+                                                                            Integer startPage, Integer endPage, List<Integer> pages);
 }

@@ -42,7 +42,8 @@ public class OcrMessageListener {
                                 record.partition(),
                                 record.offset());
                 try {
-                        ocrService.processOcrRequest(payload.getCollectionId(), payload.getDocumentId());
+                        ocrService.processOcrRequest(payload.getCollectionId(), payload.getDocumentId(),
+                                        payload.getStartPage(), payload.getEndPage(), payload.getPages());
                         acknowledgment.acknowledge(); // Manual acknowledgment after successful processing
                         log.debug("OCR processing completed successfully for document ID: {}",
                                         s.sanitizeLogging(payload.getDocumentId()));

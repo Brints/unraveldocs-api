@@ -134,30 +134,35 @@ Content-Type: multipart/form-data
 
 **Request:**
 
-| Parameter | Type              | Required | Description              |
-|-----------|-------------------|----------|--------------------------|
-| `files`   | `MultipartFile[]` | ✅        | Array of files to upload |
+| Parameter   | Type              | Required | Description                                                                          |
+|-------------|-------------------|----------|--------------------------------------------------------------------------------------|
+| `files`     | `MultipartFile[]` | ✅        | Array of files to upload                                                             |
+| `startPage` | `Integer`         | No       | Start page for PDF extraction (1-indexed, inclusive). Only applies to PDF files.     |
+| `endPage`   | `Integer`         | No       | End page for PDF extraction (1-indexed, inclusive). Only applies to PDF files.       |
+| `pages`     | `List<Integer>`   | No       | Specific pages (comma-separated). Overrides start/end page. Example: `?pages=3,8,16` |
 
 **Response:** `200 OK`
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "Documents uploaded and OCR extraction initiated.",
   "data": {
-    "collectionId": "abc-123",
-    "collectionName": "My Documents",
-    "documents": [
+    "collectionId": "b936275a-ab87-48f6-8252-d79de2bbf900",
+    "files": [
       {
-        "documentId": "doc-456",
-        "originalFileName": "invoice.pdf",
-        "fileType": "application/pdf",
-        "fileSize": 102400,
-        "fileUrl": "https://storage.example.com/invoice.pdf"
+        "documentId": "ba40291f-cbb2-4e29-9c9b-7cc947078b85",
+        "originalFileName": "machine-learning-roadmap-v2.pdf",
+        "displayName": null,
+        "fileSize": 2823327,
+        "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/24294b53-75a4-4f4e-8be6-fb4d63b5bfa9-machine_learning_roadmap_v2.pdf",
+        "status": "success",
+        "encrypted": false
       }
-    ]
-  }
+    ],
+    "overallStatus": "processing"
+  },
+  "message": "1 document(s) uploaded successfully and queued for processing. 0 failed.",
+  "status": "processing",
+  "statusCode": 202
 }
 ```
 
@@ -197,14 +202,11 @@ POST /api/v1/collections/{collectionId}/document/{documentId}/extract
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "Text extraction completed successfully.",
   "data": {
-    "id": "ocr-789",
-    "documentId": "doc-456",
+    "id": "bd869603-1750-4ff0-a415-cb7618e532a6",
+    "documentId": "a25fde5a-54eb-4584-91e7-ebbd19782c9a",
     "status": "COMPLETED",
-    "extractedText": "Lorem ipsum dolor sit amet...",
+    "extractedText": "2 \r\n` \r\n \r\nWithin these pages, you will find a blend of fundamental \r\nconcepts, advanced topics, and real-world scenarios that are \r\nfrequently encountered in interviews. Each chapter is \r\nstructured to build your understanding progressively, \r\nensuring that you are well-prepared for even the most \r\nchallenging questions. \r\n \r\nIn addition to the technical content, this book offers some \r\nvaluable real interview reports. By fostering a deeper \r\ncomprehension of Java and its applications, this book aims \r\nto equip you with the confidence and competence needed to \r\nstand out in any interview. \r\n \r\nWhether you are a fresh graduate aiming for your first job, \r\na seasoned professional looking to switch roles, or someone \r\nre-entering the workforce, \"Cracking the JAVA \r\nINTERVIEWS WITH SUMIT\" is your essential \r\ncompanion. The practical advice, detailed explanations, and \r\ninsider tips provided by Sumit will not only help you \r\nsucceed in your interviews but also inspire you to approach \r\nthem with a new level of preparedness and enthusiasm.\n--- Page 7 ---\n7 \r\n` \r\n \r\nparticularly important for senior developers targeting \r\ncaptives. \r\n- Memory Management: Understanding garbage collection, \r\nmemory leaks, and the Java memory model is critical for \r\nexperienced candidates. \r\n- Spring and Hibernate: Framework-related questions that \r\nsenior developers need to master, especially for product-\r\nbased and enterprise-level applications. \r\n- Java 8 and Beyond: With a focus on functional \r\nprogramming, streams, and lambdas, this chapter is vital for \r\ndevelopers of all experience levels. \r\n \r\nInterview Focus Areas \r\n1. For Junior Developers:  \r\n   - Mastering core Java and OOP concepts is crucial. Expect \r\nquestions about basic syntax, exception handling, and the \r\nfundamentals of how Java works under the hood. \r\n   - Understanding simple multithreading and basic memory \r\nmanagement concepts may also come up, but these are not \r\ntypically the main focus for junior roles. \r\n    \r\n \r\n2. For Experienced Developers:",
     "editedContent": null,
     "contentFormat": null,
     "editedBy": null,
@@ -213,9 +215,12 @@ POST /api/v1/collections/{collectionId}/document/{documentId}/extract
     "aiSummary": null,
     "documentType": null,
     "aiTags": null,
-    "createdAt": "2026-02-21T12:00:00Z",
-    "updatedAt": "2026-02-21T12:01:30Z"
-  }
+    "createdAt": "2026-03-03T00:58:14.448205+01:00",
+    "updatedAt": "2026-03-03T00:58:14.467903+01:00"
+  },
+  "message": "Text extraction completed successfully.",
+  "status": "success",
+  "statusCode": 200
 }
 ```
 
@@ -247,30 +252,30 @@ GET /api/v1/collections/{collectionId}/document/results
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "Collection results retrieved successfully.",
   "data": {
-    "collectionId": "abc-123",
-    "overallStatus": "PROCESSED",
+    "collectionId": "b0756849-bf74-4445-9434-7f9c387fcccc",
     "files": [
       {
-        "documentId": "doc-456",
-        "originalFileName": "invoice.pdf",
-        "status": "COMPLETED",
+        "aiSummary": null,
+        "aiTags": ["pdf", "java", "interview"],
+        "contentFormat": null,
+        "createdAt": "2026-03-02T23:58:14.448205Z",
+        "documentId": "a25fde5a-54eb-4584-91e7-ebbd19782c9a",
+        "documentType": null,
+        "editedAt": null,
+        "editedBy": null,
+        "editedContent": null,
         "errorMessage": null,
-        "createdAt": "2026-02-21T12:00:00Z",
-        "extractedText": "Lorem ipsum...",
-        "editedContent": "<p>Corrected text...</p>",
-        "contentFormat": "HTML",
-        "editedBy": "user-789",
-        "editedAt": "2026-02-21T13:00:00Z",
-        "aiSummary": "An invoice for services rendered...",
-        "documentType": "invoice",
-        "aiTags": ["finance", "invoice", "billing"]
+        "extractedText": "2 \r\n` \r\n \r\nWithin these pages, you will find a blend of fundamental \r\nconcepts, advanced topics, and real-world scenarios that are \r\nfrequently encountered in interviews. Each chapter is \r\nstructured to build your understanding progressively, \r\nensuring that you are well-prepared for even the most \r\nchallenging questions. \r\n \r\nIn addition to the technical content, this book offers some \r\nvaluable real interview reports. By fostering a deeper \r\ncomprehension of Java and its applications, this book aims \r\nto equip you with the confidence and competence needed to \r\nstand out in any interview. \r\n \r\nWhether you are a fresh graduate aiming for your first job, \r\na seasoned professional looking to switch roles, or someone \r\nre-entering the workforce, \"Cracking the JAVA \r\nINTERVIEWS WITH SUMIT\" is your essential \r\ncompanion. The practical advice, detailed explanations, and \r\ninsider tips provided by Sumit will not only help you \r\nsucceed in your interviews but also inspire you to approach \r\nthem with a new level of preparedness and enthusiasm.\n--- Page 7 ---\n7 \r\n` \r\n \r\nparticularly important for senior developers targeting \r\ncaptives. \r\n- Memory Management: Understanding garbage collection, \r\nmemory leaks, and the Java memory model is critical for \r\nexperienced candidates. \r\n- Spring and Hibernate: Framework-related questions that \r\nsenior developers need to master, especially for product-\r\nbased and enterprise-level applications. \r\n- Java 8 and Beyond: With a focus on functional \r\nprogramming, streams, and lambdas, this chapter is vital for \r\ndevelopers of all experience levels. \r\n \r\nInterview Focus Areas \r\n1. For Junior Developers:  \r\n   - Mastering core Java and OOP concepts is crucial. Expect \r\nquestions about basic syntax, exception handling, and the \r\nfundamentals of how Java works under the hood. \r\n   - Understanding simple multithreading and basic memory \r\nmanagement concepts may also come up, but these are not \r\ntypically the main focus for junior roles. \r\n    \r\n \r\n2. For Experienced Developers:",
+        "originalFileName": "5T2bHZ8XTZXkVCEkrHAUU4.pdf",
+        "status": "completed"
       }
-    ]
-  }
+    ],
+    "overallStatus": "completed"
+  },
+  "message": "OCR results retrieved successfully.",
+  "status": "success",
+  "statusCode": 200
 }
 ```
 
@@ -302,24 +307,24 @@ GET /api/v1/collections/{collectionId}/document/{documentId}/ocr-data
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "OCR data retrieved successfully.",
   "data": {
-    "documentId": "doc-456",
-    "originalFileName": "contract.pdf",
-    "status": "COMPLETED",
-    "errorMessage": null,
-    "createdAt": "2026-02-21T12:00:00Z",
-    "extractedText": "Original OCR output text...",
-    "editedContent": null,
+    "aiSummary": null,
+    "aiTags": null,
     "contentFormat": null,
-    "editedBy": null,
+    "createdAt": "2026-03-02T23:58:14.448205Z",
+    "documentId": "a25fde5a-54eb-4584-91e7-ebbd19782c9a",
+    "documentType": null,
     "editedAt": null,
-    "aiSummary": "A legal contract between...",
-    "documentType": "legal_contract",
-    "aiTags": ["legal", "contract"]
-  }
+    "editedBy": null,
+    "editedContent": null,
+    "errorMessage": null,
+    "extractedText": "2 \r\n` \r\n \r\nWithin these pages, you will find a blend of fundamental \r\nconcepts, advanced topics, and real-world scenarios that are \r\nfrequently encountered in interviews. Each chapter is \r\nstructured to build your understanding progressively, \r\nensuring that you are well-prepared for even the most \r\nchallenging questions. \r\n \r\nIn addition to the technical content, this book offers some \r\nvaluable real interview reports. By fostering a deeper \r\ncomprehension of Java and its applications, this book aims \r\nto equip you with the confidence and competence needed to \r\nstand out in any interview. \r\n \r\nWhether you are a fresh graduate aiming for your first job, \r\na seasoned professional looking to switch roles, or someone \r\nre-entering the workforce, \"Cracking the JAVA \r\nINTERVIEWS WITH SUMIT\" is your essential \r\ncompanion. The practical advice, detailed explanations, and \r\ninsider tips provided by Sumit will not only help you \r\nsucceed in your interviews but also inspire you to approach \r\nthem with a new level of preparedness and enthusiasm.\n--- Page 7 ---\n7 \r\n` \r\n \r\nparticularly important for senior developers targeting \r\ncaptives. \r\n- Memory Management: Understanding garbage collection, \r\nmemory leaks, and the Java memory model is critical for \r\nexperienced candidates. \r\n- Spring and Hibernate: Framework-related questions that \r\nsenior developers need to master, especially for product-\r\nbased and enterprise-level applications. \r\n- Java 8 and Beyond: With a focus on functional \r\nprogramming, streams, and lambdas, this chapter is vital for \r\ndevelopers of all experience levels. \r\n \r\nInterview Focus Areas \r\n1. For Junior Developers:  \r\n   - Mastering core Java and OOP concepts is crucial. Expect \r\nquestions about basic syntax, exception handling, and the \r\nfundamentals of how Java works under the hood. \r\n   - Understanding simple multithreading and basic memory \r\nmanagement concepts may also come up, but these are not \r\ntypically the main focus for junior roles. \r\n    \r\n \r\n2. For Experienced Developers:",
+    "originalFileName": "5T2bHZ8XTZXkVCEkrHAUU4.pdf",
+    "status": "COMPLETED"
+  },
+  "message": "OCR data retrieved successfully.",
+  "status": "success",
+  "statusCode": 200
 }
 ```
 
@@ -366,24 +371,24 @@ Content-Type: application/json
 
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "Document content updated successfully.",
-  "data": {
-    "documentId": "doc-456",
-    "originalFileName": "contract.pdf",
-    "status": "COMPLETED",
-    "errorMessage": null,
-    "createdAt": "2026-02-21T12:00:00Z",
-    "extractedText": "Original OCR output text...",
-    "editedContent": "<p>User-corrected <b>formatted</b> text with <a href=\"https://example.com\">links</a></p>",
-    "contentFormat": "HTML",
-    "editedBy": "user-789",
-    "editedAt": "2026-02-21T13:05:00Z",
-    "aiSummary": "A legal contract between...",
-    "documentType": "legal_contract",
-    "aiTags": ["legal", "contract"]
-  }
+    "data": {
+        "aiSummary": "Interview preparation guide covering Java fundamentals, advanced topics, and real-world scenarios.",
+        "aiTags": ["legal", "contract"],
+        "contentFormat": "HTML",
+        "createdAt": "2026-03-02T23:58:14.448205Z",
+        "documentId": "a25fde5a-54eb-4584-91e7-ebbd19782c9a",
+        "documentType": "book",
+        "editedAt": "2026-03-03T01:21:12.6928448+01:00",
+        "editedBy": "3e3c6fc7-e48b-4682-ab54-0e9375a039b8",
+        "editedContent": "2 ` Within these pages, you will find a blend of fundamental concepts, advanced topics, and real-world scenarios that are frequently encountered in interviews. Each chapter is structured to build your understanding progressively, ensuring that you are well-prepared for even the most challenging questions. In addition to the technical content, this book offers some valuable real interview reports. By fostering a deeper comprehension of Java and its applications, this book aims to equip you with the confidence and competence needed to stand out in any interview. Whether you are a fresh graduate aiming for your first job, a seasoned professional looking to switch roles, or someone re-entering the workforce, \"Cracking the JAVA INTERVIEWS WITH SUMIT\" is your essential companion. The practical advice, detailed explanations, and insider tips provided by Sumit will not only help you succeed in your interviews but also inspire you to approach them with a new level of preparedness and enthusiasm. --- Page 7 --- 7 ` particularly important for senior developers targeting captives. - Memory Management: Understanding garbage collection, memory leaks, and the Java memory model is critical for experienced candidates. - <strong>Spring and Hibernate</strong>: Framework-related questions that senior developers need to master, especially for product- based and enterprise-level applications. - Java 8 and Beyond: With a focus on functional programming, streams, and lambdas, this chapter is vital for developers of all experience levels. Interview Focus Areas 1. For Junior Developers: - Mastering core Java and OOP concepts is crucial. Expect questions about basic syntax, exception handling, and the fundamentals of how Java works under the hood. - Understanding simple multithreading and basic memory management concepts may also come up, but these are not typically the main focus for junior roles. 2.\n<p>For Experienced Developers:</p>",
+        "errorMessage": null,
+        "extractedText": "2 \r\n` \r\n \r\nWithin these pages, you will find a blend of fundamental \r\nconcepts, advanced topics, and real-world scenarios that are \r\nfrequently encountered in interviews. Each chapter is \r\nstructured to build your understanding progressively, \r\nensuring that you are well-prepared for even the most \r\nchallenging questions. \r\n \r\nIn addition to the technical content, this book offers some \r\nvaluable real interview reports. By fostering a deeper \r\ncomprehension of Java and its applications, this book aims \r\nto equip you with the confidence and competence needed to \r\nstand out in any interview. \r\n \r\nWhether you are a fresh graduate aiming for your first job, \r\na seasoned professional looking to switch roles, or someone \r\nre-entering the workforce, \"Cracking the JAVA \r\nINTERVIEWS WITH SUMIT\" is your essential \r\ncompanion. The practical advice, detailed explanations, and \r\ninsider tips provided by Sumit will not only help you \r\nsucceed in your interviews but also inspire you to approach \r\nthem with a new level of preparedness and enthusiasm.\n--- Page 7 ---\n7 \r\n` \r\n \r\nparticularly important for senior developers targeting \r\ncaptives. \r\n- Memory Management: Understanding garbage collection, \r\nmemory leaks, and the Java memory model is critical for \r\nexperienced candidates. \r\n- Spring and Hibernate: Framework-related questions that \r\nsenior developers need to master, especially for product-\r\nbased and enterprise-level applications. \r\n- Java 8 and Beyond: With a focus on functional \r\nprogramming, streams, and lambdas, this chapter is vital for \r\ndevelopers of all experience levels. \r\n \r\nInterview Focus Areas \r\n1. For Junior Developers:  \r\n   - Mastering core Java and OOP concepts is crucial. Expect \r\nquestions about basic syntax, exception handling, and the \r\nfundamentals of how Java works under the hood. \r\n   - Understanding simple multithreading and basic memory \r\nmanagement concepts may also come up, but these are not \r\ntypically the main focus for junior roles. \r\n    \r\n \r\n2. For Experienced Developers:",
+        "originalFileName": "5T2bHZ8XTZXkVCEkrHAUU4.pdf",
+        "status": "COMPLETED"
+    },
+    "message": "Document content updated successfully.",
+    "status": "success",
+    "statusCode": 200
 }
 ```
 

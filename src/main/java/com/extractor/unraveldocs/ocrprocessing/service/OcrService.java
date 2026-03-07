@@ -40,6 +40,11 @@ public class OcrService {
         return extractionService.uploadDocuments(files, user);
     }
 
+    public DocumentCollectionResponse<DocumentCollectionUploadData> uploadDocuments(MultipartFile[] files, User user,
+            Integer startPage, Integer endPage, java.util.List<Integer> pages) {
+        return extractionService.uploadDocuments(files, user, startPage, endPage, pages);
+    }
+
     public DocumentCollectionResponse<FileResultData> updateOcrContent(
             String collectionId, String documentId, String userId,
             String editedContent, ContentFormat contentFormat) {

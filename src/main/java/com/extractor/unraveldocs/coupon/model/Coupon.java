@@ -103,8 +103,8 @@ public class Coupon {
      * Checks if the coupon is currently valid based on date range.
      */
     public boolean isCurrentlyValid() {
-        OffsetDateTime now = OffsetDateTime.now();
-        return isActive && now.isAfter(validFrom) && now.isBefore(validUntil);
+        java.time.Instant now = java.time.Instant.now();
+        return isActive && now.isAfter(validFrom.toInstant()) && now.isBefore(validUntil.toInstant());
     }
 
     /**

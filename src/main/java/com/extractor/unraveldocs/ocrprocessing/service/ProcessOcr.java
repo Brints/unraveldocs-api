@@ -49,6 +49,13 @@ public class ProcessOcr implements ProcessOcrService {
     @Override
     @Transactional
     public void processOcrRequest(String collectionId, String documentId) {
+        processOcrRequest(collectionId, documentId, null, null, null);
+    }
+
+    @Override
+    @Transactional
+    public void processOcrRequest(String collectionId, String documentId,
+                                  Integer startPage, Integer endPage, List<Integer> pages) {
         DocumentCollection collection = documentCollectionRepository.findById(collectionId)
                 .orElseThrow(() -> new NotFoundException("Collection not found with ID: " + collectionId));
 
@@ -79,7 +86,7 @@ public class ProcessOcr implements ProcessOcrService {
                     documentId, collection.getId());
 
             // Build OCR request using the new abstraction
-            OcrRequest ocrRequest = buildOcrRequest(fileEntry, collection);
+            OcrRequest ocrRequest = buildOcrRequest(fileEntry, collection, startPage, endPage, pages);
 
             // Get user ID
             String userId = collection.getUser().getId();
@@ -146,13 +153,17 @@ public class ProcessOcr implements ProcessOcrService {
     /**
      * Build an OCR request from the file entry.
      */
-    private OcrRequest buildOcrRequest(FileEntry fileEntry, DocumentCollection collection) {
+    private OcrRequest buildOcrRequest(FileEntry fileEntry, DocumentCollection collection,
+                                       Integer startPage, Integer endPage, List<Integer> pages) {
         return OcrRequest.builder()
                 .documentId(fileEntry.getDocumentId())
                 .collectionId(collection.getId())
                 .imageUrl(fileEntry.getFileUrl())
                 .mimeType(fileEntry.getFileType())
                 .userId(collection.getUser().getId())
+                .startPage(startPage)
+                .endPage(endPage)
+                .pages(pages)
                 .fallbackEnabled(true)
                 .build();
     }

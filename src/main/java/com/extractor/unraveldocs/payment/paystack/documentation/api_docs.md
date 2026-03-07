@@ -42,21 +42,17 @@ Initializes a payment transaction or subscription.
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
-  "amount": 500000,
-  "callbackUrl": "https://yourapp.com/paystack/callback",
-  "reference": "TXN_123456",
+  "email": "goldenlee87@gmail.com",
+  "amount": 1395000,
   "currency": "NGN",
-  "planCode": "PLN_xxx",
-  "subscriptionStartDate": "2024-02-01T00:00:00Z",
-  "channels": ["card", "bank", "ussd"],
+  "callback_url": "https://8hw23p5s-8080.uks1.devtunnels.ms/payment/callback",
+  "coupon_code": "PROMO17",
+  "planCode": "STARTER_MONTHLY",
   "metadata": {
-    "orderId": "order_123",
-    "customField": "value"
-  },
-  "subaccount": null,
-  "splitCode": null,
-  "bearer": null
+    "plan_code": "STARTER_MONTHLY",
+    "billingInterval": "monthly",
+    "source": "billing_page"
+  }
 }
 ```
 

@@ -86,6 +86,13 @@ public class OcrDocumentController {
         @PostMapping(value = "/upload/extract-all", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<DocumentCollectionResponse<DocumentCollectionUploadData>> extractTextFromAllFiles(
                         @Parameter(description = "Files to be uploaded and extracted", required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)) @RequestParam("files") @NotNull MultipartFile[] files,
+
+                        @Parameter(description = "Start page for PDF extraction (1-indexed, inclusive). Only applies to PDF files.") @RequestParam(required = false) Integer startPage,
+
+                        @Parameter(description = "End page for PDF extraction (1-indexed, inclusive). Only applies to PDF files.") @RequestParam(required = false) Integer endPage,
+
+                        @Parameter(description = "Specific pages to extract from PDF (1-indexed, comma-separated). Takes priority over startPage/endPage. Example: ?pages=3,8,16") @RequestParam(required = false) java.util.List<Integer> pages,
+
                         Authentication authenticatedUser) {
                 User user = getAuthenticatedUser(authenticatedUser);
 
@@ -94,7 +101,7 @@ public class OcrDocumentController {
                 }
 
                 DocumentCollectionResponse<DocumentCollectionUploadData> response = ocrService.uploadDocuments(files,
-                                user);
+                                user, startPage, endPage, pages);
 
                 return ResponseEntity.ok(response);
         }

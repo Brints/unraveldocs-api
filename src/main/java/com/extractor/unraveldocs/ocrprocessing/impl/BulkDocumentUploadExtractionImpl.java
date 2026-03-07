@@ -54,6 +54,13 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
     @Override
     @Transactional
     public DocumentCollectionResponse<DocumentCollectionUploadData> uploadDocuments(MultipartFile[] files, User user) {
+        return uploadDocuments(files, user, null, null, null);
+    }
+
+    @Override
+    @Transactional
+    public DocumentCollectionResponse<DocumentCollectionUploadData> uploadDocuments(MultipartFile[] files, User user,
+            Integer startPage, Integer endPage, List<Integer> pages) {
         List<FileEntry> processedFiles = new ArrayList<>();
         List<FileEntryData> responseFileEntriesData = new ArrayList<>();
         List<OcrData> ocrDataToSave = new ArrayList<>();
@@ -154,7 +161,7 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
                     ocrEventPublisher.ifPresent(publisher -> {
                         successfulFiles.forEach(fileEntry -> {
                             OcrRequestedEvent event = ocrEventMapper.toOcrRequestedEvent(fileEntry,
-                                    finalSavedCollectionId);
+                                    finalSavedCollectionId, startPage, endPage, pages);
                             publisher.publishOcrRequest(event);
                         });
                     });

@@ -61,4 +61,10 @@ public interface UserRepository extends JpaRepository<@NonNull User, @NonNull St
          * Used for targeting new users with welcome coupons.
          */
         List<User> findByCreatedAtAfterAndDeletedAtIsNull(OffsetDateTime createdAfter);
+
+        /**
+         * Find all non-deleted users.
+         * Used for targeting all users with coupons.
+         */
+        List<User> findByDeletedAtIsNull();
 }

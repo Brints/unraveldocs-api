@@ -8,6 +8,7 @@ import com.extractor.unraveldocs.coupon.model.CouponTemplate;
 import com.extractor.unraveldocs.coupon.model.CouponUsage;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -23,11 +24,11 @@ public class CouponMapper {
         if (coupon == null)
             return null;
 
-        OffsetDateTime now = OffsetDateTime.now();
-        boolean isExpired = coupon.getValidUntil().isBefore(now);
+        Instant now = Instant.now();
+        boolean isExpired = coupon.getValidUntil().toInstant().isBefore(now);
         boolean isCurrentlyValid = coupon.isActive() &&
-                now.isAfter(coupon.getValidFrom()) &&
-                now.isBefore(coupon.getValidUntil());
+                now.isAfter(coupon.getValidFrom().toInstant()) &&
+                now.isBefore(coupon.getValidUntil().toInstant());
 
         return CouponData.builder()
                 .id(coupon.getId())

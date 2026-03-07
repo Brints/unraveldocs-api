@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 
 @Slf4j
@@ -57,12 +58,12 @@ public class CouponValidationServiceImpl implements CouponValidationService {
             return CouponValidationResponse.invalid("Coupon is inactive", "COUPON_INACTIVE");
         }
 
-        // Check date range
-        OffsetDateTime now = OffsetDateTime.now();
-        if (now.isBefore(coupon.getValidFrom())) {
+        // Check date range using Instant (UTC) to avoid timezone comparison issues
+        Instant now = Instant.now();
+        if (now.isBefore(coupon.getValidFrom().toInstant())) {
             return CouponValidationResponse.invalid("Coupon is not yet valid", "COUPON_NOT_YET_VALID");
         }
-        if (now.isAfter(coupon.getValidUntil())) {
+        if (now.isAfter(coupon.getValidUntil().toInstant())) {
             return CouponValidationResponse.invalid("Coupon has expired", "COUPON_EXPIRED");
         }
 
@@ -189,6 +190,7 @@ public class CouponValidationServiceImpl implements CouponValidationService {
         RecipientCategory category = coupon.getRecipientCategory();
 
         return switch (category) {
+            case ALL_USERS -> true;
             case ALL_PAID_USERS -> hasActivePaidSubscription(user);
             case INDIVIDUAL_PLAN -> hasSubscriptionPlan(user, "INDIVIDUAL");
             case TEAM_PLAN -> hasSubscriptionPlan(user, "TEAM");

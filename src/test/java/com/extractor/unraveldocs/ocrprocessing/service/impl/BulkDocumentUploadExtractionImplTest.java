@@ -130,7 +130,7 @@ class BulkDocumentUploadExtractionImplTest {
                 savedCollection.setCollectionStatus(DocumentStatus.PROCESSING);
                 when(documentCollectionRepository.saveAndFlush(any(DocumentCollection.class)))
                                 .thenReturn(savedCollection);
-                when(ocrEventMapper.toOcrRequestedEvent(any(FileEntry.class), anyString()))
+                when(ocrEventMapper.toOcrRequestedEvent(any(FileEntry.class), anyString(), any(), any(), any()))
                                 .thenReturn(new OcrRequestedEvent());
                 when(ocrEventPublisher.publishOcrRequest(any(OcrRequestedEvent.class)))
                                 .thenReturn(CompletableFuture.completedFuture(null));
@@ -191,7 +191,7 @@ class BulkDocumentUploadExtractionImplTest {
                 savedCollection.setCollectionStatus(DocumentStatus.PROCESSING);
                 when(documentCollectionRepository.saveAndFlush(any(DocumentCollection.class)))
                                 .thenReturn(savedCollection);
-                when(ocrEventMapper.toOcrRequestedEvent(any(FileEntry.class), anyString()))
+                when(ocrEventMapper.toOcrRequestedEvent(any(FileEntry.class), anyString(), any(), any(), any()))
                                 .thenReturn(new OcrRequestedEvent());
                 when(ocrEventPublisher.publishOcrRequest(any(OcrRequestedEvent.class)))
                                 .thenReturn(CompletableFuture.completedFuture(null));
