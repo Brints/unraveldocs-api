@@ -203,18 +203,18 @@ Retrieves a specific file from a collection.
 **Response (200 OK):**
 ```json
 {
-  "statusCode": 200,
-  "status": "success",
-  "message": "File retrieved successfully.",
   "data": {
-    "documentId": "uuid-doc-1",
-    "originalFileName": "document1.pdf",
-    "displayName": "My Custom Name",
-    "fileSize": 1024768,
-    "fileUrl": "https://s3.amazonaws.com/bucket/documents/uuid-doc-1.pdf",
-    "status": "SUCCESS",
-    "isEncrypted": false
-  }
+    "documentId": "a25fde5a-54eb-4584-91e7-ebbd19782c9a",
+    "originalFileName": "5T2bHZ8XTZXkVCEkrHAUU4.pdf",
+    "displayName": null,
+    "fileSize": 6821575,
+    "fileUrl": "https://unraveldocs-s3.s3.eu-central-1.amazonaws.com/documents/a4380b71-eaa2-4c89-b357-7b6bd0f5cc37-5T2bHZ8XTZXkVCEkrHAUU4.pdf",
+    "status": "success",
+    "encrypted": false
+  },
+  "message": "File retrieved successfully.",
+  "status": "success",
+  "statusCode": 200
 }
 ```
 

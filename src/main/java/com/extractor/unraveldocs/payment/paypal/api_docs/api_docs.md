@@ -45,15 +45,13 @@ Creates a new PayPal order for one-time payment.
 **Request Body:**
 ```json
 {
-  "amount": 49.99,
+  "amount": 90.00,
   "currency": "USD",
-  "description": "Document processing service",
-  "returnUrl": "https://yourapp.com/paypal/return",
-  "cancelUrl": "https://yourapp.com/paypal/cancel",
-  "metadata": {
-    "orderId": "order_123"
-  },
-  "planId": null,
+  "description": "Starter Plan - Yearly (with 20% coupon)",
+  "couponCode": "PROMO17",
+  "planId": "STARTER_YEARLY",
+  "returnUrl": "https://8hw23p5s-8080.uks1.devtunnels.ms/payment/success",
+  "cancelUrl": "https://8hw23p5s-8080.uks1.devtunnels.ms/payment/cancel",
   "intent": "CAPTURE"
 }
 ```
@@ -74,30 +72,35 @@ Creates a new PayPal order for one-time payment.
 **Response:**
 ```json
 {
-  "status": true,
-  "message": "Order created successfully",
   "data": {
-    "orderId": "8MC585209K746392H",
-    "status": "CREATED",
-    "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=8MC585209K746392H",
     "links": [
       {
-        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8MC585209K746392H",
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2M137983989425844",
         "rel": "self",
         "method": "GET"
       },
       {
-        "href": "https://www.sandbox.paypal.com/checkoutnow?token=8MC585209K746392H",
+        "href": "https://www.sandbox.paypal.com/checkoutnow?token=2M137983989425844",
         "rel": "approve",
         "method": "GET"
       },
       {
-        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/8MC585209K746392H/capture",
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2M137983989425844",
+        "rel": "update",
+        "method": "PATCH"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/2M137983989425844/capture",
         "rel": "capture",
         "method": "POST"
       }
-    ]
-  }
+    ],
+    "status": "CREATED",
+    "orderId": "2M137983989425844",
+    "approvalUrl": "https://www.sandbox.paypal.com/checkoutnow?token=2M137983989425844"
+  },
+  "message": "Order created successfully",
+  "status": true
 }
 ```
 

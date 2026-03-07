@@ -301,6 +301,7 @@ public class CouponNotificationServiceImpl implements CouponNotificationService 
         RecipientCategory category = coupon.getRecipientCategory();
 
         return switch (category) {
+            case ALL_USERS -> findAllUsers();
             case ALL_PAID_USERS -> findAllPaidUsers();
             case INDIVIDUAL_PLAN -> findUsersByPlan("INDIVIDUAL");
             case TEAM_PLAN -> findUsersByPlan("TEAM");
@@ -314,6 +315,10 @@ public class CouponNotificationServiceImpl implements CouponNotificationService 
                     .map(CouponRecipient::getUser)
                     .toList();
         };
+    }
+
+    private List<User> findAllUsers() {
+        return userRepository.findByDeletedAtIsNull();
     }
 
     private List<User> findAllPaidUsers() {

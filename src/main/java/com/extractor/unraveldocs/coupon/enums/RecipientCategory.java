@@ -6,6 +6,11 @@ package com.extractor.unraveldocs.coupon.enums;
  */
 public enum RecipientCategory {
     /**
+     * All users regardless of subscription status
+     */
+    ALL_USERS,
+
+    /**
      * All users with active paid subscriptions (Individual, Team, or Enterprise)
      */
     ALL_PAID_USERS,

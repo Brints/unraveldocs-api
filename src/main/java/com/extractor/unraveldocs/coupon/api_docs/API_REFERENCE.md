@@ -533,11 +533,14 @@ GET /coupons/validate/{code}
 
 ```json
 {
+  "statusCode": 400,
   "status": "success",
+  "message": "Coupon has expired",
   "data": {
-    "isValid": false,
+    "message": "Coupon has expired",
+    "couponData": null,
     "errorCode": "COUPON_EXPIRED",
-    "errorMessage": "This coupon has expired"
+    "valid": false
   }
 }
 ```
@@ -593,6 +596,16 @@ POST /coupons/apply
     "minPurchaseAmount": null,
     "minPurchaseRequirementMet": true
   }
+}
+```
+
+**Response (400 Bad Request - Invalid):**
+
+```json
+{
+  "statusCode": 400,
+  "error": "Invalid Coupon",
+  "message": "Coupon is not yet valid"
 }
 ```
 

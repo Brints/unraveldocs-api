@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 @Builder
@@ -14,4 +15,7 @@ import java.io.Serializable;
 public class OcrRequestedEvent implements Serializable {
     private String collectionId;
     private String documentId;
+    private Integer startPage;
+    private Integer endPage;
+    private List<Integer> pages;
 }

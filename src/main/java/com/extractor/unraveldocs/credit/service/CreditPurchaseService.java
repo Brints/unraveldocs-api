@@ -78,59 +78,76 @@ public class CreditPurchaseService {
                         throw new BadRequestException("Unsupported payment gateway: " + request.getGateway());
                 }
 
-                // Calculate amount (with optional coupon discount)
+                // Start with original pack price in cents (USD)
                 long originalAmountInCents = pack.getPriceInCents();
-                long finalAmountInCents = originalAmountInCents;
+
+                // Currency conversion FIRST (before applying discount)
+                String paymentCurrency = pack.getCurrency(); // default: USD
+                BigDecimal exchangeRate = BigDecimal.ONE;
+                String formattedAmount = null;
+                SubscriptionCurrency targetCurrency = null;
+
+                // Amount to apply discount on — in target currency cents
+                BigDecimal amountForDiscount = BigDecimal.valueOf(originalAmountInCents);
+
+                if (request.getCurrency() != null && !request.getCurrency().isBlank()
+                                && !request.getCurrency().equalsIgnoreCase("USD")) {
+                        try {
+                                targetCurrency = SubscriptionCurrency
+                                                .fromIdentifier(request.getCurrency());
+
+                                // Convert original USD price to target currency
+                                BigDecimal originalInUsd = BigDecimal.valueOf(originalAmountInCents)
+                                                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+                                ConvertedPrice converted = currencyConversionService.convert(originalInUsd,
+                                                targetCurrency);
+
+                                // Work in target currency cents for discount calculation
+                                amountForDiscount = converted.getConvertedAmount()
+                                                .multiply(BigDecimal.valueOf(100))
+                                                .setScale(2, RoundingMode.HALF_UP);
+
+                                paymentCurrency = targetCurrency.getCode();
+                                exchangeRate = converted.getExchangeRate();
+
+                                log.info("Converted credit purchase amount: {} USD cents -> {} {} cents (rate: {})",
+                                                originalAmountInCents, amountForDiscount, paymentCurrency,
+                                                exchangeRate);
+                        } catch (IllegalArgumentException e) {
+                                throw new BadRequestException("Unsupported currency: " + request.getCurrency());
+                        }
+                }
+
+                // Apply coupon discount to the (possibly converted) amount
+                BigDecimal finalAmountDecimal = amountForDiscount;
                 long discountApplied = 0;
 
                 if (request.getCouponCode() != null && !request.getCouponCode().isBlank()) {
                         ApplyCouponRequest couponRequest = ApplyCouponRequest.builder()
                                         .couponCode(request.getCouponCode())
-                                        .amount(BigDecimal.valueOf(originalAmountInCents))
+                                        .amount(amountForDiscount)
                                         .subscriptionPlan(pack.getName().name())
                                         .build();
 
                         DiscountCalculationData discountData = couponValidationService
                                         .applyCouponToAmount(couponRequest, user);
-                        finalAmountInCents = discountData.getFinalAmount().longValue();
-                        discountApplied = originalAmountInCents - finalAmountInCents;
+                        finalAmountDecimal = discountData.getFinalAmount();
+                        discountApplied = amountForDiscount.subtract(finalAmountDecimal)
+                                        .setScale(0, RoundingMode.HALF_UP)
+                                        .longValue();
                 }
 
-                // Currency conversion
-                String paymentCurrency = pack.getCurrency(); // default: USD
-                long paymentAmountInCents = finalAmountInCents;
-                BigDecimal exchangeRate = BigDecimal.ONE;
-                String formattedAmount = null;
+                long paymentAmountInCents = finalAmountDecimal
+                                .setScale(0, RoundingMode.HALF_UP)
+                                .longValue();
 
-                if (request.getCurrency() != null && !request.getCurrency().isBlank()
-                                && !request.getCurrency().equalsIgnoreCase("USD")) {
-                        try {
-                                SubscriptionCurrency targetCurrency = SubscriptionCurrency
-                                                .fromIdentifier(request.getCurrency());
-
-                                // Convert from cents to dollars for conversion
-                                BigDecimal amountInUsd = BigDecimal.valueOf(finalAmountInCents)
-                                                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
-                                ConvertedPrice converted = currencyConversionService.convert(amountInUsd,
-                                                targetCurrency);
-
-                                // Convert back to cents
-                                paymentAmountInCents = converted.getConvertedAmount()
-                                                .multiply(BigDecimal.valueOf(100))
-                                                .setScale(0, RoundingMode.HALF_UP)
-                                                .longValue();
-
-                                paymentCurrency = targetCurrency.getCode();
-                                exchangeRate = converted.getExchangeRate();
-                                formattedAmount = converted.getFormattedPrice();
-
-                                log.info("Converted credit purchase amount: {} USD cents -> {} {} cents (rate: {})",
-                                                finalAmountInCents, paymentAmountInCents, paymentCurrency,
-                                                exchangeRate);
-                        } catch (IllegalArgumentException e) {
-                                throw new BadRequestException("Unsupported currency: " + request.getCurrency());
-                        }
+                // Format price in target currency
+                if (targetCurrency != null) {
+                        BigDecimal amountInCurrency = BigDecimal.valueOf(paymentAmountInCents)
+                                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                        formattedAmount = currencyConversionService.formatPrice(amountInCurrency,
+                                        targetCurrency);
                 }
 
                 // Format USD amount as fallback
