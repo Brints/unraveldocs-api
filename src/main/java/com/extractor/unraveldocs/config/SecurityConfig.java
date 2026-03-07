@@ -107,6 +107,7 @@ public class SecurityConfig {
                                                 .hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPER_ADMIN")
                                                 .requestMatchers(
                                                                 "/api/v1/auth/logout",
+                                                                "/api/v1/auth/logout-all",
                                                                 "/me/**",
                                                                 "/api/v1/user/**",
                                                                 "/api/v1/user/change-password",

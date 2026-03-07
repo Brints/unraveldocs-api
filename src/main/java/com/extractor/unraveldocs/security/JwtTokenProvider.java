@@ -42,7 +42,6 @@ public class JwtTokenProvider {
                 .id(jti)
                 .build();
 
-
         return Jwts.builder()
                 .claims(claims)
                 .issuedAt(Date.from(now))
@@ -126,5 +125,9 @@ public class JwtTokenProvider {
 
     public Long getAccessExpirationInMs() {
         return jwtAccessExpirationInMs;
+    }
+
+    public Long getRefreshExpirationInMs() {
+        return jwtRefreshExpirationInMs;
     }
 }

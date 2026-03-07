@@ -2,7 +2,7 @@
 
 > **Base URL:** `/api/v1/auth`  
 > **Package:** `com.extractor.unraveldocs.auth`  
-> **Last Updated:** 2026-02-26
+> **Last Updated:** 2026-03-07
 
 ---
 
@@ -23,6 +23,7 @@
    - [Resend Verification Email](#5-resend-verification-email)
    - [Refresh Token](#6-refresh-token)
    - [Logout](#7-logout)
+   - [Logout All Devices](#8-logout-all-devices)
 5. [Service Layer](#service-layer)
    - [AuthService (Facade)](#authservice-facade)
    - [SignupUserImpl](#signupuserimpl)
@@ -52,9 +53,10 @@ Key capabilities:
 |---------------------|------------------------------------------------------------------------------------------------------------------------------|
 | User Registration   | Creates a new user account, assigns a default subscription, grants sign-up credits, and sends a verification email via Kafka |
 | Email Verification  | Token-based verification with configurable TTL (default 3 hours)                                                             |
-| Login               | Authenticates credentials, issues JWT access + refresh tokens, tracks login attempts                                         |
-| Token Refresh       | Rolling refresh token strategy — old refresh token is invalidated and a new pair is issued                                   |
-| Logout              | Blacklists the current access token; clears the Spring Security context                                                      |
+| Login               | Authenticates credentials, issues JWT access token in body + refresh token as HttpOnly cookie, tracks login attempts          |
+| Token Refresh       | Rolling refresh token strategy — reads refresh token from HttpOnly cookie, invalidates old, issues new pair                  |
+| Logout              | Blacklists the current access token, invalidates all refresh tokens, clears the cookie, returns `204 No Content`             |
+| Logout All Devices  | Invalidates all active sessions across all devices for the user                                                              |
 | Password Generation | Utility endpoint to generate cryptographically strong passwords of configurable length                                       |
 
 ---
@@ -73,16 +75,17 @@ auth/
 │   ├── Role.java                            # Enum: USER | MODERATOR | ADMIN | SUPER_ADMIN
 │   └── VerifiedStatus.java                  # Enum: PENDING | VERIFIED | EXPIRED | FAILED
 ├── dto/
-│   ├── LoginData.java                       # Login response payload
+│   ├── LoginData.java                       # Login response payload (token-only; profile via GET /api/v1/user/me)
+│   ├── LoginResult.java                     # Internal wrapper — holds response + raw refresh token for cookie
 │   ├── PasswordMatches.java                 # Custom constraint annotation
 │   ├── PasswordMatchesValidator.java        # Validator for password == confirmPassword
-│   ├── RefreshLoginData.java                # Refresh token response payload
+│   ├── RefreshLoginData.java                # Refresh token response payload (access token only)
+│   ├── RefreshResult.java                   # Internal wrapper — holds response + raw refresh token for cookie
 │   ├── SignupData.java                      # Signup response payload
 │   └── request/
 │       ├── EmailVerificationRequestDto.java # Verify email request
 │       ├── GeneratePasswordDto.java         # Password generation request
 │       ├── LoginRequestDto.java             # Login request
-│       ├── RefreshTokenRequest.java         # Token refresh request
 │       ├── ResendEmailVerificationDto.java  # Resend verification email request
 │       ├── SignupRequestDto.java            # User registration request
 │       └── VerifyEmailDto.java              # (alias/internal use)
@@ -233,9 +236,7 @@ Stores all verification and password-reset token data for a `User`. Has a one-to
 #### `RefreshTokenRequest`
 **Package:** `com.extractor.unraveldocs.auth.dto.request`
 
-| Field          | Type     | Required | Constraints | Example         |
-|----------------|----------|----------|-------------|-----------------|
-| `refreshToken` | `String` | ✅        | Not blank   | `"eyJhbGci..."` |
+> ⚠️ **Deprecated:** The refresh token is now read from an HttpOnly cookie, not from the request body. This DTO is retained for backward compatibility but its fields are no longer required.
 
 ---
 
@@ -278,36 +279,27 @@ Returned inside `UnravelDocsResponse<SignupData>` on successful registration.
 ---
 
 #### `LoginData`
-Returned inside `UnravelDocsResponse<LoginData>` on successful login.
+Returned inside `UnravelDocsResponse<LoginData>` on successful login. Contains **only authentication data**; user profile data is available via `GET /api/v1/user/me`.
 
-| Field          | Type             | Description                           |
-|----------------|------------------|---------------------------------------|
-| `id`           | `String`         | User UUID                             |
-| `firstName`    | `String`         | User first name                       |
-| `lastName`     | `String`         | User last name                        |
-| `email`        | `String`         | User email                            |
-| `role`         | `Role`           | User role                             |
-| `lastLogin`    | `OffsetDateTime` | Updated to `now()` on each login      |
-| `isActive`     | `boolean`        | Account active status                 |
-| `isVerified`   | `boolean`        | Email verification status             |
-| `accessToken`  | `String`         | Short-lived JWT access token (Bearer) |
-| `refreshToken` | `String`         | Long-lived JWT refresh token          |
-| `createdAt`    | `OffsetDateTime` | Account creation timestamp            |
-| `updatedAt`    | `OffsetDateTime` | Last update timestamp                 |
+| Field            | Type     | Description                                |
+|------------------|----------|--------------------------------------------|
+| `userId`         | `String` | User UUID                                  |
+| `accessToken`    | `String` | Short-lived JWT access token               |
+| `tokenType`      | `String` | Always `"Bearer"`                          |
+| `accessExpiresIn`| `Long`   | Access token TTL in milliseconds           |
+
+> ℹ️ The refresh token is **not** included in the JSON body. It is set as an `HttpOnly` cookie by the server.
 
 ---
 
 #### `RefreshLoginData`
-Returned inside `UnravelDocsResponse<RefreshLoginData>` on successful token refresh.
+Returned inside `UnravelDocsResponse<RefreshLoginData>` on successful token refresh. Contains **only the new access token**; the new refresh token is set as an `HttpOnly` cookie.
 
-| Field                  | Type     | Description                              |
-|------------------------|----------|------------------------------------------|
-| `id`                   | `String` | User UUID                                |
-| `email`                | `String` | User email                               |
-| `accessToken`          | `String` | Newly issued JWT access token            |
-| `refreshToken`         | `String` | Newly issued JWT refresh token (rolling) |
-| `tokenType`            | `String` | Always `"Bearer"`                        |
-| `accessExpirationInMs` | `Long`   | Access token TTL in milliseconds         |
+| Field            | Type     | Description                        |
+|------------------|----------|------------------------------------|
+| `accessToken`    | `String` | Newly issued JWT access token      |
+| `tokenType`      | `String` | Always `"Bearer"`                  |
+| `accessExpiresIn`| `Long`   | Access token TTL in milliseconds   |
 
 ---
 
@@ -452,44 +444,45 @@ All endpoints are prefixed with `/api/v1/auth`.
 
 **Success Response — `200 OK`**
 
+The access token is returned in the JSON body. The refresh token is set as an `HttpOnly` cookie (`__Host-refresh_token` or `refresh_token`).
+
 ```json
 {
   "statusCode": 200,
   "status": "success",
   "message": "User logged in successfully",
   "data": {
-    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "firstName": "John",
-    "lastName": "Doe",
-    "email": "johndoe@example.com",
-    "role": "user",
-    "lastLogin": "2026-02-26T10:05:00Z",
-    "isActive": true,
-    "isVerified": true,
+    "userId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
     "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
-    "refreshToken": "eyJhbGciOiJSUzI1NiJ9...",
-    "createdAt": "2026-02-26T10:00:00Z",
-    "updatedAt": "2026-02-26T10:05:00Z"
+    "tokenType": "Bearer",
+    "accessExpiresIn": 3600000
   }
 }
 ```
+
+**Response Headers:**
+```
+Set-Cookie: __Host-refresh_token=eyJhbGci...; Path=/api/v1/auth; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000
+```
+
+> ℹ️ **Profile data** (name, email, role, etc.) is not included in the login response. Use `GET /api/v1/user/me` (with the access token) to retrieve the full user profile.
 
 **Side Effects**
 
 - `lastLogin` is updated to `OffsetDateTime.now()`.
 - Failed login attempts are tracked; blocked users are rejected before authentication.
 - Successful login resets failed login attempt counter.
-- Refresh token JTI is stored in the token store for validation.
-- Soft-deleted accounts are reactivated on successful login.
-- A default subscription is assigned if the user has none.
+- Refresh token JTI is stored in Redis for validation.
+- Soft-deleted accounts are **blocked** from login (not reactivated).
 
 **Error Responses**
 
-| Status            | Condition                                         |
-|-------------------|---------------------------------------------------|
-| `400 Bad Request` | Invalid email or password                         |
-| `400 Bad Request` | Account is disabled (email not verified)          |
-| `403 Forbidden`   | Account is locked due to too many failed attempts |
+| Status              | `errorCode`          | Condition                                         |
+|---------------------|----------------------|---------------------------------------------------|
+| `400 Bad Request`   | `ACCOUNT_DEACTIVATED`| Account has been soft-deleted                     |
+| `401 Unauthorized`  | `INVALID_CREDENTIALS`| Invalid email or password                         |
+| `403 Forbidden`     | `ACCOUNT_NOT_VERIFIED`| Account is disabled (email not verified)          |
+| `403 Forbidden`     | `ACCOUNT_LOCKED`     | Account is locked due to too many failed attempts |
 
 ---
 
@@ -530,12 +523,13 @@ All endpoints are prefixed with `/api/v1/auth`.
 
 **Error Responses**
 
-| Status            | Condition                                                |
-|-------------------|----------------------------------------------------------|
-| `400 Bad Request` | User is already verified                                 |
-| `400 Bad Request` | Token is invalid or does not match stored token          |
-| `400 Bad Request` | Token has expired (`VerifiedStatus` is set to `EXPIRED`) |
-| `404 Not Found`   | No user found for the given email                        |
+> ℹ️ All error cases return `400 Bad Request` with generic messages to prevent user enumeration.
+
+| Status            | `errorCode`              | Condition                                                |
+|-------------------|--------------------------|----------------------------------------------------------|
+| `400 Bad Request` | `EMAIL_ALREADY_VERIFIED` | User is already verified                                 |
+| `400 Bad Request` | `VERIFICATION_FAILED`    | Token is invalid, user not found, or does not match      |
+| `400 Bad Request` | `TOKEN_EXPIRED`          | Token has expired (`VerifiedStatus` is set to `EXPIRED`) |
 
 ---
 
@@ -558,49 +552,44 @@ All endpoints are prefixed with `/api/v1/auth`.
 
 **Success Response — `200 OK`**
 
+> ⚠️ **Anti-enumeration:** This endpoint **always** returns `200 OK` with a generic message, regardless of whether the user exists, is already verified, or has an active token. This prevents attackers from discovering registered email addresses.
+
 ```json
 {
   "statusCode": 200,
   "status": "success",
-  "message": "A new verification email has been sent successfully.",
+  "message": "If an account with this email exists and is unverified, a verification email has been sent.",
   "data": null
 }
 ```
 
-**Side Effects**
+**Side Effects (when applicable)**
 
-- A new verification token is generated with a fresh 3-hour TTL.
-- `UserVerification.status` reset to `PENDING`.
-- A `UserRegisteredEvent` is published to Kafka **after transaction commit** to re-send the verification email.
+- If the user exists and is unverified with no active token: a new verification token is generated with a fresh 3-hour TTL, `UserVerification.status` is reset to `PENDING`, and a `UserRegisteredEvent` is published to Kafka.
+- If the user does not exist, is already verified, or has an active token: no side effects occur. The response is identical.
 
 **Error Responses**
 
-| Status            | Condition                                                                                              |
-|-------------------|--------------------------------------------------------------------------------------------------------|
-| `400 Bad Request` | User is already verified                                                                               |
-| `400 Bad Request` | A valid (non-expired) token already exists — response includes time remaining before resend is allowed |
-| `404 Not Found`   | No user found for the given email                                                                      |
+None — this endpoint always returns `200 OK` to prevent user enumeration.
 
 ---
 
 ### 6. Refresh Token
 
-| Property          | Value                                      |
-|-------------------|--------------------------------------------|
-| **Method**        | `POST`                                     |
-| **Path**          | `/api/v1/auth/refresh-token`               |
-| **Auth Required** | No (but a valid refresh token is required) |
-| **Content-Type**  | `application/json`                         |
+| Property          | Value                                                       |
+|-------------------|-------------------------------------------------------------|
+| **Method**        | `POST`                                                      |
+| **Path**          | `/api/v1/auth/refresh-token`                                |
+| **Auth Required** | No (but an HttpOnly refresh token cookie must be present)   |
+| **Content-Type**  | — (no request body)                                         |
 
-**Request Body:** `RefreshTokenRequest`
+**Request Body:** None — the refresh token is read from the `__Host-refresh_token` (or `refresh_token`) HttpOnly cookie.
 
-```json
-{
-  "refreshToken": "eyJhbGciOiJSUzI1NiJ9..."
-}
-```
+> ⚠️ Requests must include `credentials: 'include'` (fetch) or `withCredentials: true` (axios) for the browser to send cookies.
 
 **Success Response — `200 OK`**
+
+The new access token is returned in the JSON body. The new refresh token is set as an HttpOnly cookie (replacing the old one).
 
 ```json
 {
@@ -608,30 +597,35 @@ All endpoints are prefixed with `/api/v1/auth`.
   "status": "success",
   "message": "Token refreshed successfully",
   "data": {
-    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "email": "johndoe@example.com",
     "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
-    "refreshToken": "eyJhbGciOiJSUzI1NiJ9...",
     "tokenType": "Bearer",
-    "accessExpirationInMs": 900000
+    "accessExpiresIn": 3600000
   }
 }
 ```
 
+**Response Headers:**
+```
+Set-Cookie: __Host-refresh_token=eyJhbGci...; Path=/api/v1/auth; HttpOnly; Secure; SameSite=Strict; Max-Age=2592000
+```
+
 **Rolling Refresh Token Strategy**
 
-1. Incoming refresh token is validated (signature + JTI store + `type == "REFRESH"`).
-2. Old refresh token JTI is deleted from the store.
-3. A new access token **and** a new refresh token are issued.
-4. The new refresh token JTI is stored.
+1. Incoming refresh token is read from the HttpOnly cookie.
+2. Token is validated (signature + JTI store + `type == "REFRESH"`).
+3. Old refresh token JTI is deleted from Redis.
+4. A new access token **and** a new refresh token are issued.
+5. The new refresh token JTI is stored in Redis.
+6. The new refresh token is set as an HttpOnly cookie.
 
 **Error Responses**
 
-| Status             | Condition                                                       |
-|--------------------|-----------------------------------------------------------------|
-| `401 Unauthorized` | Token is missing, malformed, expired, or JTI not found in store |
-| `401 Unauthorized` | Token `type` claim is not `"REFRESH"`                           |
-| `401 Unauthorized` | User account is not active or not verified                      |
+| Status             | `errorCode`          | Condition                                                       |
+|--------------------|----------------------|-----------------------------------------------------------------|
+| `401 Unauthorized` | `TOKEN_MISSING`      | No refresh token cookie present                                 |
+| `401 Unauthorized` | `TOKEN_INVALID`      | Token is malformed, expired, or JTI not found in store          |
+| `401 Unauthorized` | `TOKEN_INVALID`      | Token `type` claim is not `"REFRESH"`                           |
+| `401 Unauthorized` | `ACCOUNT_NOT_VERIFIED`| User account is not active or not verified                     |
 
 ---
 
@@ -646,23 +640,53 @@ All endpoints are prefixed with `/api/v1/auth`.
 
 **Request Body:** None (token is read from the `Authorization` header)
 
-**Success Response — `200 OK`**
+**Success Response — `204 No Content`**
 
-```json
-{
-  "statusCode": 200,
-  "status": "success",
-  "message": "Logged out successfully",
-  "data": null
-}
+No response body.
+
+**Response Headers:**
+```
+Set-Cookie: __Host-refresh_token=; Path=/api/v1/auth; HttpOnly; Secure; SameSite=Strict; Max-Age=0
 ```
 
 **Side Effects**
 
 - The access token JTI is added to the token blacklist for the duration of its remaining TTL.
+- **All refresh tokens** for the user are invalidated (deleted from Redis).
+- The refresh token cookie is cleared.
 - The Spring Security context is cleared.
 
-> ℹ️ The associated refresh token is **not** automatically invalidated in the current implementation. This is noted as a TODO in `RefreshTokenImpl`.
+**Error Responses**
+
+| Status             | Condition                                                                                             |
+|--------------------|-------------------------------------------------------------------------------------------------------|
+| `401 Unauthorized` | No valid `Authorization` header provided (handled by the security filter chain before the controller) |
+
+---
+
+### 8. Logout All Devices
+
+| Property          | Value                                       |
+|-------------------|---------------------------------------------|
+| **Method**        | `POST`                                      |
+| **Path**          | `/api/v1/auth/logout-all`                   |
+| **Auth Required** | Yes — `Authorization: Bearer <accessToken>` |
+| **Content-Type**  | —                                           |
+
+**Request Body:** None
+
+**Success Response — `204 No Content`**
+
+No response body.
+
+**Side Effects**
+
+- The current access token JTI is added to the token blacklist.
+- **All refresh tokens** for the user (across all devices) are invalidated.
+- The refresh token cookie is cleared on the responding device.
+- The Spring Security context is cleared.
+
+> ℹ️ This endpoint is functionally identical to `/logout` in the current implementation since `/logout` already invalidates all refresh tokens. It exists as a semantically distinct endpoint for client clarity.
 
 **Error Responses**
 
@@ -679,15 +703,16 @@ All endpoints are prefixed with `/api/v1/auth`.
 
 A thin orchestration layer that delegates every operation to the appropriate interface implementation. Controllers depend only on `AuthService`, keeping them decoupled from implementation details.
 
-| Method                                                | Delegates To               | Description                 |
-|-------------------------------------------------------|----------------------------|-----------------------------|
-| `registerUser(SignupRequestDto)`                      | `SignupUserService`        | User registration           |
-| `loginUser(LoginRequestDto)`                          | `LoginUserService`         | User login                  |
-| `verifyEmail(String, String)`                         | `EmailVerificationService` | Email verification          |
-| `resendEmailVerification(ResendEmailVerificationDto)` | `EmailVerificationService` | Resend verification email   |
-| `generatePassword(GeneratePasswordDto)`               | `GeneratePasswordService`  | Password generation         |
-| `refreshToken(RefreshTokenRequest)`                   | `RefreshTokenService`      | Token refresh               |
-| `logout(HttpServletRequest)`                          | `RefreshTokenService`      | Logout / token invalidation |
+| Method                                                | Delegates To               | Description                              |
+|-------------------------------------------------------|----------------------------|------------------------------------------|
+| `registerUser(SignupRequestDto)`                      | `SignupUserService`        | User registration                        |
+| `loginUser(LoginRequestDto)` → `LoginResult`         | `LoginUserService`         | User login (returns token + raw refresh) |
+| `verifyEmail(String, String)`                         | `EmailVerificationService` | Email verification                       |
+| `resendEmailVerification(ResendEmailVerificationDto)` | `EmailVerificationService` | Resend verification email                |
+| `generatePassword(GeneratePasswordDto)`               | `GeneratePasswordService`  | Password generation                      |
+| `refreshToken(String)` → `RefreshResult`              | `RefreshTokenService`      | Token refresh (from cookie)              |
+| `logout(HttpServletRequest)`                          | `RefreshTokenService`      | Logout / token + cookie invalidation     |
+| `logoutAllDevices(HttpServletRequest)`                 | `RefreshTokenService`      | Logout all devices                       |
 
 ---
 

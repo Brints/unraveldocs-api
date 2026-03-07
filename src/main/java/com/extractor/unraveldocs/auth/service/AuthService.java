@@ -1,7 +1,7 @@
 package com.extractor.unraveldocs.auth.service;
 
-import com.extractor.unraveldocs.auth.dto.LoginData;
-import com.extractor.unraveldocs.auth.dto.RefreshLoginData;
+import com.extractor.unraveldocs.auth.dto.LoginResult;
+import com.extractor.unraveldocs.auth.dto.RefreshResult;
 import com.extractor.unraveldocs.auth.dto.SignupData;
 import com.extractor.unraveldocs.auth.dto.request.*;
 import com.extractor.unraveldocs.auth.interfaces.*;
@@ -26,7 +26,7 @@ public class AuthService {
         return signupUserService.registerUser(request);
     }
 
-    public UnravelDocsResponse<LoginData> loginUser(LoginRequestDto request) {
+    public LoginResult loginUser(LoginRequestDto request) {
         return loginUserService.loginUser(request);
     }
 
@@ -42,11 +42,15 @@ public class AuthService {
         return generatePasswordService.generatePassword(passwordDto);
     }
 
-    public UnravelDocsResponse<RefreshLoginData> refreshToken(RefreshTokenRequest request) {
-        return refreshTokenService.refreshToken(request);
+    public RefreshResult refreshToken(String refreshToken) {
+        return refreshTokenService.refreshToken(refreshToken);
     }
 
     public UnravelDocsResponse<Void> logout(HttpServletRequest request) {
         return refreshTokenService.logout(request);
+    }
+
+    public UnravelDocsResponse<Void> logoutAllDevices(HttpServletRequest request) {
+        return refreshTokenService.logoutAllDevices(request);
     }
 }

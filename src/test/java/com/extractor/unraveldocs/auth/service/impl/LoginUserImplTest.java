@@ -1,19 +1,19 @@
 package com.extractor.unraveldocs.auth.service.impl;
 
 import com.extractor.unraveldocs.auth.dto.LoginData;
+import com.extractor.unraveldocs.auth.dto.LoginResult;
 import com.extractor.unraveldocs.auth.dto.request.LoginRequestDto;
 import com.extractor.unraveldocs.auth.datamodel.Role;
 import com.extractor.unraveldocs.auth.impl.LoginUserImpl;
-import com.extractor.unraveldocs.auth.model.UserVerification;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.TokenProcessingException;
+import com.extractor.unraveldocs.exceptions.custom.UnauthorizedException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.loginattempts.interfaces.LoginAttemptsService;
 import com.extractor.unraveldocs.security.JwtTokenProvider;
 import com.extractor.unraveldocs.security.RefreshTokenService;
-import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 
-
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
@@ -35,309 +34,302 @@ import static org.mockito.Mockito.*;
 
 public class LoginUserImplTest {
 
-    @Mock
-    private UserRepository userRepository;
+        @Mock
+        private UserRepository userRepository;
 
-    @Mock
-    private AssignSubscriptionService subscriptionService;
+        @Mock
+        private JwtTokenProvider jwtTokenProvider;
 
-    @Mock
-    private JwtTokenProvider jwtTokenProvider;
+        @Mock
+        private AuthenticationManager authenticationManager;
 
-    @Mock
-    private AuthenticationManager authenticationManager;
+        @Mock
+        private ResponseBuilderService responseBuilder;
 
-    @Mock
-    private ResponseBuilderService responseBuilder;
+        @Mock
+        private LoginAttemptsService loginAttemptsService;
 
-    @Mock
-    private LoginAttemptsService loginAttemptsService;
+        @Mock
+        private RefreshTokenService refreshTokenService;
 
-    @Mock
-    private RefreshTokenService refreshTokenService;
+        @InjectMocks
+        private LoginUserImpl loginUserImpl;
 
-    @InjectMocks
-    private LoginUserImpl loginUserImpl;
+        private User user;
+        private LoginRequestDto loginRequest;
+        private Authentication authentication;
 
-    private User user;
-    private LoginRequestDto loginRequest;
-    private Authentication authentication;
+        @BeforeEach
+        void setUp() {
+                MockitoAnnotations.openMocks(this);
+                loginRequest = new LoginRequestDto("test@example.com", "password");
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        loginRequest = new LoginRequestDto("test@example.com", "password");
+                user = new User();
+                user.setId("userId");
+                user.setEmail("test@example.com");
+                user.setPassword("encodedPassword");
+                user.setVerified(true);
+                user.setActive(true);
+                user.setRole(Role.USER);
+                user.setFirstName("John");
+                user.setLastName("Doe");
+                user.setCreatedAt(OffsetDateTime.now().minusDays(1));
+                user.setUpdatedAt(OffsetDateTime.now().minusHours(1));
+                user.setLastLogin(null);
 
-        user = new User();
-        user.setId("userId");
-        user.setEmail("test@example.com");
-        user.setPassword("encodedPassword"); // Raw password not typically stored like this, but for test object
-        user.setVerified(true);
-        user.setActive(true);
-        user.setRole(Role.USER);
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setCreatedAt(OffsetDateTime.now().minusDays(1));
-        user.setUpdatedAt(OffsetDateTime.now().minusHours(1));
-        user.setLastLogin(null);
+                authentication = mock(Authentication.class);
+        }
 
+        @Test
+        void loginUser_successfulLogin_returnsLoginResult() {
+                // Arrange — #8: LoginData now contains only token fields
+                LoginData loginData = LoginData.builder()
+                                .userId(user.getId())
+                                .accessToken("jwtAccessToken")
+                                .tokenType("Bearer")
+                                .accessExpiresIn(900000L)
+                                .build();
 
-        authentication = mock(Authentication.class);
-    }
+                UnravelDocsResponse<LoginData> expectedResponse = new UnravelDocsResponse<>();
+                expectedResponse.setStatusCode(HttpStatus.OK.value());
+                expectedResponse.setStatus("success");
+                expectedResponse.setMessage("User logged in successfully");
+                expectedResponse.setData(loginData);
 
-    @Test
-    void loginUser_successfulLogin_returnsUserLoginResponse() {
-        // Arrange
-        LoginData loginData = LoginData.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .lastLogin(user.getLastLogin()) // Will be updated
-                .isActive(user.isActive())
-                .isVerified(user.isVerified())
-                .accessToken("jwtAccessToken")
-                .refreshToken("jwtRefreshToken")
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
+                when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenReturn(authentication);
+                when(authentication.getPrincipal()).thenReturn(user);
+                when(jwtTokenProvider.generateAccessToken(user)).thenReturn("jwtAccessToken");
+                when(jwtTokenProvider.generateRefreshToken(user)).thenReturn("jwtRefreshToken");
+                when(jwtTokenProvider.getJtiFromToken("jwtRefreshToken")).thenReturn("refreshTokenJti");
+                when(jwtTokenProvider.getAccessExpirationInMs()).thenReturn(900000L);
 
-        UnravelDocsResponse<LoginData> expectedResponse = new UnravelDocsResponse<>();
-        expectedResponse.setStatusCode(HttpStatus.OK.value());
-        expectedResponse.setStatus("success");
-        expectedResponse.setMessage("User logged in successfully");
-        expectedResponse.setData(loginData);
+                when(responseBuilder.buildUserResponse(
+                                any(LoginData.class),
+                                eq(HttpStatus.OK),
+                                eq("User logged in successfully"))).thenReturn(expectedResponse);
 
-        when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(user); // Principal is the User object
-        when(jwtTokenProvider.generateAccessToken(user)).thenReturn("jwtAccessToken");
-        when(jwtTokenProvider.generateRefreshToken(user)).thenReturn("jwtRefreshToken");
-        when(jwtTokenProvider.getJtiFromToken("jwtRefreshToken")).thenReturn("refreshTokenJti");
-        // refreshTokenService.storeRefreshToken is void, no need to mock return unless specific exception
+                // Act
+                LoginResult result = loginUserImpl.loginUser(loginRequest);
 
-        when(responseBuilder.buildUserResponse(
-                any(LoginData.class), // Use any(LoginData.class) for flexibility
-                eq(HttpStatus.OK),
-                eq("User logged in successfully")
-        )).thenReturn(expectedResponse);
+                // Assert
+                assertNotNull(result);
+                assertNotNull(result.response());
+                assertEquals("jwtRefreshToken", result.refreshToken());
 
-        // Act
-        UnravelDocsResponse<LoginData> response = loginUserImpl.loginUser(loginRequest);
+                UnravelDocsResponse<LoginData> response = result.response();
+                assertEquals(HttpStatus.OK.value(), response.getStatusCode());
+                assertEquals("success", response.getStatus());
+                assertEquals("User logged in successfully", response.getMessage());
+                assertNotNull(response.getData());
+                assertEquals("jwtAccessToken", response.getData().accessToken());
+                assertEquals("Bearer", response.getData().tokenType());
+                assertEquals(900000L, response.getData().accessExpiresIn());
+                assertEquals("userId", response.getData().userId());
+                assertNotNull(user.getLastLogin());
 
-        // Assert
-        assertNotNull(response);
-        assertEquals(HttpStatus.OK.value(), response.getStatusCode());
-        assertEquals("success", response.getStatus());
-        assertEquals("User logged in successfully", response.getMessage());
-        assertNotNull(response.getData());
-        assertEquals("jwtAccessToken", response.getData().accessToken());
-        assertEquals("jwtRefreshToken", response.getData().refreshToken());
-        assertNotNull(user.getLastLogin()); // Check that lastLogin was updated on the user object
+                verify(loginAttemptsService).checkIfUserBlocked(user);
+                verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+                verify(userRepository, times(1)).findByEmail(eq("test@example.com"));
+                verify(loginAttemptsService).resetLoginAttempts(user);
+                verify(jwtTokenProvider).generateAccessToken(user);
+                verify(jwtTokenProvider).generateRefreshToken(user);
+                verify(jwtTokenProvider).getJtiFromToken("jwtRefreshToken");
+                verify(refreshTokenService).storeRefreshToken("refreshTokenJti", user.getId());
+                verify(userRepository, atLeastOnce()).save(user);
+                verify(responseBuilder).buildUserResponse(any(LoginData.class), eq(HttpStatus.OK),
+                                eq("User logged in successfully"));
+        }
 
-        verify(loginAttemptsService).checkIfUserBlocked(user);
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userRepository, times(1)).findByEmail(eq("test@example.com"));
-        verify(loginAttemptsService).resetLoginAttempts(user);
-        verify(jwtTokenProvider).generateAccessToken(user);
-        verify(jwtTokenProvider).generateRefreshToken(user);
-        verify(jwtTokenProvider).getJtiFromToken("jwtRefreshToken");
-        verify(refreshTokenService).storeRefreshToken("refreshTokenJti", user.getId());
-        verify(userRepository, atLeastOnce()).save(user); // User is saved after lastLogin update and possibly subscription assignment
-        verify(responseBuilder).buildUserResponse(any(LoginData.class), eq(HttpStatus.OK), eq("User logged in successfully"));
-    }
+        @Test
+        void loginUser_withSoftDeletedAccount_throwsBadRequestException() {
+                // Arrange — Issue #2: soft-deleted accounts should be rejected
+                OffsetDateTime deletionTime = OffsetDateTime.now().plusDays(5);
+                user.setDeletedAt(deletionTime);
+                user.setActive(false);
 
-    @Test
-    void loginUser_withScheduledDeletion_cancelsDeletionAndLogsIn() {
-        // Arrange
-        OffsetDateTime deletionTime = OffsetDateTime.now().plusDays(5);
-        user.setDeletedAt(deletionTime);
-        user.setActive(false);
-        UserVerification verification = new UserVerification();
-        verification.setDeletedAt(deletionTime);
-        user.setUserVerification(verification);
+                when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
 
-        when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(user);
-        when(jwtTokenProvider.generateAccessToken(user)).thenReturn("accessToken");
-        when(jwtTokenProvider.generateRefreshToken(user)).thenReturn("refreshToken");
-        when(jwtTokenProvider.getJtiFromToken("refreshToken")).thenReturn("jti");
-        when(responseBuilder.buildUserResponse(any(LoginData.class), eq(HttpStatus.OK), anyString()))
-                .thenReturn(new UnravelDocsResponse<>());
+                // Act & Assert
+                BadRequestException exception = assertThrows(BadRequestException.class,
+                                () -> loginUserImpl.loginUser(loginRequest));
+                assertEquals("This account has been deactivated. Please contact support.", exception.getMessage());
+                assertEquals("ACCOUNT_DEACTIVATED", exception.getErrorCode());
 
-        // Act
-        loginUserImpl.loginUser(loginRequest);
+                verify(userRepository).findByEmail(loginRequest.email());
+                verify(authenticationManager, never()).authenticate(any());
+                verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
+        }
 
-        // Assert
-        assertNull(user.getDeletedAt(), "DeletedAt should be cleared on login.");
-        assertTrue(user.isActive(), "User should be set to active on login.");
-        assertNull(user.getUserVerification().getDeletedAt(), "UserVerification DeletedAt should be cleared.");
-        assertNotNull(user.getLastLogin(), "Last login should be updated.");
-        verify(userRepository, atLeastOnce()).save(user);
-    }
+        @Test
+        void loginUser_invalidCredentials_throwsUnauthorizedExceptionAndRecordsAttempt() {
+                // Arrange — Issue #6: invalid credentials now throw UnauthorizedException (401)
+                when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenThrow(new BadCredentialsException("Bad credentials"));
 
-    @Test
-    void loginUser_invalidCredentials_throwsBadRequestExceptionAndRecordsAttempt() {
-        // Arrange
-        when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new BadCredentialsException("Bad credentials"));
+                // Act & Assert
+                UnauthorizedException exception = assertThrows(UnauthorizedException.class,
+                                () -> loginUserImpl.loginUser(loginRequest));
+                assertEquals("Invalid email or password", exception.getMessage());
+                assertEquals("INVALID_CREDENTIALS", exception.getErrorCode());
 
-        // Act & Assert
-        BadRequestException exception = assertThrows(BadRequestException.class, () -> loginUserImpl.loginUser(loginRequest));
-        assertEquals("Invalid email or password", exception.getMessage());
+                verify(loginAttemptsService).checkIfUserBlocked(user);
+                verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+                verify(loginAttemptsService).recordFailedLoginAttempt(user);
+                verify(userRepository, never()).save(any(User.class));
+                verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
+                verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
+                verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
+                verify(responseBuilder, never()).buildUserResponse(any(), any(), anyString());
+        }
 
-        verify(loginAttemptsService).checkIfUserBlocked(user);
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(loginAttemptsService).recordFailedLoginAttempt(user);
-        verify(userRepository, never()).save(any(User.class));
-        verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
-        verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
-        verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
-        verify(responseBuilder, never()).buildUserResponse(any(), any(), anyString());
-    }
+        @Test
+        void loginUser_userAccountDisabled_throwsForbiddenException() {
+                // Arrange — Issue #6: disabled accounts now throw ForbiddenException (403)
+                when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenThrow(new DisabledException("User account is disabled"));
 
-    @Test
-    void loginUser_userAccountDisabled_throwsBadRequestException() {
-        // Arrange
-        when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new DisabledException("User account is disabled"));
+                // Act & Assert
+                ForbiddenException exception = assertThrows(ForbiddenException.class,
+                                () -> loginUserImpl.loginUser(loginRequest));
+                assertEquals("User account is disabled. Please verify your email or contact support.",
+                                exception.getMessage());
+                assertEquals("ACCOUNT_NOT_VERIFIED", exception.getErrorCode());
 
-        // Act & Assert
-        BadRequestException exception = assertThrows(BadRequestException.class, () -> loginUserImpl.loginUser(loginRequest));
-        assertEquals("User account is disabled. Please verify your email or contact support.", exception.getMessage());
+                verify(loginAttemptsService).checkIfUserBlocked(user);
+                verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+                verify(loginAttemptsService, never()).recordFailedLoginAttempt(any(User.class));
+                verify(loginAttemptsService, never()).resetLoginAttempts(any(User.class));
+                verify(userRepository, never()).save(any(User.class));
+                verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
+                verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
+                verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
+        }
 
-        verify(loginAttemptsService).checkIfUserBlocked(user);
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(loginAttemptsService, never()).recordFailedLoginAttempt(any(User.class));
-        verify(loginAttemptsService, never()).resetLoginAttempts(any(User.class));
-        verify(userRepository, never()).save(any(User.class));
-        verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
-        verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
-        verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
-    }
+        @Test
+        void loginUser_userAccountLocked_throwsForbiddenException() {
+                // Arrange
+                when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenThrow(new LockedException("User account is locked"));
 
-    @Test
-    void loginUser_userAccountLocked_throwsForbiddenException() {
-        // Arrange
-        when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new LockedException("User account is locked"));
+                // Act & Assert
+                ForbiddenException exception = assertThrows(ForbiddenException.class,
+                                () -> loginUserImpl.loginUser(loginRequest));
+                assertEquals("User account is locked. Please contact support or try again later.",
+                                exception.getMessage());
+                assertEquals("ACCOUNT_LOCKED", exception.getErrorCode());
 
-        // Act & Assert
-        ForbiddenException exception = assertThrows(ForbiddenException.class, () -> loginUserImpl.loginUser(loginRequest));
-        assertEquals("User account is locked. Please contact support or try again later.", exception.getMessage());
+                verify(loginAttemptsService).checkIfUserBlocked(user);
+                verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+                verify(loginAttemptsService, never()).recordFailedLoginAttempt(any(User.class));
+                verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
+                verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
+                verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
+        }
 
-        verify(loginAttemptsService).checkIfUserBlocked(user);
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(loginAttemptsService, never()).recordFailedLoginAttempt(any(User.class));
-        verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
-        verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
-        verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
-    }
+        @Test
+        void loginUser_genericAuthenticationException_throwsUnauthorizedExceptionAndRecordsAttempt() {
+                // Arrange — Issue #6: generic auth failures now throw UnauthorizedException
+                // (401)
+                when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenThrow(new AuthenticationServiceException("Some other auth error"));
 
-    @Test
-    void loginUser_genericAuthenticationException_throwsBadRequestExceptionAndRecordsAttempt() {
-        // Arrange
-        when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
-        // Use a generic AuthenticationException that is not BadCredentials, Disabled, or Locked
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new AuthenticationServiceException("Some other auth error"));
+                // Act & Assert
+                UnauthorizedException exception = assertThrows(UnauthorizedException.class,
+                                () -> loginUserImpl.loginUser(loginRequest));
+                assertEquals("Authentication failed. Please check your credentials.", exception.getMessage());
+                assertEquals("INVALID_CREDENTIALS", exception.getErrorCode());
 
-        // Act & Assert
-        BadRequestException exception = assertThrows(BadRequestException.class, () -> loginUserImpl.loginUser(loginRequest));
-        assertEquals("Authentication failed. Please check your credentials.", exception.getMessage());
+                verify(loginAttemptsService).checkIfUserBlocked(user);
+                verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+                verify(loginAttemptsService).recordFailedLoginAttempt(user);
+                verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
+                verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
+                verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
+        }
 
-        verify(loginAttemptsService).checkIfUserBlocked(user);
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(loginAttemptsService).recordFailedLoginAttempt(user);
-        verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
-        verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
-        verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
-    }
+        @Test
+        void loginUser_userNotFoundByRequestEmail_throwsUnauthorizedException() {
+                // Arrange — Issue #6: user not found now throws UnauthorizedException (401)
+                when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.empty());
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenThrow(new BadCredentialsException("User not found"));
 
+                // Act & Assert
+                UnauthorizedException exception = assertThrows(UnauthorizedException.class,
+                                () -> loginUserImpl.loginUser(loginRequest));
+                assertEquals("Invalid email or password", exception.getMessage());
+                assertEquals("INVALID_CREDENTIALS", exception.getErrorCode());
 
-    @Test
-    void loginUser_userNotFoundByRequestEmail_throwsBadRequestException() {
-        // Arrange
-        when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.empty());
-        // If user not found, AuthenticationManager typically throws BadCredentialsException
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new BadCredentialsException("User not found"));
+                verify(userRepository).findByEmail(loginRequest.email());
+                verify(loginAttemptsService, never()).checkIfUserBlocked(any(User.class));
+                verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+                verify(loginAttemptsService, never()).recordFailedLoginAttempt(any(User.class));
+                verify(responseBuilder, never()).buildUserResponse(any(), any(), anyString());
+                verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
+                verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
+                verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
+        }
 
+        @Test
+        void loginUser_userIsBlocked_throwsForbiddenException() {
+                // Arrange
+                String blockedUserEmail = "blocked@example.com";
+                LoginRequestDto blockedLoginRequest = new LoginRequestDto(blockedUserEmail, "password");
+                User blockedUser = new User();
+                blockedUser.setEmail(blockedUserEmail);
+                blockedUser.setId("blockedUserId");
 
-        // Act & Assert
-        BadRequestException exception = assertThrows(BadRequestException.class, () -> loginUserImpl.loginUser(loginRequest));
-        // The specific exception thrown by authenticate() for "user not found" is BadCredentialsException,
-        // which is caught and re-thrown as BadRequestException("Invalid email or password")
-        assertEquals("Invalid email or password", exception.getMessage());
+                when(userRepository.findByEmail(blockedLoginRequest.email())).thenReturn(Optional.of(blockedUser));
+                String expectedMessage = "Your account is temporarily locked.";
+                doThrow(new ForbiddenException(expectedMessage))
+                                .when(loginAttemptsService).checkIfUserBlocked(blockedUser);
 
-        verify(userRepository).findByEmail(loginRequest.email());
-        // checkIfUserBlocked is NOT called because userOpt is empty
-        verify(loginAttemptsService, never()).checkIfUserBlocked(any(User.class));
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        // recordFailedLoginAttempt is NOT called because userOpt is empty
-        verify(loginAttemptsService, never()).recordFailedLoginAttempt(any(User.class));
-        verify(responseBuilder, never()).buildUserResponse(any(), any(), anyString());
-        verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
-        verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
-        verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
-    }
+                // Act & Assert
+                ForbiddenException exception = assertThrows(ForbiddenException.class,
+                                () -> loginUserImpl.loginUser(blockedLoginRequest));
+                assertEquals(expectedMessage, exception.getMessage());
 
-    @Test
-    void loginUser_userIsBlocked_throwsForbiddenException() {
-        // Arrange
-        String blockedUserEmail = "blocked@example.com";
-        LoginRequestDto blockedLoginRequest = new LoginRequestDto(blockedUserEmail, "password");
-        User blockedUser = new User();
-        blockedUser.setEmail(blockedUserEmail);
-        blockedUser.setId("blockedUserId");
+                verify(userRepository).findByEmail(blockedLoginRequest.email());
+                verify(loginAttemptsService).checkIfUserBlocked(blockedUser);
+                verify(authenticationManager, never()).authenticate(any());
+                verify(loginAttemptsService, never()).recordFailedLoginAttempt(any());
+                verify(loginAttemptsService, never()).resetLoginAttempts(any());
+                verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
+                verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
+                verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
+                verify(responseBuilder, never()).buildUserResponse(any(), any(), anyString());
+        }
 
-        when(userRepository.findByEmail(blockedLoginRequest.email())).thenReturn(Optional.of(blockedUser));
-        String expectedMessage = "Your account is temporarily locked.";
-        doThrow(new ForbiddenException(expectedMessage))
-                .when(loginAttemptsService).checkIfUserBlocked(blockedUser);
+        @Test
+        void loginUser_tokenProcessingException_whenJtiIsNull() {
+                // Arrange
+                when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
+                when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                                .thenReturn(authentication);
+                when(authentication.getPrincipal()).thenReturn(user);
+                when(jwtTokenProvider.generateAccessToken(user)).thenReturn("accessToken");
+                when(jwtTokenProvider.generateRefreshToken(user)).thenReturn("refreshToken");
+                when(jwtTokenProvider.getJtiFromToken("refreshToken")).thenReturn(null);
 
-        // Act & Assert
-        ForbiddenException exception = assertThrows(ForbiddenException.class, () -> loginUserImpl.loginUser(blockedLoginRequest));
-        assertEquals(expectedMessage, exception.getMessage());
+                // Act & Assert
+                TokenProcessingException exception = assertThrows(TokenProcessingException.class,
+                                () -> loginUserImpl.loginUser(loginRequest));
+                assertEquals("Error processing refresh token.", exception.getMessage());
 
-        verify(userRepository).findByEmail(blockedLoginRequest.email());
-        verify(loginAttemptsService).checkIfUserBlocked(blockedUser);
-        verify(authenticationManager, never()).authenticate(any());
-        verify(loginAttemptsService, never()).recordFailedLoginAttempt(any());
-        verify(loginAttemptsService, never()).resetLoginAttempts(any());
-        verify(jwtTokenProvider, never()).generateAccessToken(any(User.class));
-        verify(jwtTokenProvider, never()).generateRefreshToken(any(User.class));
-        verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
-        verify(responseBuilder, never()).buildUserResponse(any(), any(), anyString());
-    }
-
-    @Test
-    void loginUser_tokenProcessingException_whenJtiIsNull() {
-        // Arrange
-        when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(user));
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(user);
-        when(jwtTokenProvider.generateAccessToken(user)).thenReturn("accessToken");
-        when(jwtTokenProvider.generateRefreshToken(user)).thenReturn("refreshToken");
-        when(jwtTokenProvider.getJtiFromToken("refreshToken")).thenReturn(null); // Simulate JTI generation failure
-
-        // Act & Assert
-        TokenProcessingException exception = assertThrows(TokenProcessingException.class, () -> loginUserImpl.loginUser(loginRequest));
-        assertEquals("Error processing refresh token.", exception.getMessage());
-
-        verify(loginAttemptsService).checkIfUserBlocked(user);
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(loginAttemptsService).resetLoginAttempts(user); // This is called before token generation
-        verify(jwtTokenProvider).generateAccessToken(user);
-        verify(jwtTokenProvider).generateRefreshToken(user);
-        verify(jwtTokenProvider).getJtiFromToken("refreshToken");
-        verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
-        verify(userRepository, never()).save(user); // Not saved if token processing fails
-        verify(responseBuilder, never()).buildUserResponse(any(), any(), anyString());
-    }
+                verify(loginAttemptsService).checkIfUserBlocked(user);
+                verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+                verify(loginAttemptsService).resetLoginAttempts(user);
+                verify(jwtTokenProvider).generateAccessToken(user);
+                verify(jwtTokenProvider).generateRefreshToken(user);
+                verify(jwtTokenProvider).getJtiFromToken("refreshToken");
+                verify(refreshTokenService, never()).storeRefreshToken(anyString(), anyString());
+                verify(userRepository, never()).save(user);
+                verify(responseBuilder, never()).buildUserResponse(any(), any(), anyString());
+        }
 }

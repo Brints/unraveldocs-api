@@ -182,107 +182,107 @@ User/Admin REST API
 
 **Category: `document`**
 
-| Constant | Display Name |
-|---|---|
+| Constant                  | Display Name            |
+|---------------------------|-------------------------|
 | `DOCUMENT_UPLOAD_SUCCESS` | Document Upload Success |
-| `DOCUMENT_UPLOAD_FAILED` | Document Upload Failed |
-| `DOCUMENT_DELETED` | Document Deleted |
+| `DOCUMENT_UPLOAD_FAILED`  | Document Upload Failed  |
+| `DOCUMENT_DELETED`        | Document Deleted        |
 
 **Category: `ocr`**
 
-| Constant | Display Name |
-|---|---|
-| `OCR_PROCESSING_STARTED` | OCR Processing Started |
+| Constant                   | Display Name             |
+|----------------------------|--------------------------|
+| `OCR_PROCESSING_STARTED`   | OCR Processing Started   |
 | `OCR_PROCESSING_COMPLETED` | OCR Processing Completed |
-| `OCR_PROCESSING_FAILED` | OCR Processing Failed |
+| `OCR_PROCESSING_FAILED`    | OCR Processing Failed    |
 
 **Category: `storage`**
 
-| Constant | Display Name |
-|---|---|
-| `STORAGE_WARNING_80` | Storage Warning 80% |
-| `STORAGE_WARNING_90` | Storage Warning 90% |
-| `STORAGE_WARNING_95` | Storage Warning 95% |
+| Constant                | Display Name          |
+|-------------------------|-----------------------|
+| `STORAGE_WARNING_80`    | Storage Warning 80%   |
+| `STORAGE_WARNING_90`    | Storage Warning 90%   |
+| `STORAGE_WARNING_95`    | Storage Warning 95%   |
 | `STORAGE_LIMIT_REACHED` | Storage Limit Reached |
 
 **Category: `payment`**
 
-| Constant | Display Name |
-|---|---|
-| `PAYMENT_SUCCESS` | Payment Success |
-| `PAYMENT_FAILED` | Payment Failed |
+| Constant           | Display Name     |
+|--------------------|------------------|
+| `PAYMENT_SUCCESS`  | Payment Success  |
+| `PAYMENT_FAILED`   | Payment Failed   |
 | `PAYMENT_REFUNDED` | Payment Refunded |
 
 **Category: `subscription`**
 
-| Constant | Display Name |
-|---|---|
+| Constant                       | Display Name                    |
+|--------------------------------|---------------------------------|
 | `SUBSCRIPTION_EXPIRING_7_DAYS` | Subscription Expiring in 7 Days |
 | `SUBSCRIPTION_EXPIRING_3_DAYS` | Subscription Expiring in 3 Days |
-| `SUBSCRIPTION_EXPIRING_1_DAY` | Subscription Expiring Tomorrow |
-| `SUBSCRIPTION_EXPIRED` | Subscription Expired |
-| `SUBSCRIPTION_RENEWED` | Subscription Renewed |
-| `SUBSCRIPTION_UPGRADED` | Subscription Upgraded |
-| `SUBSCRIPTION_DOWNGRADED` | Subscription Downgraded |
-| `TRIAL_EXPIRING_SOON` | Trial Expiring Soon |
-| `TRIAL_EXPIRED` | Trial Expired |
-| `TRIAL_ACTIVATED` | Trial Activated |
+| `SUBSCRIPTION_EXPIRING_1_DAY`  | Subscription Expiring Tomorrow  |
+| `SUBSCRIPTION_EXPIRED`         | Subscription Expired            |
+| `SUBSCRIPTION_RENEWED`         | Subscription Renewed            |
+| `SUBSCRIPTION_UPGRADED`        | Subscription Upgraded           |
+| `SUBSCRIPTION_DOWNGRADED`      | Subscription Downgraded         |
+| `TRIAL_EXPIRING_SOON`          | Trial Expiring Soon             |
+| `TRIAL_EXPIRED`                | Trial Expired                   |
+| `TRIAL_ACTIVATED`              | Trial Activated                 |
 
 **Category: `team`**
 
-| Constant | Display Name |
-|---|---|
+| Constant                   | Display Name             |
+|----------------------------|--------------------------|
 | `TEAM_INVITATION_RECEIVED` | Team Invitation Received |
-| `TEAM_MEMBER_ADDED` | Team Member Added |
-| `TEAM_MEMBER_REMOVED` | Team Member Removed |
-| `TEAM_ROLE_CHANGED` | Team Role Changed |
+| `TEAM_MEMBER_ADDED`        | Team Member Added        |
+| `TEAM_MEMBER_REMOVED`      | Team Member Removed      |
+| `TEAM_ROLE_CHANGED`        | Team Role Changed        |
 
 **Category: `coupon`**
 
-| Constant | Display Name |
-|---|---|
-| `COUPON_RECEIVED` | Coupon Received |
+| Constant                 | Display Name              |
+|--------------------------|---------------------------|
+| `COUPON_RECEIVED`        | Coupon Received           |
 | `COUPON_EXPIRING_7_DAYS` | Coupon Expiring in 7 Days |
 | `COUPON_EXPIRING_3_DAYS` | Coupon Expiring in 3 Days |
-| `COUPON_EXPIRING_1_DAY` | Coupon Expiring Tomorrow |
-| `COUPON_EXPIRED` | Coupon Expired |
-| `COUPON_APPLIED` | Coupon Applied |
+| `COUPON_EXPIRING_1_DAY`  | Coupon Expiring Tomorrow  |
+| `COUPON_EXPIRED`         | Coupon Expired            |
+| `COUPON_APPLIED`         | Coupon Applied            |
 
 **Category: `credit`**
 
-| Constant | Display Name |
-|---|---|
-| `CREDIT_PURCHASE_SUCCESS` | Credit Purchase Success |
-| `CREDIT_BALANCE_LOW` | Credit Balance Low |
-| `CREDIT_TRANSFER_SENT` | Credit Transfer Sent |
+| Constant                   | Display Name             |
+|----------------------------|--------------------------|
+| `CREDIT_PURCHASE_SUCCESS`  | Credit Purchase Success  |
+| `CREDIT_BALANCE_LOW`       | Credit Balance Low       |
+| `CREDIT_TRANSFER_SENT`     | Credit Transfer Sent     |
 | `CREDIT_TRANSFER_RECEIVED` | Credit Transfer Received |
 
 **Category: `system`**
 
-| Constant | Display Name |
-|---|---|
+| Constant              | Display Name        |
+|-----------------------|---------------------|
 | `SYSTEM_ANNOUNCEMENT` | System Announcement |
-| `WELCOME` | Welcome |
+| `WELCOME`             | Welcome             |
 
 ---
 
 ### `NotificationProviderType`
 
-| Value | Display Name | Conditional Property |
-|---|---|---|
-| `FCM` | Firebase Cloud Messaging | `firebase.enabled=true` |
-| `ONESIGNAL` | OneSignal | `onesignal.enabled=true` |
-| `AWS_SNS` | AWS Simple Notification Service | `aws.sns.enabled=true` |
+| Value       | Display Name                    | Conditional Property     |
+|-------------|---------------------------------|--------------------------|
+| `FCM`       | Firebase Cloud Messaging        | `firebase.enabled=true`  |
+| `ONESIGNAL` | OneSignal                       | `onesignal.enabled=true` |
+| `AWS_SNS`   | AWS Simple Notification Service | `aws.sns.enabled=true`   |
 
 ---
 
 ### `DeviceType`
 
-| Value | Description |
-|---|---|
+| Value     | Description           |
+|-----------|-----------------------|
 | `ANDROID` | Android mobile device |
-| `IOS` | Apple iOS device |
-| `WEB` | Web browser (WebPush) |
+| `IOS`     | Apple iOS device      |
+| `WEB`     | Web browser (WebPush) |
 
 ---
 
@@ -292,17 +292,17 @@ User/Admin REST API
 **Table:** `notifications`  
 **Indexes:** `user_id`, `is_read`, `created_at`, `type`
 
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `UUID` | PK, auto-generated | Notification UUID |
-| `user_id` | `UUID` | FK → users, NOT NULL | Owner user |
-| `type` | `VARCHAR(50)` | NOT NULL | `NotificationType` enum |
-| `title` | `VARCHAR` | NOT NULL | Notification title |
-| `message` | `TEXT` | NOT NULL | Full message body |
-| `data` | `JSONB` | nullable | Extra key-value payload (e.g., `{"documentId": "..."}`) |
-| `is_read` | `BOOLEAN` | NOT NULL, default `false` | Read state |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL, auto-set | Creation timestamp |
-| `read_at` | `TIMESTAMPTZ` | nullable | When the notification was marked read |
+| Column       | Type          | Constraints               | Description                                             |
+|--------------|---------------|---------------------------|---------------------------------------------------------|
+| `id`         | `UUID`        | PK, auto-generated        | Notification UUID                                       |
+| `user_id`    | `UUID`        | FK → users, NOT NULL      | Owner user                                              |
+| `type`       | `VARCHAR(50)` | NOT NULL                  | `NotificationType` enum                                 |
+| `title`      | `VARCHAR`     | NOT NULL                  | Notification title                                      |
+| `message`    | `TEXT`        | NOT NULL                  | Full message body                                       |
+| `data`       | `JSONB`       | nullable                  | Extra key-value payload (e.g., `{"documentId": "..."}`) |
+| `is_read`    | `BOOLEAN`     | NOT NULL, default `false` | Read state                                              |
+| `created_at` | `TIMESTAMPTZ` | NOT NULL, auto-set        | Creation timestamp                                      |
+| `read_at`    | `TIMESTAMPTZ` | nullable                  | When the notification was marked read                   |
 
 **Business methods:**
 - `markAsRead()` — sets `isRead = true` and `readAt = OffsetDateTime.now()`
@@ -313,24 +313,24 @@ User/Admin REST API
 **Table:** `notification_preferences`  
 **Relationship:** One-to-one with `User`
 
-| Column | Type | Default | Description |
-|---|---|---|---|
-| `id` | `UUID` | PK | Preferences record UUID |
-| `user_id` | `UUID` | FK unique | Owning user |
-| `push_enabled` | `BOOLEAN` | `true` | Master push notification toggle |
-| `email_enabled` | `BOOLEAN` | `true` | Email notification toggle |
-| `document_notifications` | `BOOLEAN` | `true` | document category toggle |
-| `ocr_notifications` | `BOOLEAN` | `true` | ocr category toggle |
-| `payment_notifications` | `BOOLEAN` | `true` | payment category toggle |
-| `storage_notifications` | `BOOLEAN` | `true` | storage category toggle |
-| `subscription_notifications` | `BOOLEAN` | `true` | subscription category toggle |
-| `team_notifications` | `BOOLEAN` | `true` | team category toggle |
-| `coupon_notifications` | `BOOLEAN` | `true` | coupon category toggle |
-| `quiet_hours_enabled` | `BOOLEAN` | `false` | Quiet window toggle |
-| `quiet_hours_start` | `TIME` | nullable | Start of quiet window |
-| `quiet_hours_end` | `TIME` | nullable | End of quiet window |
-| `created_at` | `TIMESTAMPTZ` | auto | Creation timestamp |
-| `updated_at` | `TIMESTAMPTZ` | auto | Last update timestamp |
+| Column                       | Type          | Default   | Description                     |
+|------------------------------|---------------|-----------|---------------------------------|
+| `id`                         | `UUID`        | PK        | Preferences record UUID         |
+| `user_id`                    | `UUID`        | FK unique | Owning user                     |
+| `push_enabled`               | `BOOLEAN`     | `true`    | Master push notification toggle |
+| `email_enabled`              | `BOOLEAN`     | `true`    | Email notification toggle       |
+| `document_notifications`     | `BOOLEAN`     | `true`    | document category toggle        |
+| `ocr_notifications`          | `BOOLEAN`     | `true`    | ocr category toggle             |
+| `payment_notifications`      | `BOOLEAN`     | `true`    | payment category toggle         |
+| `storage_notifications`      | `BOOLEAN`     | `true`    | storage category toggle         |
+| `subscription_notifications` | `BOOLEAN`     | `true`    | subscription category toggle    |
+| `team_notifications`         | `BOOLEAN`     | `true`    | team category toggle            |
+| `coupon_notifications`       | `BOOLEAN`     | `true`    | coupon category toggle          |
+| `quiet_hours_enabled`        | `BOOLEAN`     | `false`   | Quiet window toggle             |
+| `quiet_hours_start`          | `TIME`        | nullable  | Start of quiet window           |
+| `quiet_hours_end`            | `TIME`        | nullable  | End of quiet window             |
+| `created_at`                 | `TIMESTAMPTZ` | auto      | Creation timestamp              |
+| `updated_at`                 | `TIMESTAMPTZ` | auto      | Last update timestamp           |
 
 **Business methods:**
 - `isNotificationTypeEnabled(NotificationType)` — returns `false` if `pushEnabled=false`; otherwise checks the matching category flag via `type.getCategory()` switch.
@@ -338,16 +338,16 @@ User/Admin REST API
 
 **Category → column mapping:**
 
-| `type.getCategory()` | Preference Field |
-|---|---|
-| `"document"` | `documentNotifications` |
-| `"ocr"` | `ocrNotifications` |
-| `"payment"` | `paymentNotifications` |
-| `"storage"` | `storageNotifications` |
-| `"subscription"` | `subscriptionNotifications` |
-| `"team"` | `teamNotifications` |
-| `"coupon"` | `couponNotifications` |
-| `"system"` | always `true` (system messages bypass preferences) |
+| `type.getCategory()` | Preference Field                                   |
+|----------------------|----------------------------------------------------|
+| `"document"`         | `documentNotifications`                            |
+| `"ocr"`              | `ocrNotifications`                                 |
+| `"payment"`          | `paymentNotifications`                             |
+| `"storage"`          | `storageNotifications`                             |
+| `"subscription"`     | `subscriptionNotifications`                        |
+| `"team"`             | `teamNotifications`                                |
+| `"coupon"`           | `couponNotifications`                              |
+| `"system"`           | always `true` (system messages bypass preferences) |
 
 ---
 
@@ -356,17 +356,17 @@ User/Admin REST API
 **Indexes:** `user_id`, `is_active`  
 **Constraint:** `device_token` is `UNIQUE` across the entire table (one token = one user at a time)
 
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `UUID` | PK | Token record UUID |
-| `user_id` | `UUID` | FK → users | Owning user |
-| `device_token` | `VARCHAR(512)` | NOT NULL, UNIQUE | FCM/APNs/OneSignal token |
-| `device_type` | `VARCHAR(20)` | NOT NULL | `ANDROID`, `IOS`, `WEB` |
-| `device_name` | `VARCHAR(100)` | nullable | Human-friendly device name |
-| `is_active` | `BOOLEAN` | NOT NULL, default `true` | Active state |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL, auto | Registration timestamp |
-| `updated_at` | `TIMESTAMPTZ` | NOT NULL, auto | Last update |
-| `last_used_at` | `TIMESTAMPTZ` | nullable | Last notification delivery |
+| Column         | Type           | Constraints              | Description                |
+|----------------|----------------|--------------------------|----------------------------|
+| `id`           | `UUID`         | PK                       | Token record UUID          |
+| `user_id`      | `UUID`         | FK → users               | Owning user                |
+| `device_token` | `VARCHAR(512)` | NOT NULL, UNIQUE         | FCM/APNs/OneSignal token   |
+| `device_type`  | `VARCHAR(20)`  | NOT NULL                 | `ANDROID`, `IOS`, `WEB`    |
+| `device_name`  | `VARCHAR(100)` | nullable                 | Human-friendly device name |
+| `is_active`    | `BOOLEAN`      | NOT NULL, default `true` | Active state               |
+| `created_at`   | `TIMESTAMPTZ`  | NOT NULL, auto           | Registration timestamp     |
+| `updated_at`   | `TIMESTAMPTZ`  | NOT NULL, auto           | Last update                |
+| `last_used_at` | `TIMESTAMPTZ`  | nullable                 | Last notification delivery |
 
 **Business methods:**
 - `updateLastUsed()` — sets `lastUsedAt = OffsetDateTime.now()`
@@ -378,12 +378,12 @@ User/Admin REST API
 **Table:** `storage_warning_sent`  
 **Unique Constraint:** `(user_id, warning_level)` — prevents duplicate warnings per threshold per user
 
-| Column | Type | Description |
-|---|---|---|
-| `id` | `UUID` | PK |
-| `user_id` | `UUID` | FK → users |
-| `warning_level` | `INTEGER` | `80`, `90`, or `95` |
-| `sent_at` | `TIMESTAMPTZ` | When the warning was sent |
+| Column          | Type          | Description               |
+|-----------------|---------------|---------------------------|
+| `id`            | `UUID`        | PK                        |
+| `user_id`       | `UUID`        | FK → users                |
+| `warning_level` | `INTEGER`     | `80`, `90`, or `95`       |
+| `sent_at`       | `TIMESTAMPTZ` | When the warning was sent |
 
 > **Purpose:** The `StorageWarningNotificationJob` checks `existsByUserIdAndWarningLevel()` before sending each threshold warning. If a record exists, the warning is skipped — preventing repeated alerts at the same threshold.
 
@@ -394,14 +394,14 @@ User/Admin REST API
 ### `NotificationConfig`
 **Prefix:** `notification`
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `notification.activeProvider` | `NotificationProviderType` | `FCM` | Which provider handles delivery |
-| `notification.persistNotifications` | `boolean` | `true` | Whether to store notifications in the database |
-| `notification.respectQuietHours` | `boolean` | `true` | Whether the consumer skips delivery during quiet windows |
-| `notification.maxDevicesPerUser` | `int` | `10` | Maximum device tokens per user |
-| `notification.notificationRetentionDays` | `int` | `90` | Days before notifications are eligible for cleanup |
-| `notification.kafkaTopic` | `String` | `"notification-events"` | Kafka topic name for notification events |
+| Property                                 | Type                       | Default                 | Description                                              |
+|------------------------------------------|----------------------------|-------------------------|----------------------------------------------------------|
+| `notification.activeProvider`            | `NotificationProviderType` | `FCM`                   | Which provider handles delivery                          |
+| `notification.persistNotifications`      | `boolean`                  | `true`                  | Whether to store notifications in the database           |
+| `notification.respectQuietHours`         | `boolean`                  | `true`                  | Whether the consumer skips delivery during quiet windows |
+| `notification.maxDevicesPerUser`         | `int`                      | `10`                    | Maximum device tokens per user                           |
+| `notification.notificationRetentionDays` | `int`                      | `90`                    | Days before notifications are eligible for cleanup       |
+| `notification.kafkaTopic`                | `String`                   | `"notification-events"` | Kafka topic name for notification events                 |
 
 ---
 
@@ -434,15 +434,15 @@ Both follow the same pattern — conditional on their respective `*.enabled` pro
 
 Serializable Kafka message envelope.
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | `String` | Auto-generated UUID |
-| `userId` | `String` | Recipient user ID (also used as Kafka message key) |
-| `type` | `NotificationType` | Notification type enum |
-| `title` | `String` | Notification title |
-| `message` | `String` | Notification message body |
-| `data` | `Map<String, String>` | Extra payload key-value pairs |
-| `timestamp` | `Instant` | When the event was created |
+| Field       | Type                  | Description                                        |
+|-------------|-----------------------|----------------------------------------------------|
+| `id`        | `String`              | Auto-generated UUID                                |
+| `userId`    | `String`              | Recipient user ID (also used as Kafka message key) |
+| `type`      | `NotificationType`    | Notification type enum                             |
+| `title`     | `String`              | Notification title                                 |
+| `message`   | `String`              | Notification message body                          |
+| `data`      | `Map<String, String>` | Extra payload key-value pairs                      |
+| `timestamp` | `Instant`             | When the event was created                         |
 
 **Factory method:** `NotificationEvent.create(userId, type, title, message, data)` — generates UUID and current timestamp.
 
@@ -451,11 +451,11 @@ Serializable Kafka message envelope.
 ### `NotificationKafkaProducer`
 **Conditional:** `@ConditionalOnBean(KafkaTemplate.class)`
 
-| Method | Description |
-|---|---|
-| `publishNotification(userId, type, title, message, data)` | Builds `NotificationEvent` and calls `publishEvent()` |
-| `publishNotifications(userIds, type, title, message, data)` | Loops over each userId and calls `publishNotification()` |
-| `publishEvent(NotificationEvent)` | Calls `kafkaTemplate.send(kafkaTopic, userId, event)` — keyed by `userId` for partition ordering |
+| Method                                                      | Description                                                                                      |
+|-------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| `publishNotification(userId, type, title, message, data)`   | Builds `NotificationEvent` and calls `publishEvent()`                                            |
+| `publishNotifications(userIds, type, title, message, data)` | Loops over each userId and calls `publishNotification()`                                         |
+| `publishEvent(NotificationEvent)`                           | Calls `kafkaTemplate.send(kafkaTopic, userId, event)` — keyed by `userId` for partition ordering |
 
 **Send:** Async `whenComplete` callback — logs success at DEBUG, errors at ERROR. Does not throw; failures are swallowed to avoid blocking the calling service.
 
@@ -500,15 +500,15 @@ Serializable Kafka message envelope.
 
 ### `NotificationProviderService` Interface
 
-| Method | Return | Description |
-|---|---|---|
-| `send(deviceToken, title, message, data)` | `boolean` | Send to a single device; `true` = success |
-| `sendBatch(deviceTokens, title, message, data)` | `int` | Send to multiple devices; returns success count |
-| `sendToTopic(topic, title, message, data)` | `boolean` | Send to a subscribed topic |
-| `subscribeToTopic(deviceToken, topic)` | `boolean` | Subscribe device to an FCM topic |
-| `unsubscribeFromTopic(deviceToken, topic)` | `boolean` | Unsubscribe device from an FCM topic |
-| `getProviderName()` | `String` | Returns provider type name (matches `NotificationProviderType` enum names) |
-| `isEnabled()` | `boolean` | Whether the provider is configured and ready |
+| Method                                          | Return    | Description                                                                |
+|-------------------------------------------------|-----------|----------------------------------------------------------------------------|
+| `send(deviceToken, title, message, data)`       | `boolean` | Send to a single device; `true` = success                                  |
+| `sendBatch(deviceTokens, title, message, data)` | `int`     | Send to multiple devices; returns success count                            |
+| `sendToTopic(topic, title, message, data)`      | `boolean` | Send to a subscribed topic                                                 |
+| `subscribeToTopic(deviceToken, topic)`          | `boolean` | Subscribe device to an FCM topic                                           |
+| `unsubscribeFromTopic(deviceToken, topic)`      | `boolean` | Unsubscribe device from an FCM topic                                       |
+| `getProviderName()`                             | `String`  | Returns provider type name (matches `NotificationProviderType` enum names) |
+| `isEnabled()`                                   | `boolean` | Whether the provider is configured and ready                               |
 
 ---
 
@@ -553,19 +553,19 @@ Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, p
 **Interface:** `com.extractor.unraveldocs.pushnotification.interfaces.NotificationService`  
 **Implementation:** `NotificationServiceImpl`
 
-| Method | Description |
-|---|---|
-| `sendToUser(userId, type, title, message, data)` | Publishes single-user `NotificationEvent` to Kafka (or logs if Kafka absent) |
-| `sendToUsers(userIds, type, title, message, data)` | Publishes batch events; calls `kafkaProducer.publishNotifications()` |
-| `sendToTopic(topic, type, title, message, data)` | Reserved for topic-based sends (implementation pending) |
-| `getUserNotifications(userId, Pageable)` | Returns paginated `Page<NotificationResponse>` ordered by `createdAt` DESC |
-| `getNotificationsByType(userId, type, Pageable)` | Returns paginated notifications filtered by `NotificationType` |
-| `getUnreadNotifications(userId, Pageable)` | Returns unread notifications for user |
-| `getUnreadCount(userId)` | Returns `long` count of unread notifications |
-| `markAsRead(userId, notificationId)` | Marks notification as read — validates ownership before updating |
-| `markAllAsRead(userId)` | Bulk-updates all unread notifications for user via JPQL `@Modifying` query |
-| `deleteNotification(userId, notificationId)` | Deletes notification — validates ownership before deleting |
-| `isNotificationTypeEnabled(userId, type)` | Delegates to `NotificationPreferencesService` |
+| Method                                             | Description                                                                  |
+|----------------------------------------------------|------------------------------------------------------------------------------|
+| `sendToUser(userId, type, title, message, data)`   | Publishes single-user `NotificationEvent` to Kafka (or logs if Kafka absent) |
+| `sendToUsers(userIds, type, title, message, data)` | Publishes batch events; calls `kafkaProducer.publishNotifications()`         |
+| `sendToTopic(topic, type, title, message, data)`   | Reserved for topic-based sends (implementation pending)                      |
+| `getUserNotifications(userId, Pageable)`           | Returns paginated `Page<NotificationResponse>` ordered by `createdAt` DESC   |
+| `getNotificationsByType(userId, type, Pageable)`   | Returns paginated notifications filtered by `NotificationType`               |
+| `getUnreadNotifications(userId, Pageable)`         | Returns unread notifications for user                                        |
+| `getUnreadCount(userId)`                           | Returns `long` count of unread notifications                                 |
+| `markAsRead(userId, notificationId)`               | Marks notification as read — validates ownership before updating             |
+| `markAllAsRead(userId)`                            | Bulk-updates all unread notifications for user via JPQL `@Modifying` query   |
+| `deleteNotification(userId, notificationId)`       | Deletes notification — validates ownership before deleting                   |
+| `isNotificationTypeEnabled(userId, type)`          | Delegates to `NotificationPreferencesService`                                |
 
 > **Kafka fallback:** `NotificationKafkaProducer` is injected with `@Autowired(required = false)`. If Kafka is not configured, `kafkaProducer == null` and `sendToUser` / `sendToUsers` log a debug message instead.
 
@@ -575,17 +575,17 @@ Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, p
 **Interface:** `com.extractor.unraveldocs.pushnotification.interfaces.DeviceTokenService`  
 **Implementation:** `DeviceTokenServiceImpl`
 
-| Method | Description |
-|---|---|
+| Method                                          | Description                                                                                                       |
+|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
 | `registerDevice(userId, RegisterDeviceRequest)` | Register or re-activate device token; enforces `maxDevicesPerUser`; transfers token if it belongs to another user |
-| `unregisterDevice(userId, tokenId)` | Deactivates token by ID — validates user ownership |
-| `unregisterByToken(deviceToken)` | Deactivates token by raw token string (e.g., on FCM `UNREGISTERED` error) |
-| `getActiveDevices(userId)` | Returns `List<DeviceTokenResponse>` for active tokens only |
-| `getAllDevices(userId)` | Returns all tokens (active + inactive) |
-| `getActiveTokenEntities(userId)` | Returns raw `List<UserDeviceToken>` — used internally by consumer |
-| `updateLastUsed(deviceToken)` | Updates `lastUsedAt` timestamp on the token entity |
-| `deactivateAllDevices(userId)` | Bulk-deactivates all tokens for a user (e.g., on account deletion) |
-| `isTokenActive(deviceToken)` | Returns `true` if the token exists and `isActive = true` |
+| `unregisterDevice(userId, tokenId)`             | Deactivates token by ID — validates user ownership                                                                |
+| `unregisterByToken(deviceToken)`                | Deactivates token by raw token string (e.g., on FCM `UNREGISTERED` error)                                         |
+| `getActiveDevices(userId)`                      | Returns `List<DeviceTokenResponse>` for active tokens only                                                        |
+| `getAllDevices(userId)`                         | Returns all tokens (active + inactive)                                                                            |
+| `getActiveTokenEntities(userId)`                | Returns raw `List<UserDeviceToken>` — used internally by consumer                                                 |
+| `updateLastUsed(deviceToken)`                   | Updates `lastUsedAt` timestamp on the token entity                                                                |
+| `deactivateAllDevices(userId)`                  | Bulk-deactivates all tokens for a user (e.g., on account deletion)                                                |
+| `isTokenActive(deviceToken)`                    | Returns `true` if the token exists and `isActive = true`                                                          |
 
 **`registerDevice()` flow:**
 ```
@@ -606,14 +606,14 @@ Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, p
 **Interface:** `com.extractor.unraveldocs.pushnotification.interfaces.NotificationPreferencesService`  
 **Implementation:** `NotificationPreferencesServiceImpl`
 
-| Method | Description |
-|---|---|
-| `getPreferences(userId)` | Gets (or creates default) preferences and maps to `NotificationPreferencesResponse` |
+| Method                                                | Description                                                                               |
+|-------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| `getPreferences(userId)`                              | Gets (or creates default) preferences and maps to `NotificationPreferencesResponse`       |
 | `updatePreferences(userId, UpdatePreferencesRequest)` | Updates all preference fields; quiet hours fields are optional (only updated if non-null) |
-| `isNotificationTypeEnabled(userId, type)` | Returns `true` if no preferences exist (fail-open default) |
-| `isInQuietHours(userId)` | Returns `false` if no preferences exist |
-| `isPushEnabled(userId)` | Returns `true` if no preferences exist |
-| `createDefaultPreferences(userId)` | Idempotent — only creates if `existsByUserId = false` |
+| `isNotificationTypeEnabled(userId, type)`             | Returns `true` if no preferences exist (fail-open default)                                |
+| `isInQuietHours(userId)`                              | Returns `false` if no preferences exist                                                   |
+| `isPushEnabled(userId)`                               | Returns `true` if no preferences exist                                                    |
+| `createDefaultPreferences(userId)`                    | Idempotent — only creates if `existsByUserId = false`                                     |
 
 **Default preferences (all enabled, quiet hours off):** Created lazily on first `getPreferences()` or `updatePreferences()` call if no record exists, or explicitly via `createDefaultPreferences()` at user registration.
 
@@ -623,27 +623,27 @@ Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, p
 
 ### `NotificationRepository`
 
-| Method | Description |
-|---|---|
-| `findByUserIdOrderByCreatedAtDesc(userId, Pageable)` | Paginated inbox (newest first) |
-| `findByUserIdAndTypeOrderByCreatedAtDesc(userId, type, Pageable)` | Paginated inbox filtered by type |
-| `findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId, Pageable)` | Paginated unread inbox |
-| `countByUserIdAndIsReadFalse(userId)` | Unread badge count |
-| `markAllAsRead(userId, readAt)` | `@Modifying` JPQL bulk update; returns affected row count |
-| `deleteOlderThan(cutoffDate)` | `@Modifying` JPQL bulk delete for cleanup jobs |
-| `findByUserIdAndTypeAndCreatedAtAfter(userId, type, after)` | Deduplication check (recent notifications of same type) |
+| Method                                                             | Description                                               |
+|--------------------------------------------------------------------|-----------------------------------------------------------|
+| `findByUserIdOrderByCreatedAtDesc(userId, Pageable)`               | Paginated inbox (newest first)                            |
+| `findByUserIdAndTypeOrderByCreatedAtDesc(userId, type, Pageable)`  | Paginated inbox filtered by type                          |
+| `findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId, Pageable)` | Paginated unread inbox                                    |
+| `countByUserIdAndIsReadFalse(userId)`                              | Unread badge count                                        |
+| `markAllAsRead(userId, readAt)`                                    | `@Modifying` JPQL bulk update; returns affected row count |
+| `deleteOlderThan(cutoffDate)`                                      | `@Modifying` JPQL bulk delete for cleanup jobs            |
+| `findByUserIdAndTypeAndCreatedAtAfter(userId, type, after)`        | Deduplication check (recent notifications of same type)   |
 
 ### `DeviceTokenRepository`
 
-| Method | Description |
-|---|---|
-| `findByUserIdAndIsActiveTrue(userId)` | Active tokens for sending |
-| `findByDeviceToken(deviceToken)` | Token lookup by raw string |
-| `findByUserIdAndDeviceToken(userId, deviceToken)` | Token lookup scoped to user |
-| `findByUserId(userId)` | All tokens (active + inactive) |
-| `findByUserIdAndDeviceTypeAndIsActiveTrue(userId, type)` | Active tokens filtered by device type |
-| `countByUserIdAndIsActiveTrue(userId)` | Device count for `maxDevicesPerUser` check |
-| `deactivateAllForUser(userId)` | `@Modifying` JPQL bulk deactivation |
+| Method                                                   | Description                                |
+|----------------------------------------------------------|--------------------------------------------|
+| `findByUserIdAndIsActiveTrue(userId)`                    | Active tokens for sending                  |
+| `findByDeviceToken(deviceToken)`                         | Token lookup by raw string                 |
+| `findByUserIdAndDeviceToken(userId, deviceToken)`        | Token lookup scoped to user                |
+| `findByUserId(userId)`                                   | All tokens (active + inactive)             |
+| `findByUserIdAndDeviceTypeAndIsActiveTrue(userId, type)` | Active tokens filtered by device type      |
+| `countByUserIdAndIsActiveTrue(userId)`                   | Device count for `maxDevicesPerUser` check |
+| `deactivateAllForUser(userId)`                           | `@Modifying` JPQL bulk deactivation        |
 
 ### `NotificationPreferencesRepository`
 - `findByUserId(userId)` → `Optional<NotificationPreferences>`
@@ -660,28 +660,28 @@ Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, p
 
 #### `RegisterDeviceRequest`
 
-| Field | Type | Constraints | Description |
-|---|---|---|---|
-| `deviceToken` | `String` | `@NotBlank`, max 512 | FCM/APNs/OneSignal token |
-| `deviceType` | `DeviceType` | `@NotNull` | `ANDROID`, `IOS`, or `WEB` |
-| `deviceName` | `String` | optional, max 100 | Human-friendly label (e.g., "My iPhone 15") |
+| Field         | Type         | Constraints          | Description                                 |
+|---------------|--------------|----------------------|---------------------------------------------|
+| `deviceToken` | `String`     | `@NotBlank`, max 512 | FCM/APNs/OneSignal token                    |
+| `deviceType`  | `DeviceType` | `@NotNull`           | `ANDROID`, `IOS`, or `WEB`                  |
+| `deviceName`  | `String`     | optional, max 100    | Human-friendly label (e.g., "My iPhone 15") |
 
 #### `UpdatePreferencesRequest`
 
-| Field | Type | Constraints | Description |
-|---|---|---|---|
-| `pushEnabled` | `Boolean` | `@NotNull` | Master push toggle |
-| `emailEnabled` | `Boolean` | `@NotNull` | Email notification toggle |
-| `documentNotifications` | `Boolean` | `@NotNull` | document category |
-| `ocrNotifications` | `Boolean` | `@NotNull` | ocr category |
-| `paymentNotifications` | `Boolean` | `@NotNull` | payment category |
-| `storageNotifications` | `Boolean` | `@NotNull` | storage category |
-| `subscriptionNotifications` | `Boolean` | `@NotNull` | subscription category |
-| `teamNotifications` | `Boolean` | `@NotNull` | team category |
-| `couponNotifications` | `Boolean` | `@NotNull` | coupon category |
-| `quietHoursEnabled` | `Boolean` | optional | Quiet window master toggle |
-| `quietHoursStart` | `LocalTime` | optional | Start of quiet window (e.g., `22:00`) |
-| `quietHoursEnd` | `LocalTime` | optional | End of quiet window (e.g., `07:00`) |
+| Field                       | Type        | Constraints | Description                           |
+|-----------------------------|-------------|-------------|---------------------------------------|
+| `pushEnabled`               | `Boolean`   | `@NotNull`  | Master push toggle                    |
+| `emailEnabled`              | `Boolean`   | `@NotNull`  | Email notification toggle             |
+| `documentNotifications`     | `Boolean`   | `@NotNull`  | document category                     |
+| `ocrNotifications`          | `Boolean`   | `@NotNull`  | ocr category                          |
+| `paymentNotifications`      | `Boolean`   | `@NotNull`  | payment category                      |
+| `storageNotifications`      | `Boolean`   | `@NotNull`  | storage category                      |
+| `subscriptionNotifications` | `Boolean`   | `@NotNull`  | subscription category                 |
+| `teamNotifications`         | `Boolean`   | `@NotNull`  | team category                         |
+| `couponNotifications`       | `Boolean`   | `@NotNull`  | coupon category                       |
+| `quietHoursEnabled`         | `Boolean`   | optional    | Quiet window master toggle            |
+| `quietHoursStart`           | `LocalTime` | optional    | Start of quiet window (e.g., `22:00`) |
+| `quietHoursEnd`             | `LocalTime` | optional    | End of quiet window (e.g., `07:00`)   |
 
 ---
 
@@ -689,50 +689,50 @@ Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, p
 
 #### `NotificationResponse`
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | `String` | Notification UUID |
-| `type` | `NotificationType` | Enum value |
-| `typeDisplayName` | `String` | Human-readable type name |
-| `category` | `String` | Category string (`"document"`, `"payment"`, etc.) |
-| `title` | `String` | Notification title |
-| `message` | `String` | Message body |
-| `data` | `Map<String, String>` | Extra payload |
-| `isRead` | `boolean` | Read state |
-| `createdAt` | `OffsetDateTime` | Creation timestamp |
-| `readAt` | `OffsetDateTime` | When marked read (nullable) |
+| Field             | Type                  | Description                                       |
+|-------------------|-----------------------|---------------------------------------------------|
+| `id`              | `String`              | Notification UUID                                 |
+| `type`            | `NotificationType`    | Enum value                                        |
+| `typeDisplayName` | `String`              | Human-readable type name                          |
+| `category`        | `String`              | Category string (`"document"`, `"payment"`, etc.) |
+| `title`           | `String`              | Notification title                                |
+| `message`         | `String`              | Message body                                      |
+| `data`            | `Map<String, String>` | Extra payload                                     |
+| `isRead`          | `boolean`             | Read state                                        |
+| `createdAt`       | `OffsetDateTime`      | Creation timestamp                                |
+| `readAt`          | `OffsetDateTime`      | When marked read (nullable)                       |
 
 #### `DeviceTokenResponse`
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | `String` | Token record UUID |
-| `deviceToken` | `String` | The raw token string |
-| `deviceType` | `DeviceType` | `ANDROID`, `IOS`, `WEB` |
-| `deviceName` | `String` | Optional friendly name |
-| `isActive` | `boolean` | Active state |
-| `createdAt` | `OffsetDateTime` | Registration time |
-| `lastUsedAt` | `OffsetDateTime` | Last delivery time (nullable) |
+| Field         | Type             | Description                   |
+|---------------|------------------|-------------------------------|
+| `id`          | `String`         | Token record UUID             |
+| `deviceToken` | `String`         | The raw token string          |
+| `deviceType`  | `DeviceType`     | `ANDROID`, `IOS`, `WEB`       |
+| `deviceName`  | `String`         | Optional friendly name        |
+| `isActive`    | `boolean`        | Active state                  |
+| `createdAt`   | `OffsetDateTime` | Registration time             |
+| `lastUsedAt`  | `OffsetDateTime` | Last delivery time (nullable) |
 
 #### `NotificationPreferencesResponse`
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | `String` | Preferences record UUID |
-| `pushEnabled` | `boolean` | Master push toggle |
-| `emailEnabled` | `boolean` | Email toggle |
-| `documentNotifications` | `boolean` | document category |
-| `ocrNotifications` | `boolean` | ocr category |
-| `paymentNotifications` | `boolean` | payment category |
-| `storageNotifications` | `boolean` | storage category |
-| `subscriptionNotifications` | `boolean` | subscription category |
-| `teamNotifications` | `boolean` | team category |
-| `couponNotifications` | `boolean` | coupon category |
-| `quietHoursEnabled` | `boolean` | Quiet window enabled |
-| `quietHoursStart` | `LocalTime` | Quiet start (nullable) |
-| `quietHoursEnd` | `LocalTime` | Quiet end (nullable) |
-| `createdAt` | `OffsetDateTime` | Record creation |
-| `updatedAt` | `OffsetDateTime` | Last update |
+| Field                       | Type             | Description             |
+|-----------------------------|------------------|-------------------------|
+| `id`                        | `String`         | Preferences record UUID |
+| `pushEnabled`               | `boolean`        | Master push toggle      |
+| `emailEnabled`              | `boolean`        | Email toggle            |
+| `documentNotifications`     | `boolean`        | document category       |
+| `ocrNotifications`          | `boolean`        | ocr category            |
+| `paymentNotifications`      | `boolean`        | payment category        |
+| `storageNotifications`      | `boolean`        | storage category        |
+| `subscriptionNotifications` | `boolean`        | subscription category   |
+| `teamNotifications`         | `boolean`        | team category           |
+| `couponNotifications`       | `boolean`        | coupon category         |
+| `quietHoursEnabled`         | `boolean`        | Quiet window enabled    |
+| `quietHoursStart`           | `LocalTime`      | Quiet start (nullable)  |
+| `quietHoursEnd`             | `LocalTime`      | Quiet end (nullable)    |
+| `createdAt`                 | `OffsetDateTime` | Record creation         |
+| `updatedAt`                 | `OffsetDateTime` | Last update             |
 
 ---
 
@@ -776,8 +776,8 @@ Register a device token for push notifications.
 
 #### DELETE `/api/v1/notifications/device/{tokenId}` — Unregister Device
 
-| Parameter | Type | Description |
-|---|---|---|
+| Parameter | Type            | Description       |
+|-----------|-----------------|-------------------|
 | `tokenId` | `String` (path) | Token record UUID |
 
 **Response — `204 No Content`**  
@@ -796,10 +796,10 @@ Returns all **active** device tokens for the authenticated user.
 
 #### GET `/api/v1/notifications` — Get All Notifications
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `page` | `int` | `0` | Page number |
-| `size` | `int` | `20` | Page size |
+| Parameter | Type  | Default | Description |
+|-----------|-------|---------|-------------|
+| `page`    | `int` | `0`     | Page number |
+| `size`    | `int` | `20`    | Page size   |
 
 **Response — `200 OK`:** `Page<NotificationResponse>` (newest first)
 
@@ -807,10 +807,10 @@ Returns all **active** device tokens for the authenticated user.
 
 #### GET `/api/v1/notifications/unread` — Get Unread Notifications
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `page` | `int` | `0` | Page number |
-| `size` | `int` | `20` | Page size |
+| Parameter | Type  | Default | Description |
+|-----------|-------|---------|-------------|
+| `page`    | `int` | `0`     | Page number |
+| `size`    | `int` | `20`    | Page size   |
 
 **Response — `200 OK`:** `Page<NotificationResponse>` (unread only, newest first)
 
@@ -818,11 +818,11 @@ Returns all **active** device tokens for the authenticated user.
 
 #### GET `/api/v1/notifications/by-type/{type}` — Get by Type
 
-| Parameter | Type | Description |
-|---|---|---|
-| `type` | `NotificationType` (path) | Notification type enum value |
-| `page` | `int` | Default `0` |
-| `size` | `int` | Default `20` |
+| Parameter | Type                      | Description                  |
+|-----------|---------------------------|------------------------------|
+| `type`    | `NotificationType` (path) | Notification type enum value |
+| `page`    | `int`                     | Default `0`                  |
+| `size`    | `int`                     | Default `20`                 |
 
 **Response — `200 OK`:** `Page<NotificationResponse>`
 
@@ -839,9 +839,9 @@ Returns all **active** device tokens for the authenticated user.
 
 #### PATCH `/api/v1/notifications/{id}/read` — Mark Single as Read
 
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | `String` (path) | Notification UUID |
+| Parameter | Type            | Description       |
+|-----------|-----------------|-------------------|
+| `id`      | `String` (path) | Notification UUID |
 
 **Response — `204 No Content`**
 
@@ -855,9 +855,9 @@ Returns all **active** device tokens for the authenticated user.
 
 #### DELETE `/api/v1/notifications/{id}` — Delete Notification
 
-| Parameter | Type | Description |
-|---|---|---|
-| `id` | `String` (path) | Notification UUID |
+| Parameter | Type            | Description       |
+|-----------|-----------------|-------------------|
+| `id`      | `String` (path) | Notification UUID |
 
 **Response — `204 No Content`**  
 **Note:** Ownership validated — silently ignores if notification doesn't belong to the user.
@@ -907,11 +907,11 @@ Iterates over all `UserSubscription` records and checks storage usage against th
 
 **Threshold logic (checked highest-first):**
 
-| Threshold | Notification Type | Title | Message |
-|---|---|---|---|
-| ≥ 95% | `STORAGE_WARNING_95` | "Storage Almost Full!" | "You've used 95% of your storage..." |
-| ≥ 90% | `STORAGE_WARNING_90` | "Storage Warning" | "You've used 90% of your storage..." |
-| ≥ 80% | `STORAGE_WARNING_80` | "Storage Warning" | "You're using 80% of your storage..." |
+| Threshold | Notification Type    | Title                  | Message                               |
+|-----------|----------------------|------------------------|---------------------------------------|
+| ≥ 95%     | `STORAGE_WARNING_95` | "Storage Almost Full!" | "You've used 95% of your storage..."  |
+| ≥ 90%     | `STORAGE_WARNING_90` | "Storage Warning"      | "You've used 90% of your storage..."  |
+| ≥ 80%     | `STORAGE_WARNING_80` | "Storage Warning"      | "You're using 80% of your storage..." |
 
 **`sendWarningIfNotSent()` flow:**
 ```
@@ -936,11 +936,11 @@ Queries subscriptions expiring within specific windows and sends countdown notif
 
 **Expiry windows checked:**
 
-| Window | Notification Type | Title |
-|---|---|---|
-| `now+7d` to `now+8d` | `SUBSCRIPTION_EXPIRING_7_DAYS` | "Subscription Expiring Soon" |
-| `now+3d` to `now+4d` | `SUBSCRIPTION_EXPIRING_3_DAYS` | "Subscription Expiring" |
-| `now+1d` to `now+2d` | `SUBSCRIPTION_EXPIRING_1_DAY` | "Subscription Expires Tomorrow" |
+| Window               | Notification Type              | Title                           |
+|----------------------|--------------------------------|---------------------------------|
+| `now+7d` to `now+8d` | `SUBSCRIPTION_EXPIRING_7_DAYS` | "Subscription Expiring Soon"    |
+| `now+3d` to `now+4d` | `SUBSCRIPTION_EXPIRING_3_DAYS` | "Subscription Expiring"         |
+| `now+1d` to `now+2d` | `SUBSCRIPTION_EXPIRING_1_DAY`  | "Subscription Expires Tomorrow" |
 
 **Query:** `findByCurrentPeriodEndBetweenAndAutoRenewFalse(startWindow, endWindow)` — only notifies users who have auto-renew disabled (users with auto-renew enabled will be billed automatically).
 
