@@ -1,18 +1,18 @@
 package com.extractor.unraveldocs.auth.impl;
 
 import com.extractor.unraveldocs.auth.dto.LoginData;
+import com.extractor.unraveldocs.auth.dto.LoginResult;
 import com.extractor.unraveldocs.auth.dto.request.LoginRequestDto;
 import com.extractor.unraveldocs.auth.interfaces.LoginUserService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
 import com.extractor.unraveldocs.exceptions.custom.ForbiddenException;
 import com.extractor.unraveldocs.exceptions.custom.TokenProcessingException;
+import com.extractor.unraveldocs.exceptions.custom.UnauthorizedException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.loginattempts.interfaces.LoginAttemptsService;
 import com.extractor.unraveldocs.security.JwtTokenProvider;
 import com.extractor.unraveldocs.security.RefreshTokenService;
-import com.extractor.unraveldocs.subscription.impl.AssignSubscriptionService;
-import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,6 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class LoginUserImpl implements LoginUserService {
-    private final AssignSubscriptionService subscriptionService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final LoginAttemptsService loginAttemptsService;
@@ -39,27 +38,41 @@ public class LoginUserImpl implements LoginUserService {
     private final RefreshTokenService refreshTokenService;
 
     @Override
-    public UnravelDocsResponse<LoginData> loginUser(LoginRequestDto request) {
+    public LoginResult loginUser(LoginRequestDto request) {
         Optional<User> userOpt = userRepository.findByEmail(request.email());
+
+        // Block login for soft-deleted accounts (Issue #2)
+        userOpt.ifPresent(user -> {
+            if (user.getDeletedAt() != null) {
+                throw new BadRequestException(
+                        "This account has been deactivated. Please contact support.",
+                        "ACCOUNT_DEACTIVATED");
+            }
+        });
 
         userOpt.ifPresent(loginAttemptsService::checkIfUserBlocked);
 
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.email(), request.password())
-            );
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password()));
         } catch (BadCredentialsException e) {
             userOpt.ifPresent(loginAttemptsService::recordFailedLoginAttempt);
-            throw new BadRequestException("Invalid email or password");
+            throw new UnauthorizedException("Invalid email or password", "INVALID_CREDENTIALS");
         } catch (DisabledException e) {
-            throw new BadRequestException("User account is disabled. Please verify your email or contact support.");
+            throw new ForbiddenException(
+                    "User account is disabled. Please verify your email or contact support.",
+                    "ACCOUNT_NOT_VERIFIED");
         } catch (LockedException e) {
-            throw new ForbiddenException("User account is locked. Please contact support or try again later.");
+            throw new ForbiddenException(
+                    "User account is locked. Please contact support or try again later.",
+                    "ACCOUNT_LOCKED");
         } catch (AuthenticationException e) {
             log.error("Authentication failed for user {}: {}", request.email(), e.getMessage());
             userOpt.ifPresent(loginAttemptsService::recordFailedLoginAttempt);
-            throw new BadRequestException("Authentication failed. Please check your credentials.");
+            throw new UnauthorizedException(
+                    "Authentication failed. Please check your credentials.",
+                    "INVALID_CREDENTIALS");
         }
 
         User authenticatedUser = (User) authentication.getPrincipal();
@@ -78,39 +91,22 @@ public class LoginUserImpl implements LoginUserService {
             throw new TokenProcessingException("Error processing refresh token.");
         }
 
-        if (authenticatedUser.getDeletedAt() != null) {
-            authenticatedUser.setDeletedAt(null);
-            authenticatedUser.setActive(true);
-            if (authenticatedUser.getUserVerification() != null) {
-                authenticatedUser.getUserVerification().setDeletedAt(null);
-            }
-        }
-
         authenticatedUser.setLastLogin(OffsetDateTime.now());
         userRepository.save(authenticatedUser);
 
-        // Ensure user has a subscription
-        if (authenticatedUser.getSubscription() == null) {
-            UserSubscription subscription = subscriptionService.assignDefaultSubscription(authenticatedUser);
-            authenticatedUser.setSubscription(subscription);
-            userRepository.save(authenticatedUser);
-        }
-
+        // Issue #8: Login response contains only token data — profile via GET
+        // /api/v1/user/me
         LoginData data = LoginData.builder()
-                .id(authenticatedUser.getId())
-                .firstName(authenticatedUser.getFirstName())
-                .lastName(authenticatedUser.getLastName())
-                .email(authenticatedUser.getEmail())
-                .isVerified(authenticatedUser.isVerified())
-                .isActive(authenticatedUser.isActive())
-                .role(authenticatedUser.getRole())
-                .lastLogin(authenticatedUser.getLastLogin())
+                .userId(authenticatedUser.getId())
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .createdAt(authenticatedUser.getCreatedAt())
-                .updatedAt(authenticatedUser.getUpdatedAt())
+                .tokenType("Bearer")
+                .accessExpiresIn(jwtTokenProvider.getAccessExpirationInMs())
                 .build();
 
-        return responseBuilder.buildUserResponse(data, HttpStatus.OK, "User logged in successfully");
+        UnravelDocsResponse<LoginData> response = responseBuilder.buildUserResponse(
+                data, HttpStatus.OK, "User logged in successfully");
+
+        // Return refresh token separately for cookie setting by controller
+        return new LoginResult(response, refreshToken);
     }
 }

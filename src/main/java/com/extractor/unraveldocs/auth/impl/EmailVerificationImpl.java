@@ -11,7 +11,6 @@ import com.extractor.unraveldocs.brokers.kafka.events.EventMetadata;
 import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
 import com.extractor.unraveldocs.brokers.kafka.events.EventTypes;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
-import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
 import com.extractor.unraveldocs.user.repository.UserRepository;
@@ -19,6 +18,7 @@ import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.utils.generatetoken.GenerateVerificationToken;
 import com.extractor.unraveldocs.utils.userlib.DateHelper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,8 +26,10 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailVerificationImpl implements EmailVerificationService {
@@ -37,26 +39,35 @@ public class EmailVerificationImpl implements EmailVerificationService {
     private final ResponseBuilderService responseBuilder;
     private final EventPublisherService eventPublisherService;
 
+    private static final String RESEND_GENERIC_MESSAGE = "If an account with this email exists and is unverified, a verification email has been sent.";
+
     @Override
     @Transactional
     public UnravelDocsResponse<Void> resendEmailVerification(ResendEmailVerificationDto request) {
-        User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new NotFoundException("User does not exist."));
+        // Issue #3: Prevent user enumeration — always return generic 200 OK
+        Optional<User> userOpt = userRepository.findByEmail(request.email());
+
+        if (userOpt.isEmpty()) {
+            // User not found — return generic success to prevent enumeration
+            return responseBuilder.buildUserResponse(null, HttpStatus.OK, RESEND_GENERIC_MESSAGE);
+        }
+
+        User user = userOpt.get();
 
         if (user.isVerified()) {
-            throw new BadRequestException("User is already verified. Please login.");
+            // Already verified — return generic success to prevent enumeration
+            return responseBuilder.buildUserResponse(null, HttpStatus.OK, RESEND_GENERIC_MESSAGE);
         }
 
         UserVerification userVerification = user.getUserVerification();
         OffsetDateTime now = OffsetDateTime.now();
 
-        // Allow resend only if the token is expired or doesn't exist
+        // Issue #5: Do not leak token TTL — return generic message
         if (userVerification.getEmailVerificationToken() != null &&
                 userVerification.getEmailVerificationTokenExpiry().isAfter(now)) {
-            String timeLeft = dateHelper.getTimeLeftToExpiry(now, userVerification.getEmailVerificationTokenExpiry(),
-                    "hour");
-            throw new BadRequestException(
-                    "A verification email has already been sent. Please check your inbox or try again in " + timeLeft);
+            return responseBuilder.buildUserResponse(
+                    null, HttpStatus.OK,
+                    "Please wait before requesting a new verification email.");
         }
 
         String emailVerificationToken = verificationToken.generateVerificationToken();
@@ -76,8 +87,7 @@ public class EmailVerificationImpl implements EmailVerificationService {
             }
         });
 
-        return responseBuilder.buildUserResponse(
-                null, HttpStatus.OK, "A new verification email has been sent successfully.");
+        return responseBuilder.buildUserResponse(null, HttpStatus.OK, RESEND_GENERIC_MESSAGE);
     }
 
     private void publishVerificationEmailEvent(User user, String token, String expiration) {
@@ -102,23 +112,29 @@ public class EmailVerificationImpl implements EmailVerificationService {
     @Override
     @Transactional
     public UnravelDocsResponse<Void> verifyEmail(String email, String token) {
+        // Issue #3: Use generic error for all failure cases — no 404 to prevent
+        // enumeration
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User does not exist."));
+                .orElseThrow(() -> new BadRequestException(
+                        "Email verification failed.", "VERIFICATION_FAILED"));
 
         if (user.isVerified()) {
-            throw new BadRequestException("User is already verified. Please login.");
+            throw new BadRequestException(
+                    "User is already verified. Please login.", "EMAIL_ALREADY_VERIFIED");
         }
 
         UserVerification userVerification = user.getUserVerification();
         if (userVerification.getEmailVerificationToken() == null
                 || !userVerification.getEmailVerificationToken().equals(token)) {
-            throw new BadRequestException("Invalid email verification token.");
+            throw new BadRequestException(
+                    "Email verification failed.", "VERIFICATION_FAILED");
         }
 
         if (userVerification.getEmailVerificationTokenExpiry().isBefore(OffsetDateTime.now())) {
             userVerification.setStatus(VerifiedStatus.EXPIRED);
             userRepository.save(user);
-            throw new BadRequestException("Email verification token has expired.");
+            throw new BadRequestException(
+                    "Email verification token has expired.", "TOKEN_EXPIRED");
         }
 
         userVerification.setEmailVerificationToken(null);

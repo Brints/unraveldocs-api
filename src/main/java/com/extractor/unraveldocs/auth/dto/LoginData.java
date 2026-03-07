@@ -1,23 +1,15 @@
 package com.extractor.unraveldocs.auth.dto;
 
-import com.extractor.unraveldocs.auth.datamodel.Role;
 import lombok.Builder;
 
-import java.time.OffsetDateTime;
-
+/**
+ * Token-only login response DTO. Profile data is served separately
+ * via GET /api/v1/user/me.
+ */
 @Builder
 public record LoginData(
-        String id,
-        String firstName,
-        String lastName,
-        String email,
-        Role role,
-        OffsetDateTime lastLogin,
-        boolean isActive,
-        boolean isVerified,
+        String userId,
         String accessToken,
-        String refreshToken,
-        OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
-) {
+        String tokenType,
+        Long accessExpiresIn) {
 }

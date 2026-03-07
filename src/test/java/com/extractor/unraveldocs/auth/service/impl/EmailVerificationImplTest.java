@@ -7,7 +7,6 @@ import com.extractor.unraveldocs.auth.model.UserVerification;
 import com.extractor.unraveldocs.brokers.kafka.events.BaseEvent;
 import com.extractor.unraveldocs.brokers.kafka.events.EventPublisherService;
 import com.extractor.unraveldocs.exceptions.custom.BadRequestException;
-import com.extractor.unraveldocs.exceptions.custom.NotFoundException;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
@@ -33,6 +32,8 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class EmailVerificationImplTest {
+
+        private static final String RESEND_GENERIC_MESSAGE = "If an account with this email exists and is unverified, a verification email has been sent.";
 
         @Mock
         private UserRepository userRepository;
@@ -85,68 +86,88 @@ class EmailVerificationImplTest {
         }
 
         // Tests for resendEmailVerification
+
         @Test
-        void resendEmailVerification_UserNotFound_ThrowsNotFoundException() {
-                // Arrange
+        void resendEmailVerification_UserNotFound_ReturnsGenericSuccess() {
+                // Arrange - user not found should not throw, but return generic 200 OK (Issue
+                // #3)
+                UnravelDocsResponse<Void> expectedResponse = new UnravelDocsResponse<>(HttpStatus.OK.value(), "success",
+                                RESEND_GENERIC_MESSAGE, null);
                 when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.empty());
+                when(responseBuilder.<Void>buildUserResponse(null, HttpStatus.OK, RESEND_GENERIC_MESSAGE))
+                                .thenReturn(expectedResponse);
 
-                // Act & Assert
-                assertThrows(NotFoundException.class,
-                                () -> emailVerificationService.resendEmailVerification(resendRequest),
-                                "User does not exist.");
+                // Act
+                UnravelDocsResponse<Void> response = emailVerificationService.resendEmailVerification(resendRequest);
+
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK.value(), response.getStatusCode());
+                assertEquals(RESEND_GENERIC_MESSAGE, response.getMessage());
                 verify(userRepository).findByEmail("john.doe@example.com");
-                verifyNoMoreInteractions(userRepository);
-                verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
+                verifyNoInteractions(verificationToken, dateHelper, eventPublisherService);
         }
 
         @Test
-        void resendEmailVerification_UserAlreadyVerified_ThrowsBadRequestException() {
-                // Arrange
+        void resendEmailVerification_UserAlreadyVerified_ReturnsGenericSuccess() {
+                // Arrange - already verified should not throw, but return generic 200 OK (Issue
+                // #3)
                 user.setVerified(true);
+                UnravelDocsResponse<Void> expectedResponse = new UnravelDocsResponse<>(HttpStatus.OK.value(), "success",
+                                RESEND_GENERIC_MESSAGE, null);
                 when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
+                when(responseBuilder.<Void>buildUserResponse(null, HttpStatus.OK, RESEND_GENERIC_MESSAGE))
+                                .thenReturn(expectedResponse);
 
-                // Act & Assert
-                assertThrows(BadRequestException.class,
-                                () -> emailVerificationService.resendEmailVerification(resendRequest),
-                                "User is already verified. Please login.");
+                // Act
+                UnravelDocsResponse<Void> response = emailVerificationService.resendEmailVerification(resendRequest);
+
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK.value(), response.getStatusCode());
+                assertEquals(RESEND_GENERIC_MESSAGE, response.getMessage());
                 verify(userRepository).findByEmail("john.doe@example.com");
-                verifyNoMoreInteractions(userRepository);
-                verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
+                verifyNoInteractions(verificationToken, dateHelper, eventPublisherService);
         }
 
         @Test
-        void resendEmailVerification_ActiveTokenExists_ThrowsBadRequestException() {
-                // Arrange
+        void resendEmailVerification_ActiveTokenExists_ReturnsGenericWaitMessage() {
+                // Arrange - active token should not leak TTL, return generic wait message
+                // (Issue #5)
                 userVerification.setEmailVerificationToken("existingToken");
                 userVerification.setEmailVerificationTokenExpiry(expiryDate);
+                String waitMessage = "Please wait before requesting a new verification email.";
+                UnravelDocsResponse<Void> expectedResponse = new UnravelDocsResponse<>(HttpStatus.OK.value(), "success",
+                                waitMessage, null);
                 when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
-                when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), eq(expiryDate), eq("hour")))
-                                .thenReturn("2 hours");
+                when(responseBuilder.<Void>buildUserResponse(null, HttpStatus.OK, waitMessage))
+                                .thenReturn(expectedResponse);
 
-                // Act & Assert
-                BadRequestException exception = assertThrows(BadRequestException.class,
-                                () -> emailVerificationService.resendEmailVerification(resendRequest));
-                assertEquals("A verification email has already been sent. Please check your inbox or try again in 2 hours",
-                                exception.getMessage());
+                // Act
+                UnravelDocsResponse<Void> response = emailVerificationService.resendEmailVerification(resendRequest);
+
+                // Assert
+                assertNotNull(response);
+                assertEquals(HttpStatus.OK.value(), response.getStatusCode());
+                assertEquals(waitMessage, response.getMessage());
+                // Verify dateHelper.getTimeLeftToExpiry is NOT called — TTL is not leaked
+                verifyNoInteractions(dateHelper);
                 verify(userRepository).findByEmail("john.doe@example.com");
-                verify(dateHelper).getTimeLeftToExpiry(any(OffsetDateTime.class), eq(expiryDate), eq("hour"));
-                verifyNoMoreInteractions(userRepository, dateHelper);
-                verifyNoInteractions(verificationToken, responseBuilder);
+                verifyNoInteractions(verificationToken, eventPublisherService);
         }
 
         @Test
         void resendEmailVerification_SuccessfulResend_ReturnsUserResponse() {
                 // Arrange
                 UnravelDocsResponse<Void> expectedResponse = new UnravelDocsResponse<>(HttpStatus.OK.value(), "success",
-                                "A new verification email has been sent successfully.", null);
+                                RESEND_GENERIC_MESSAGE, null);
                 when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
                 when(verificationToken.generateVerificationToken()).thenReturn("newToken");
                 when(dateHelper.setExpiryDate(any(OffsetDateTime.class), eq("hour"), eq(3))).thenReturn(expiryDate);
                 when(dateHelper.getTimeLeftToExpiry(any(OffsetDateTime.class), eq(expiryDate), eq("hour")))
                                 .thenReturn("3 hours");
                 when(userRepository.save(any(User.class))).thenReturn(user);
-                when(responseBuilder.<Void>buildUserResponse(
-                                null, HttpStatus.OK, "A new verification email has been sent successfully."))
+                when(responseBuilder.<Void>buildUserResponse(null, HttpStatus.OK, RESEND_GENERIC_MESSAGE))
                                 .thenReturn(expectedResponse);
 
                 // Act
@@ -157,7 +178,7 @@ class EmailVerificationImplTest {
                 assertNotNull(response);
                 assertEquals(HttpStatus.OK.value(), response.getStatusCode());
                 assertEquals("success", response.getStatus());
-                assertEquals("A new verification email has been sent successfully.", response.getMessage());
+                assertEquals(RESEND_GENERIC_MESSAGE, response.getMessage());
                 assertNull(response.getData());
                 verify(userRepository).findByEmail("john.doe@example.com");
                 verify(verificationToken).generateVerificationToken();
@@ -170,21 +191,22 @@ class EmailVerificationImplTest {
                                         uv.getStatus() == VerifiedStatus.PENDING;
                 }));
                 verify(eventPublisherService).publishUserEvent(any(BaseEvent.class));
-                verify(responseBuilder).buildUserResponse(
-                                null, HttpStatus.OK, "A new verification email has been sent successfully.");
+                verify(responseBuilder).buildUserResponse(null, HttpStatus.OK, RESEND_GENERIC_MESSAGE);
                 verifyNoMoreInteractions(responseBuilder);
         }
 
         // Tests for verifyEmail
+
         @Test
-        void verifyEmail_UserNotFound_ThrowsNotFoundException() {
-                // Arrange
+        void verifyEmail_UserNotFound_ThrowsBadRequestException() {
+                // Arrange — Issue #3: returns BadRequestException instead of NotFoundException
                 when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.empty());
 
                 // Act & Assert
-                assertThrows(NotFoundException.class,
-                                () -> emailVerificationService.verifyEmail("john.doe@example.com", "token"),
-                                "User does not exist.");
+                BadRequestException exception = assertThrows(BadRequestException.class,
+                                () -> emailVerificationService.verifyEmail("john.doe@example.com", "token"));
+                assertEquals("Email verification failed.", exception.getMessage());
+                assertEquals("VERIFICATION_FAILED", exception.getErrorCode());
                 verify(userRepository).findByEmail("john.doe@example.com");
                 verifyNoMoreInteractions(userRepository);
                 verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
@@ -197,9 +219,10 @@ class EmailVerificationImplTest {
                 when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
 
                 // Act & Assert
-                assertThrows(BadRequestException.class,
-                                () -> emailVerificationService.verifyEmail("john.doe@example.com", "token"),
-                                "User is already verified. Please login.");
+                BadRequestException exception = assertThrows(BadRequestException.class,
+                                () -> emailVerificationService.verifyEmail("john.doe@example.com", "token"));
+                assertEquals("User is already verified. Please login.", exception.getMessage());
+                assertEquals("EMAIL_ALREADY_VERIFIED", exception.getErrorCode());
                 verify(userRepository).findByEmail("john.doe@example.com");
                 verifyNoMoreInteractions(userRepository);
                 verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
@@ -213,9 +236,10 @@ class EmailVerificationImplTest {
                 when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(user));
 
                 // Act & Assert
-                assertThrows(BadRequestException.class,
-                                () -> emailVerificationService.verifyEmail("john.doe@example.com", "invalidToken"),
-                                "Invalid email verification token.");
+                BadRequestException exception = assertThrows(BadRequestException.class,
+                                () -> emailVerificationService.verifyEmail("john.doe@example.com", "invalidToken"));
+                assertEquals("Email verification failed.", exception.getMessage());
+                assertEquals("VERIFICATION_FAILED", exception.getErrorCode());
                 verify(userRepository).findByEmail("john.doe@example.com");
                 verifyNoMoreInteractions(userRepository);
                 verifyNoInteractions(verificationToken, dateHelper, responseBuilder);
@@ -231,9 +255,10 @@ class EmailVerificationImplTest {
                 when(userRepository.save(any(User.class))).thenReturn(user);
 
                 // Act & Assert
-                assertThrows(BadRequestException.class,
-                                () -> emailVerificationService.verifyEmail("john.doe@example.com", "validToken"),
-                                "Email verification token has expired.");
+                BadRequestException exception = assertThrows(BadRequestException.class,
+                                () -> emailVerificationService.verifyEmail("john.doe@example.com", "validToken"));
+                assertEquals("Email verification token has expired.", exception.getMessage());
+                assertEquals("TOKEN_EXPIRED", exception.getErrorCode());
                 verify(userRepository).findByEmail("john.doe@example.com");
                 verify(userRepository)
                                 .save(argThat(u -> u.getUserVerification().getStatus() == VerifiedStatus.EXPIRED));

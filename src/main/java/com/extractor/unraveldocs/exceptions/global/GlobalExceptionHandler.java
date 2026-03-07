@@ -74,6 +74,7 @@ public class GlobalExceptionHandler {
         errorResponse.setStatusCode(HttpStatus.FORBIDDEN.value());
         errorResponse.setError(HttpStatus.FORBIDDEN.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
+        errorResponse.setErrorCode(ex.getErrorCode());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
@@ -83,6 +84,7 @@ public class GlobalExceptionHandler {
         errorResponse.setStatusCode(HttpStatus.BAD_REQUEST.value());
         errorResponse.setError(HttpStatus.BAD_REQUEST.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
+        errorResponse.setErrorCode(ex.getErrorCode());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
@@ -110,6 +112,7 @@ public class GlobalExceptionHandler {
         errorResponse.setStatusCode(HttpStatus.UNAUTHORIZED.value());
         errorResponse.setError(HttpStatus.UNAUTHORIZED.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
+        errorResponse.setErrorCode(ex.getErrorCode());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
