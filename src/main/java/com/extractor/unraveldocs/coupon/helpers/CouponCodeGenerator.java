@@ -45,7 +45,7 @@ public class CouponCodeGenerator {
         if (code == null || code.isBlank()) {
             return false;
         }
-        // Must be 6-50 characters, alphanumeric with hyphens
-        return code.matches("^[A-Za-z0-9-]{6,50}$");
+        // Must be 3-40 characters, alphanumeric with hyphens
+        return code.matches("^[A-Za-z0-9-]{3,40}$");
     }
 }

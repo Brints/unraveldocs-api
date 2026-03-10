@@ -50,7 +50,7 @@ public class AuthService {
         return refreshTokenService.logout(request);
     }
 
-    public UnravelDocsResponse<Void> logoutAllDevices(HttpServletRequest request) {
-        return refreshTokenService.logoutAllDevices(request);
+    public void logoutAllDevices(HttpServletRequest request) {
+        refreshTokenService.logoutAllDevices(request);
     }
 }

@@ -22,9 +22,9 @@ public class CreateCouponRequest {
 
     /**
      * Optional custom coupon code. If not provided, system will auto-generate one.
-     * Must be 6-50 characters, alphanumeric with hyphens allowed.
+     * Must be 3-40 characters, alphanumeric with hyphens allowed.
      */
-    @Size(min = 6, max = 50, message = "Custom code must be between 6 and 50 characters")
+    @Size(min = 3, max = 40, message = "Custom code must be between 3 and 40 characters")
     @Pattern(regexp = "^[A-Za-z0-9-]+$", message = "Custom code can only contain letters, numbers, and hyphens")
     private String customCode;
 
@@ -62,19 +62,31 @@ public class CreateCouponRequest {
      * Maximum number of times each user can use this coupon. Default is 1.
      */
     @Min(value = 1, message = "Max usage per user must be at least 1")
+    @Builder.Default
     private Integer maxUsagePerUser = 1;
 
-    @NotNull(message = "Valid from date is required")
     @FutureOrPresent(message = "Valid from date must be in the present or future")
     private OffsetDateTime validFrom;
 
-    @NotNull(message = "Valid until date is required")
     @Future(message = "Valid until date must be in the future")
     private OffsetDateTime validUntil;
 
     /**
+     * Optional duration value for coupon validity (e.g. 5, 13). Used if validUntil
+     * is not provided.
+     */
+    @Min(value = 1, message = "Duration value must be at least 1")
+    private Long validDurationValue;
+
+    /**
+     * Optional duration unit for coupon validity (e.g. SECONDS, MINUTES, DAYS).
+     */
+    private java.time.temporal.ChronoUnit validDurationUnit;
+
+    /**
      * Whether to send notifications to eligible recipients. Default is true.
      */
+    @Builder.Default
     private Boolean sendNotifications = true;
 
     /**

@@ -55,27 +55,27 @@ The UnravelDocs Coupon System is a comprehensive solution for managing promotion
 
 ### Controllers
 
-| Controller | Path | Description |
-|------------|------|-------------|
-| `AdminCouponController` | `/api/v1/admin/coupons` | Admin operations: CRUD, analytics, bulk generation |
-| `CouponController` | `/api/v1/coupons` | User operations: validate, apply, get available coupons |
+| Controller              | Path                    | Description                                             |
+|-------------------------|-------------------------|---------------------------------------------------------|
+| `AdminCouponController` | `/api/v1/admin/coupons` | Admin operations: CRUD, analytics, bulk generation      |
+| `CouponController`      | `/api/v1/coupons`       | User operations: validate, apply, get available coupons |
 
 ### Services
 
-| Service | Description |
-|---------|-------------|
-| `CouponServiceImpl` | Core coupon CRUD operations |
-| `CouponValidationServiceImpl` | Validates coupons, checks eligibility, calculates discounts |
-| `CouponNotificationServiceImpl` | Sends email and push notifications |
-| `CouponCacheServiceImpl` | Redis-based caching for fast lookups |
-| `BulkCouponGenerationService` | Generates multiple coupons from templates |
+| Service                         | Description                                                 |
+|---------------------------------|-------------------------------------------------------------|
+| `CouponServiceImpl`             | Core coupon CRUD operations                                 |
+| `CouponValidationServiceImpl`   | Validates coupons, checks eligibility, calculates discounts |
+| `CouponNotificationServiceImpl` | Sends email and push notifications                          |
+| `CouponCacheServiceImpl`        | Redis-based caching for fast lookups                        |
+| `BulkCouponGenerationService`   | Generates multiple coupons from templates                   |
 
 ### Helpers
 
-| Helper | Description |
-|--------|-------------|
+| Helper                | Description                                |
+|-----------------------|--------------------------------------------|
 | `CouponCodeGenerator` | Generates unique alphanumeric coupon codes |
-| `CouponMapper` | Maps between entities and DTOs |
+| `CouponMapper`        | Maps between entities and DTOs             |
 
 ---
 
@@ -114,25 +114,25 @@ The UnravelDocs Coupon System is a comprehensive solution for managing promotion
 
 ### Admin Endpoints (`/api/v1/admin/coupons`)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/` | Create a new coupon |
-| `PUT` | `/{couponId}` | Update coupon details |
-| `DELETE` | `/{couponId}` | Deactivate a coupon |
-| `GET` | `/{couponId}` | Get coupon by ID |
-| `GET` | `/` | List all coupons (paginated, filterable) |
-| `GET` | `/{couponId}/usage` | Get coupon usage history |
-| `GET` | `/{couponId}/analytics` | Get coupon analytics |
-| `POST` | `/bulk` | Generate bulk coupons |
+| Method   | Endpoint                | Description                              |
+|----------|-------------------------|------------------------------------------|
+| `POST`   | `/`                     | Create a new coupon                      |
+| `PUT`    | `/{couponId}`           | Update coupon details                    |
+| `DELETE` | `/{couponId}`           | Deactivate a coupon                      |
+| `GET`    | `/{couponId}`           | Get coupon by ID                         |
+| `GET`    | `/`                     | List all coupons (paginated, filterable) |
+| `GET`    | `/{couponId}/usage`     | Get coupon usage history                 |
+| `GET`    | `/{couponId}/analytics` | Get coupon analytics                     |
+| `POST`   | `/bulk`                 | Generate bulk coupons                    |
 
 ### User Endpoints (`/api/v1/coupons`)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/validate/{code}` | Validate a coupon code |
-| `POST` | `/apply` | Apply coupon and calculate discount |
-| `GET` | `/{code}` | Get coupon details by code |
-| `GET` | `/available` | Get user's available coupons |
+| Method | Endpoint           | Description                         |
+|--------|--------------------|-------------------------------------|
+| `GET`  | `/validate/{code}` | Validate a coupon code              |
+| `POST` | `/apply`           | Apply coupon and calculate discount |
+| `GET`  | `/{code}`          | Get coupon details by code          |
+| `GET`  | `/available`       | Get user's available coupons        |
 
 ---
 
@@ -200,17 +200,17 @@ public class CouponRecipient {
 
 ## Recipient Categories
 
-| Category | Description | Eligibility Criteria |
-|----------|-------------|---------------------|
-| `ALL_PAID_USERS` | All users with paid subscriptions | Active subscription, not FREE plan |
-| `INDIVIDUAL_PLAN` | Individual plan subscribers | Plan name = INDIVIDUAL |
-| `TEAM_PLAN` | Team plan subscribers | Plan name = TEAM |
-| `ENTERPRISE_PLAN` | Enterprise plan subscribers | Plan name = ENTERPRISE |
-| `FREE_TIER_ACTIVE` | Active free tier users | FREE plan with ≥20 OCR pages used |
-| `EXPIRED_SUBSCRIPTION` | Recently expired subscriptions | Expired within 3 months |
-| `NEW_USERS` | Newly registered users | Registered within 30 days |
-| `HIGH_ACTIVITY_USERS` | Heavy platform users | >50% resource usage |
-| `SPECIFIC_USERS` | Specific user list | User ID in recipient list |
+| Category               | Description                       | Eligibility Criteria               |
+|------------------------|-----------------------------------|------------------------------------|
+| `ALL_PAID_USERS`       | All users with paid subscriptions | Active subscription, not FREE plan |
+| `INDIVIDUAL_PLAN`      | Individual plan subscribers       | Plan name = INDIVIDUAL             |
+| `TEAM_PLAN`            | Team plan subscribers             | Plan name = TEAM                   |
+| `ENTERPRISE_PLAN`      | Enterprise plan subscribers       | Plan name = ENTERPRISE             |
+| `FREE_TIER_ACTIVE`     | Active free tier users            | FREE plan with ≥20 OCR pages used  |
+| `EXPIRED_SUBSCRIPTION` | Recently expired subscriptions    | Expired within 3 months            |
+| `NEW_USERS`            | Newly registered users            | Registered within 30 days          |
+| `HIGH_ACTIVITY_USERS`  | Heavy platform users              | >50% resource usage                |
+| `SPECIFIC_USERS`       | Specific user list                | User ID in recipient list          |
 
 ---
 
@@ -247,21 +247,21 @@ public interface CouponCacheService {
 
 ### Notification Types
 
-| Type | Description | Trigger |
-|------|-------------|---------|
-| `COUPON_RECEIVED` | New coupon assigned | Coupon creation/distribution |
-| `COUPON_EXPIRING_7_DAYS` | Expiry reminder | 7 days before expiry |
-| `COUPON_EXPIRING_3_DAYS` | Expiry reminder | 3 days before expiry |
-| `COUPON_EXPIRING_1_DAY` | Expiry reminder | 1 day before expiry |
-| `COUPON_EXPIRED` | Coupon has expired | After expiry date |
-| `COUPON_APPLIED` | Coupon was used | After successful redemption |
+| Type                     | Description         | Trigger                      |
+|--------------------------|---------------------|------------------------------|
+| `COUPON_RECEIVED`        | New coupon assigned | Coupon creation/distribution |
+| `COUPON_EXPIRING_7_DAYS` | Expiry reminder     | 7 days before expiry         |
+| `COUPON_EXPIRING_3_DAYS` | Expiry reminder     | 3 days before expiry         |
+| `COUPON_EXPIRING_1_DAY`  | Expiry reminder     | 1 day before expiry          |
+| `COUPON_EXPIRED`         | Coupon has expired  | After expiry date            |
+| `COUPON_APPLIED`         | Coupon was used     | After successful redemption  |
 
 ### Email Templates
 
-| Template | Purpose |
-|----------|---------|
+| Template                   | Purpose                 |
+|----------------------------|-------------------------|
 | `coupon-notification.html` | New coupon announcement |
-| `coupon-expiration.html` | Expiry reminder |
+| `coupon-expiration.html`   | Expiry reminder         |
 
 ### Notification Flow
 
@@ -307,11 +307,11 @@ coupon.expiration.check.cron=0 0 9 * * ?
 
 ### Test Classes
 
-| Test Class | Coverage |
-|------------|----------|
-| `CouponServiceImplTest` | Create, get, list operations |
+| Test Class                        | Coverage                                      |
+|-----------------------------------|-----------------------------------------------|
+| `CouponServiceImplTest`           | Create, get, list operations                  |
 | `CouponValidationServiceImplTest` | Validation, eligibility, discount calculation |
-| `CouponCodeGeneratorTest` | Code generation, validation |
+| `CouponCodeGeneratorTest`         | Code generation, validation                   |
 
 ### Running Tests
 
@@ -369,16 +369,16 @@ spring:
 
 ## Error Codes
 
-| Code | Description |
-|------|-------------|
-| `COUPON_NOT_FOUND` | Coupon code does not exist |
-| `COUPON_INACTIVE` | Coupon is deactivated |
-| `COUPON_EXPIRED` | Coupon past validity date |
-| `COUPON_NOT_YET_VALID` | Coupon before validity date |
-| `USAGE_LIMIT_REACHED` | Global usage limit exceeded |
-| `PER_USER_LIMIT_REACHED` | User's usage limit exceeded |
-| `USER_NOT_ELIGIBLE` | User doesn't match recipient category |
-| `MIN_PURCHASE_NOT_MET` | Amount below minimum purchase |
+| Code                     | Description                           |
+|--------------------------|---------------------------------------|
+| `COUPON_NOT_FOUND`       | Coupon code does not exist            |
+| `COUPON_INACTIVE`        | Coupon is deactivated                 |
+| `COUPON_EXPIRED`         | Coupon past validity date             |
+| `COUPON_NOT_YET_VALID`   | Coupon before validity date           |
+| `USAGE_LIMIT_REACHED`    | Global usage limit exceeded           |
+| `PER_USER_LIMIT_REACHED` | User's usage limit exceeded           |
+| `USER_NOT_ELIGIBLE`      | User doesn't match recipient category |
+| `MIN_PURCHASE_NOT_MET`   | Amount below minimum purchase         |
 
 ---
 
@@ -406,10 +406,6 @@ spring:
 
 ## Related Documentation
 
-- [FEATURE_COUPON_SYSTEM.md](../FEATURE_COUPON_SYSTEM.md) - Feature overview and implementation status
-- [Email Templates](../../resources/templates/) - Thymeleaf templates for notifications
-- [API Documentation](swagger-ui.html) - Swagger/OpenAPI documentation
-
----
-
-*Last Updated: January 2026*
+- [FEATURE_COUPON_SYSTEM.md]() - Feature overview and implementation status
+- [Email Templates]() - Thymeleaf templates for notifications
+- [API Documentation]() - Swagger/OpenAPI documentation

@@ -86,7 +86,8 @@ class CouponServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        // Configure sanitizer mock to return input value (lenient as it may not be called in all tests)
+        // Configure sanitizer mock to return input value (lenient as it may not be
+        // called in all tests)
         lenient().when(sanitizer.sanitizeLogging(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
 
         adminUser = createAdminUser();
@@ -171,30 +172,34 @@ class CouponServiceImplTest {
         }
 
         @Test
-        @DisplayName("Should not save when duplicate code exists")
-        void createCoupon_duplicateCode_doesNotSave() {
+        @DisplayName("Should save coupon to repository when created with duration value")
+        void createCoupon_withDurationValue_savesCoupon() {
             // Arrange
-            CreateCouponRequest requestWithCustomCode = CreateCouponRequest.builder()
-                    .customCode("EXISTING")
-                    .description("Duplicate code")
+            CreateCouponRequest requestWithDuration = CreateCouponRequest.builder()
+                    .description("Test Description")
                     .discountPercentage(new BigDecimal("10"))
-                    .validFrom(OffsetDateTime.now())
-                    .validUntil(OffsetDateTime.now().plusMonths(1))
-                    .maxUsageCount(10)
-                    .maxUsagePerUser(1)
-                    .recipientCategory(RecipientCategory.ALL_PAID_USERS)
+                    .recipientCategory(RecipientCategory.ALL_USERS)
+                    .validDurationValue(5L)
+                    .validDurationUnit(java.time.temporal.ChronoUnit.DAYS)
                     .build();
 
-            when(couponRepository.existsByCode("EXISTING")).thenReturn(true);
-            when(responseBuilderService.buildUserResponse(isNull(), eq(HttpStatus.CONFLICT), anyString()))
+            when(codeGenerator.generate(any())).thenReturn("GENERATED_DUR");
+            when(couponRepository.existsByCode(anyString())).thenReturn(false);
+            when(couponRepository.save(any(Coupon.class))).thenReturn(testCoupon);
+            when(couponMapper.toCouponData(any(Coupon.class))).thenReturn(couponData);
+            when(responseBuilderService.buildUserResponse(any(), eq(HttpStatus.CREATED), anyString()))
                     .thenReturn(null);
 
             // Act
-            couponService.createCoupon(requestWithCustomCode, adminUser);
+            couponService.createCoupon(requestWithDuration, adminUser);
 
             // Assert
-            verify(couponRepository, never()).save(any(Coupon.class));
+            verify(couponRepository).save(argThat(coupon -> {
+                return coupon.getValidUntil() != null &&
+                        coupon.getValidUntil().isAfter(coupon.getValidFrom().plusDays(4));
+            }));
         }
+
     }
 
     // ========== Get Coupon Tests ==========
