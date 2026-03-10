@@ -36,19 +36,23 @@ POST /admin/coupons
 
 **Request Fields:**
 
-| Field                 | Type        | Required | Description                                                                |
-|-----------------------|-------------|----------|----------------------------------------------------------------------------|
-| `customCode`          | `string`    | Yes      | Unique code for the coupon (alphanumeric, 5-20 chars)                      |
-| `description`         | `string`    | Yes      | Description of the coupon                                                  |
-| `discountPercentage`  | `decimal`   | Yes      | Discount percentage (e.g., 15.00 for 15%)                                  |
-| `minPurchaseAmount`   | `decimal`   | No       | Minimum purchase amount to apply coupon (default: 0.00)                    |
-| `validFrom`           | `datetime`  | Yes      | Start date/time for coupon validity (ISO 8601 format)                      |
-| `validUntil`          | `datetime`  | Yes      | End date/time for coupon validity (ISO 8601 format)                        |
-| `maxUsageCount`       | `int`       | No       | Maximum total uses for the coupon (default: unlimited)                     |
-| `maxUsagePerUser`     | `int`       | No       | Maximum uses per user (default: unlimited)                                 |
-| `recipientCategory`   | `string`    | Yes      | Target users: `ALL_USERS`, `NEW_USERS`, `ALL_PAID_USERS`, `SPECIFIC_USERS` |
-| `specificUserIds`     | `array`     | No       | List of user IDs (UUIDs) if `recipientCategory` is `SPECIFIC_USERS`        |
-| `templateId`          | `string`    | No       | ID of coupon template to base this coupon on (if any)                      |
+| Field                | Type       | Required | Description                                                                                          |
+|----------------------|------------|----------|------------------------------------------------------------------------------------------------------|
+| `customCode`         | `string`   | Yes      | Unique code for the coupon (alphanumeric, 5-20 chars)                                                |
+| `description`        | `string`   | Yes      | Description of the coupon                                                                            |
+| `discountPercentage` | `decimal`  | Yes      | Discount percentage (e.g., 15.00 for 15%)                                                            |
+| `minPurchaseAmount`  | `decimal`  | No       | Minimum purchase amount to apply coupon (default: 0.00)                                              |
+| `validFrom`          | `datetime` | No       | Start date/time for coupon validity (ISO 8601 UTC format). Defaults to creation time if not provided |
+| `validUntil`         | `datetime` | No*      | End date/time for coupon validity (ISO 8601 UTC format)                                              |
+| `validDurationValue` | `long`     | No*      | Duration value (e.g. 5, 13) for dynamic expiry matching validDurationUnit                            |
+| `validDurationUnit`  | `string`   | No*      | Unit for duration (e.g. Seconds, Minutes, Days)                                                      |
+| `maxUsageCount`      | `int`      | No       | Maximum total uses for the coupon (default: unlimited)                                               |
+| `maxUsagePerUser`    | `int`      | No       | Maximum uses per user (default: unlimited)                                                           |
+| `recipientCategory`  | `string`   | Yes      | Target users: `ALL_USERS`, `NEW_USERS`, `ALL_PAID_USERS`, `SPECIFIC_USERS`                           |
+| `specificUserIds`    | `array`    | No       | List of user IDs (UUIDs) if `recipientCategory` is `SPECIFIC_USERS`                                  |
+| `templateId`         | `string`   | No       | ID of coupon template to base this coupon on (if any)                                                |
+
+**Note:** You must provide either `validUntil` OR `validDurationValue` & `validDurationUnit` for the coupon to be successfully created. Dates must strictly conform to ISO 8601 UTC formats truncated to seconds (e.g. "2026-03-28T23:59:59Z").
 
 **Request Body:**
 
@@ -58,8 +62,10 @@ POST /admin/coupons
   "description": "Black Friday 20% off",
   "discountPercentage": 20.00,
   "minPurchaseAmount": 10.00,
-  "validFrom": "2026-11-20T00:00:00Z",
-  "validUntil": "2026-11-30T23:59:59Z",
+  "validFrom": "2026-03-08T00:00:00Z",
+  "validUntil": "2026-03-28T23:59:59Z",
+  "validDurationValue": null,
+  "validDurationUnit": null,
   "maxUsageCount": 1000,
   "maxUsagePerUser": 1,
   "recipientCategory": "ALL_PAID_USERS",

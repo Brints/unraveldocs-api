@@ -38,6 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,8 +68,26 @@ public class CouponServiceImpl implements CouponService {
     public UnravelDocsResponse<CouponData> createCoupon(CreateCouponRequest request, User createdBy) {
         log.info("Creating coupon by user: {}", sanitizer.sanitizeLogging(createdBy.getEmail()));
 
+        OffsetDateTime validFrom = request.getValidFrom() != null
+                ? request.getValidFrom()
+                : OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS);
+
+        OffsetDateTime validUntil = request.getValidUntil();
+        if (validUntil == null) {
+            if (request.getValidDurationValue() != null && request.getValidDurationUnit() != null) {
+                validUntil = validFrom.plus(request.getValidDurationValue(), request.getValidDurationUnit());
+            } else {
+                return responseBuilder.buildUserResponse(
+                        null, HttpStatus.BAD_REQUEST,
+                        "Either validUntil or validDurationValue and validDurationUnit must be provided");
+            }
+        }
+
+        // Ensure validUntil is properly truncated if calculated or set
+        validUntil = validUntil.truncatedTo(ChronoUnit.SECONDS);
+
         // Validate date range
-        if (request.getValidUntil().isBefore(request.getValidFrom())) {
+        if (validUntil.isBefore(validFrom)) {
             return responseBuilder.buildUserResponse(
                     null, HttpStatus.BAD_REQUEST, "Valid until date must be after valid from date");
         }
@@ -74,11 +95,7 @@ public class CouponServiceImpl implements CouponService {
         // Generate or validate code
         String code;
         if (request.getCustomCode() != null && !request.getCustomCode().isBlank()) {
-            code = request.getCustomCode().toUpperCase();
-            if (couponRepository.existsByCode(code)) {
-                return responseBuilder.buildUserResponse(
-                        null, HttpStatus.CONFLICT, "Coupon code already exists");
-            }
+            code = generateUniqueCode(request.getCustomCode().toUpperCase().trim());
         } else {
             code = generateUniqueCode(null);
         }
@@ -101,8 +118,8 @@ public class CouponServiceImpl implements CouponService {
                 .maxUsagePerUser(request.getMaxUsagePerUser() != null ? request.getMaxUsagePerUser() : 1)
                 .currentUsageCount(0)
                 .isActive(true)
-                .validFrom(request.getValidFrom())
-                .validUntil(request.getValidUntil())
+                .validFrom(validFrom)
+                .validUntil(validUntil)
                 .expiryNotificationSent(false)
                 .template(template)
                 .createdBy(createdBy)

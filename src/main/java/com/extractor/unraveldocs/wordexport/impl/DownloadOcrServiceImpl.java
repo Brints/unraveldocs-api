@@ -42,7 +42,7 @@ public class DownloadOcrServiceImpl implements DownloadOcrResultService {
      */
     @Override
     @Transactional(readOnly = true)
-    public DownloadableFile downloadAsDocx(String collectionId, String documentId, String userId) {
+    public DownloadableFile downloadAsDocx(String collectionId, String documentId, String type, String userId) {
         FileEntry fileEntry = validateFileEntry
                 .findAndValidateFileEntry(collectionId, documentId, userId, documentCollectionRepository);
 
@@ -53,12 +53,21 @@ public class DownloadOcrServiceImpl implements DownloadOcrResultService {
             throw new BadRequestException("OCR processing is not completed for document: " + documentId);
         }
 
-        if (ocrData.getExtractedText() == null || ocrData.getExtractedText().isBlank()) {
-            throw new BadRequestException("No text extracted from the document: " + documentId);
+        String textToExport = ocrData.getExtractedText();
+        
+        if ("edited".equalsIgnoreCase(type)) {
+            if (ocrData.getEditedContent() == null || ocrData.getEditedContent().isBlank()) {
+                throw new BadRequestException("No edited text available for the document: " + documentId);
+            }
+            textToExport = ocrData.getEditedContent();
+        } else {
+            if (ocrData.getExtractedText() == null || ocrData.getExtractedText().isBlank()) {
+                throw new BadRequestException("No text extracted from the document: " + documentId);
+            }
         }
 
         try {
-            InputStreamResource resource = new InputStreamResource(docxExportService.generateDocxFromText(ocrData.getExtractedText()));
+            InputStreamResource resource = new InputStreamResource(docxExportService.generateDocxFromText(textToExport));
             String originalFileName = fileEntry.getOriginalFileName();
             String docxFileName = originalFileName.substring(0, originalFileName.lastIndexOf('.')) + ".docx";
 

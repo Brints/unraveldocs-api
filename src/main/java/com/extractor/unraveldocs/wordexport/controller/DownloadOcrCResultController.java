@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -40,10 +41,11 @@ public class DownloadOcrCResultController {
     public ResponseEntity<InputStreamResource> downloadOcrResultAsDocx(
             @Parameter(description = "ID of the document collection", required = true) @PathVariable String collectionId,
             @Parameter(description = "ID of the document to export text", required = true) @PathVariable String documentId,
+            @Parameter(description = "Type of text to download (original or edited)", example = "original") @RequestParam(defaultValue = "original", required = false) String type,
             @Parameter(hidden = true) @CurrentUser User user
             ) {
         DownloadOcrResultService.DownloadableFile downloadableFile = downloadOcrResultService
-                .downloadAsDocx(collectionId, documentId, user.getId());
+                .downloadAsDocx(collectionId, documentId, type, user.getId());
 
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + downloadableFile.fileName() + "\"");

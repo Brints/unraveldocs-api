@@ -19,8 +19,9 @@ public interface DownloadOcrResultService {
      *
      * @param collectionId The ID of the document's collection.
      * @param documentId   The ID of the document to process.
+     * @param type         The type of text to download (original or edited).
      * @param userId       The ID of the user requesting the download.
      * @return A {@link DownloadableFile} record containing the file name and resource.
      */
-    DownloadableFile downloadAsDocx(String collectionId, String documentId, String userId);
+    DownloadableFile downloadAsDocx(String collectionId, String documentId, String type, String userId);
 }
