@@ -11,6 +11,7 @@ import com.extractor.unraveldocs.team.model.Team;
 import com.extractor.unraveldocs.team.model.TeamMember;
 import com.extractor.unraveldocs.team.repository.TeamMemberRepository;
 import com.extractor.unraveldocs.team.repository.TeamRepository;
+import com.extractor.unraveldocs.team.service.TeamMemberSubscriptionSyncService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
@@ -33,6 +34,7 @@ public class CloseTeamImpl {
 
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final TeamMemberSubscriptionSyncService memberSubscriptionSyncService;
     private final ResponseBuilderService responseBuilder;
     private final SanitizeLogging sanitizer;
 
@@ -71,6 +73,7 @@ public class CloseTeamImpl {
         team.setClosedAt(OffsetDateTime.now());
         team.setActive(false);
         teamRepository.save(team);
+        memberSubscriptionSyncService.downgradeTeamMembers(team);
 
         log.info("Team {} has been closed successfully", sanitizer.sanitizeLogging(teamId));
 

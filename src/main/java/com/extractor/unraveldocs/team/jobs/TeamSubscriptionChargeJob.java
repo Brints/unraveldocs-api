@@ -5,8 +5,10 @@ import com.extractor.unraveldocs.team.datamodel.TeamSubscriptionStatus;
 import com.extractor.unraveldocs.team.model.Team;
 import com.extractor.unraveldocs.team.repository.TeamRepository;
 import com.extractor.unraveldocs.team.service.TeamBillingService;
+import com.extractor.unraveldocs.team.service.TeamMemberSubscriptionSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +29,11 @@ public class TeamSubscriptionChargeJob {
 
     private final TeamRepository teamRepository;
     private final TeamBillingService teamBillingService;
+    private final TeamMemberSubscriptionSyncService memberSubscriptionSyncService;
     private final SanitizeLogging sanitizer;
+
+    @Value("${team.subscription.past-due-grace-days:7}")
+    private int pastDueGraceDays;
 
     /**
      * Runs daily at 2:00 AM to process subscription charges.
@@ -50,6 +56,7 @@ public class TeamSubscriptionChargeJob {
                 boolean success = teamBillingService.chargeSubscription(team);
                 if (success) {
                     team.setSubscriptionStatus(TeamSubscriptionStatus.ACTIVE);
+                    team.setPastDueSince(null);
                     team.setLastBillingDate(now);
                     team.setNextBillingDate(calculateNextBillingDate(team, now));
                     teamRepository.save(team);
@@ -57,6 +64,9 @@ public class TeamSubscriptionChargeJob {
                     log.info("Successfully charged team {} for subscription", sanitizer.sanitizeLogging(team.getTeamCode()));
                 } else {
                     team.setSubscriptionStatus(TeamSubscriptionStatus.PAST_DUE);
+                    if (team.getPastDueSince() == null) {
+                        team.setPastDueSince(now);
+                    }
                     teamRepository.save(team);
                     failedCount++;
                     log.warn("Payment failed for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
@@ -74,7 +84,9 @@ public class TeamSubscriptionChargeJob {
         for (Team team : teamsToExpire) {
             team.setSubscriptionStatus(TeamSubscriptionStatus.EXPIRED);
             team.setActive(false);
+            team.setPastDueSince(null);
             teamRepository.save(team);
+            memberSubscriptionSyncService.downgradeTeamMembers(team);
             log.info("Expired team {} (no auto-renew)", sanitizer.sanitizeLogging(team.getTeamCode()));
         }
 
@@ -85,33 +97,60 @@ public class TeamSubscriptionChargeJob {
         for (Team team : cancelledTeamsToExpire) {
             team.setSubscriptionStatus(TeamSubscriptionStatus.EXPIRED);
             team.setActive(false);
+            team.setPastDueSince(null);
             teamRepository.save(team);
+            memberSubscriptionSyncService.downgradeTeamMembers(team);
             log.info("Expired cancelled team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
         }
 
         // 4. Process recurring billing for active subscriptions
         List<Team> teamsDueForBilling = teamRepository.findTeamsDueForBilling(now);
-        log.info("Found {} teams due for recurring billing", sanitizer.sanitizeLoggingInteger(teamsDueForBilling.size()));
+        log.info("Found {} teams due for recurring billing",
+                sanitizer.sanitizeLoggingInteger(teamsDueForBilling.size()));
 
         for (Team team : teamsDueForBilling) {
             try {
                 boolean success = teamBillingService.chargeSubscription(team);
                 if (success) {
+                    team.setSubscriptionStatus(TeamSubscriptionStatus.ACTIVE);
+                    team.setPastDueSince(null);
                     team.setLastBillingDate(now);
                     team.setNextBillingDate(calculateNextBillingDate(team, now));
                     teamRepository.save(team);
                     processedCount++;
-                    log.info("Successfully charged recurring billing for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
+                    log.info("Successfully charged recurring billing for team {}",
+                            sanitizer.sanitizeLogging(team.getTeamCode()));
                 } else {
                     team.setSubscriptionStatus(TeamSubscriptionStatus.PAST_DUE);
+                    if (team.getPastDueSince() == null) {
+                        team.setPastDueSince(now);
+                    }
                     teamRepository.save(team);
                     failedCount++;
-                    log.warn("Recurring payment failed for team {}", sanitizer.sanitizeLogging(team.getTeamCode()));
+                    log.warn("Recurring payment failed for team {}",
+                            sanitizer.sanitizeLogging(team.getTeamCode()));
                 }
             } catch (Exception e) {
-                log.error("Error processing recurring charge for team {}: {}", sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
+                log.error("Error processing recurring charge for team {}: {}",
+                        sanitizer.sanitizeLogging(team.getTeamCode()), e.getMessage(), e);
                 failedCount++;
             }
+        }
+
+        // 5. Expire long-running past due teams once grace period elapses
+        OffsetDateTime graceCutoff = now.minusDays(pastDueGraceDays);
+        List<Team> pastDueTeamsToExpire = teamRepository.findPastDueTeamsBeyondGrace(graceCutoff);
+        log.info("Found {} past-due teams past grace period",
+                sanitizer.sanitizeLoggingInteger(pastDueTeamsToExpire.size()));
+
+        for (Team team : pastDueTeamsToExpire) {
+            team.setSubscriptionStatus(TeamSubscriptionStatus.EXPIRED);
+            team.setActive(false);
+            team.setPastDueSince(null);
+            teamRepository.save(team);
+            memberSubscriptionSyncService.downgradeTeamMembers(team);
+            log.info("Expired past-due team {} after grace period",
+                    sanitizer.sanitizeLogging(team.getTeamCode()));
         }
 
         log.info("Completed team subscription charge job. Processed: {}, Failed: {}", sanitizer.sanitizeLoggingInteger(processedCount), sanitizer.sanitizeLoggingInteger(failedCount));

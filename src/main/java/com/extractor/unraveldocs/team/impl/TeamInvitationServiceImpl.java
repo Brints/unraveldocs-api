@@ -18,6 +18,7 @@ import com.extractor.unraveldocs.team.model.TeamMember;
 import com.extractor.unraveldocs.team.repository.TeamInvitationRepository;
 import com.extractor.unraveldocs.team.repository.TeamMemberRepository;
 import com.extractor.unraveldocs.team.repository.TeamRepository;
+import com.extractor.unraveldocs.team.service.TeamMemberSubscriptionSyncService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
@@ -52,6 +53,7 @@ public class TeamInvitationServiceImpl {
     private final EmailOrchestratorService emailService;
     private final ResponseBuilderService responseBuilder;
     private final SanitizeLogging sanitizer;
+    private final TeamMemberSubscriptionSyncService memberSubscriptionSyncService;
 
     @Value("${app.base-url:http://localhost:4200}")
     private String baseUrl;
@@ -216,6 +218,7 @@ public class TeamInvitationServiceImpl {
         newMember.setRole(MemberRole.MEMBER);
         newMember.setInvitedBy(invitedBy);
         teamMemberRepository.save(newMember);
+        memberSubscriptionSyncService.upgradeTeamMember(user, team);
 
         log.info(
                 "User {} joined team {} via invitation",

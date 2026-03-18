@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.pushnotification.provider.sns;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.pushnotification.config.AwsSnsConfig;
 import com.extractor.unraveldocs.pushnotification.interfaces.DeviceTokenService;
 import com.extractor.unraveldocs.pushnotification.provider.NotificationProviderService;
@@ -30,17 +31,20 @@ public class AwsSnsNotificationProvider implements NotificationProviderService {
     private final SnsClient snsClient;
     private final ObjectMapper objectMapper;
     private final DeviceTokenService deviceTokenService;
+    private final SanitizeLogging sanitizer;
 
     @Autowired
     public AwsSnsNotificationProvider(
             AwsSnsConfig config,
             @Qualifier("snsPushClient") SnsClient snsClient,
             ObjectMapper objectMapper,
-            DeviceTokenService deviceTokenService) {
+            DeviceTokenService deviceTokenService,
+            SanitizeLogging sanitizer) {
         this.config = config;
         this.snsClient = snsClient;
         this.objectMapper = objectMapper;
         this.deviceTokenService = deviceTokenService;
+        this.sanitizer = sanitizer;
         log.info("AWS SNS Notification Provider initialized");
     }
 
@@ -56,7 +60,6 @@ public class AwsSnsNotificationProvider implements NotificationProviderService {
                     .build();
 
             PublishResponse response = snsClient.publish(request);
-            log.debug("SNS message sent: {}", response.messageId());
             return true;
         } catch (SnsException e) {
             log.error("Failed to send SNS notification: {}", e.getMessage());
@@ -88,7 +91,6 @@ public class AwsSnsNotificationProvider implements NotificationProviderService {
                     .build();
 
             PublishResponse response = snsClient.publish(request);
-            log.debug("SNS topic message sent: {}", response.messageId());
             return true;
         } catch (SnsException e) {
             log.error("Failed to send SNS topic notification: {}", e.getMessage());
@@ -116,7 +118,10 @@ public class AwsSnsNotificationProvider implements NotificationProviderService {
                     .build();
 
             SubscribeResponse response = snsClient.subscribe(request);
-            log.debug("Subscribed {} to topic {}: {}", endpointArn, topicArn, response.subscriptionArn());
+            log.debug("Subscribed {} to topic {}: {}",
+                    sanitizer.sanitizeLogging(endpointArn),
+                    sanitizer.sanitizeLogging(topicArn),
+                    sanitizer.sanitizeLogging(response.subscriptionArn()));
             return true;
         } catch (SnsException e) {
             log.error("Failed to subscribe to topic: {}", e.getMessage());
@@ -132,7 +137,7 @@ public class AwsSnsNotificationProvider implements NotificationProviderService {
                     .build();
 
             snsClient.unsubscribe(request);
-            log.debug("Unsubscribed: {}", subscriptionArn);
+            log.debug("Unsubscribed: {}", sanitizer.sanitizeLogging(subscriptionArn));
             return true;
         } catch (SnsException e) {
             log.error("Failed to unsubscribe: {}", e.getMessage());
@@ -200,7 +205,7 @@ public class AwsSnsNotificationProvider implements NotificationProviderService {
             String errorCode = e.awsErrorDetails().errorCode();
             if ("EndpointDisabled".equals(errorCode) || "InvalidParameter".equals(errorCode)) {
                 deviceTokenService.unregisterByToken(endpointArn);
-                log.warn("Invalid or disabled endpoint removed: {}", endpointArn);
+                log.warn("Invalid or disabled endpoint removed: {}", sanitizer.sanitizeLogging(endpointArn));
             }
         }
     }

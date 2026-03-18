@@ -11,7 +11,7 @@ import com.extractor.unraveldocs.team.model.TeamMember;
 import com.extractor.unraveldocs.team.repository.TeamMemberRepository;
 import com.extractor.unraveldocs.team.repository.TeamRepository;
 import com.extractor.unraveldocs.team.service.TeamBillingService;
-import com.extractor.unraveldocs.team.service.TeamSubscriptionPlanService;
+import com.extractor.unraveldocs.team.service.TeamMemberSubscriptionSyncService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.user.model.User;
@@ -36,6 +36,7 @@ public class CancelTeamSubscriptionImpl {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final TeamBillingService teamBillingService;
+    private final TeamMemberSubscriptionSyncService memberSubscriptionSyncService;
     private final ResponseBuilderService responseBuilder;
     private final SanitizeLogging sanitizer;
 
@@ -66,6 +67,8 @@ public class CancelTeamSubscriptionImpl {
             throw new ForbiddenException("Cannot cancel an expired subscription");
         }
 
+        TeamSubscriptionStatus previousStatus = team.getSubscriptionStatus();
+
         // Cancel with payment gateway
         boolean gatewaySuccess = teamBillingService.cancelSubscription(team);
         if (!gatewaySuccess) {
@@ -78,7 +81,7 @@ public class CancelTeamSubscriptionImpl {
         team.setSubscriptionStatus(TeamSubscriptionStatus.CANCELLED);
 
         // Set subscription end date based on current period
-        if (team.getSubscriptionStatus() == TeamSubscriptionStatus.TRIAL) {
+        if (previousStatus == TeamSubscriptionStatus.TRIAL) {
             // If still in trial, subscription ends when trial ends
             team.setSubscriptionEndsAt(team.getTrialEndsAt());
         } else if (team.getNextBillingDate() != null) {
@@ -87,6 +90,12 @@ public class CancelTeamSubscriptionImpl {
         } else {
             // Fallback: end immediately
             team.setSubscriptionEndsAt(OffsetDateTime.now());
+        }
+
+        if (team.getSubscriptionEndsAt() != null && !team.getSubscriptionEndsAt().isAfter(OffsetDateTime.now())) {
+            team.setSubscriptionStatus(TeamSubscriptionStatus.EXPIRED);
+            team.setActive(false);
+            memberSubscriptionSyncService.downgradeTeamMembers(team);
         }
 
         teamRepository.save(team);

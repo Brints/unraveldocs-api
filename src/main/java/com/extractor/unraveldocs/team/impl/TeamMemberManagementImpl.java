@@ -13,6 +13,7 @@ import com.extractor.unraveldocs.team.model.Team;
 import com.extractor.unraveldocs.team.model.TeamMember;
 import com.extractor.unraveldocs.team.repository.TeamMemberRepository;
 import com.extractor.unraveldocs.team.repository.TeamRepository;
+import com.extractor.unraveldocs.team.service.TeamMemberSubscriptionSyncService;
 import com.extractor.unraveldocs.shared.response.ResponseBuilderService;
 import com.extractor.unraveldocs.shared.response.UnravelDocsResponse;
 import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
@@ -44,6 +45,7 @@ public class TeamMemberManagementImpl {
     private final ResponseBuilderService responseBuilder;
     private final SanitizeLogging sanitizer;
     private final NotificationService notificationService;
+    private final TeamMemberSubscriptionSyncService memberSubscriptionSyncService;
 
     /**
      * Adds a new member to the team.
@@ -93,6 +95,7 @@ public class TeamMemberManagementImpl {
         newMember.setRole(MemberRole.MEMBER);
         newMember.setInvitedBy(actingUser);
         teamMemberRepository.save(newMember);
+        memberSubscriptionSyncService.upgradeTeamMember(userToAdd, team);
 
         log.info(
                 "Successfully added user {} to team {}",
@@ -157,6 +160,7 @@ public class TeamMemberManagementImpl {
 
         // 8. Remove member
         teamMemberRepository.delete(memberToRemove);
+        memberSubscriptionSyncService.revertMemberSubscription(memberToRemove.getUser());
 
         log.info("Successfully removed member {} from team {}", sanitizer.sanitizeLogging(memberId),
                 sanitizer.sanitizeLogging(teamId));
@@ -217,6 +221,7 @@ public class TeamMemberManagementImpl {
             }
 
             teamMemberRepository.delete(member);
+            memberSubscriptionSyncService.revertMemberSubscription(member.getUser());
             removedCount++;
         }
 

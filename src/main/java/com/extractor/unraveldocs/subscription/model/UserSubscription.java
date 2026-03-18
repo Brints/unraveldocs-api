@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.subscription.model;
 
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionSource;
 import com.extractor.unraveldocs.user.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -27,6 +28,14 @@ public class UserSubscription {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id", referencedColumnName = "id", nullable = false)
     private SubscriptionPlan plan;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "previous_plan_id", referencedColumnName = "id")
+    private SubscriptionPlan previousPlan;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "subscription_source", nullable = false, length = 20)
+    private SubscriptionSource subscriptionSource = SubscriptionSource.INDIVIDUAL;
 
     @Column(name = "payment_gateway_subscription_id")
     private String paymentGatewaySubscriptionId;

@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.documents.repository.DocumentCollectionReposito
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.storage.dto.StorageInfo;
 import com.extractor.unraveldocs.storage.exception.StorageQuotaExceededException;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionSource;
 import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import com.extractor.unraveldocs.subscription.repository.UserSubscriptionRepository;
@@ -47,16 +48,10 @@ public class StorageAllocationService {
      * @throws StorageQuotaExceededException if storage limit would be exceeded
      */
     public void checkStorageAvailable(User user, long requiredBytes) {
-        // Check if user is part of a team first
-        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
-        Optional<TeamMember> teamMembership = teamMemberships.stream().findFirst();
-
-        if (teamMembership.isPresent()) {
-            Team team = teamMembership.get().getTeam();
-            if (team.isAccessAllowed()) {
-                checkTeamStorageAvailable(team, requiredBytes);
-                return;
-            }
+        Optional<Team> teamContext = resolveEffectiveTeamContext(user);
+        if (teamContext.isPresent()) {
+            checkTeamStorageAvailable(teamContext.get(), requiredBytes);
+            return;
         }
 
         checkIndividualStorageAvailable(user, requiredBytes);
@@ -124,16 +119,10 @@ public class StorageAllocationService {
      */
     @Transactional
     public void updateStorageUsed(User user, long bytesChange) {
-        // Check if user is part of a team first
-        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
-        Optional<TeamMember> teamMembership = teamMemberships.stream().findFirst();
-
-        if (teamMembership.isPresent()) {
-            Team team = teamMembership.get().getTeam();
-            if (team.isAccessAllowed()) {
-                updateTeamStorageUsed(team, bytesChange);
-                return;
-            }
+        Optional<Team> teamContext = resolveEffectiveTeamContext(user);
+        if (teamContext.isPresent()) {
+            updateTeamStorageUsed(teamContext.get(), bytesChange);
+            return;
         }
 
         updateIndividualStorageUsed(user, bytesChange);
@@ -261,15 +250,9 @@ public class StorageAllocationService {
      */
     @Transactional(readOnly = true)
     public StorageInfo getStorageInfo(User user) {
-        // Check if user is part of a team first
-        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
-        Optional<TeamMember> teamMembership = teamMemberships.stream().findFirst();
-
-        if (teamMembership.isPresent()) {
-            Team team = teamMembership.get().getTeam();
-            if (team.isAccessAllowed()) {
-                return getTeamStorageInfo(team, user);
-            }
+        Optional<Team> teamContext = resolveEffectiveTeamContext(user);
+        if (teamContext.isPresent()) {
+            return getTeamStorageInfo(teamContext.get(), user);
         }
 
         return getIndividualStorageInfo(user);
@@ -363,6 +346,23 @@ public class StorageAllocationService {
         return buildStorageInfo(storageUsed, storageLimit, ocrPageLimit, ocrPagesUsed, ocrPagesRemaining,
                 ocrUnlimited, documentUploadLimit, documentsUploaded, documentsRemaining, documentsUnlimited,
                 subscriptionPlanName, billingInterval, null);
+    }
+
+    /**
+     * Team limits only apply when the subscription currently comes from team
+     * entitlement and the linked team still grants access.
+     */
+    private Optional<Team> resolveEffectiveTeamContext(User user) {
+        Optional<UserSubscription> subscriptionOpt = userSubscriptionRepository.findByUserId(user.getId());
+        if (subscriptionOpt.isEmpty() || subscriptionOpt.get().getSubscriptionSource() != SubscriptionSource.TEAM) {
+            return Optional.empty();
+        }
+
+        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
+        return teamMemberships.stream()
+                .map(TeamMember::getTeam)
+                .filter(team -> team != null && team.isAccessAllowed())
+                .findFirst();
     }
 
     /**

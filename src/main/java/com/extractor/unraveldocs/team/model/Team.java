@@ -25,6 +25,7 @@ import java.util.Set;
         @Index(columnList = "is_closed"),
         @Index(columnList = "subscription_type"),
         @Index(columnList = "subscription_status"),
+        @Index(columnList = "past_due_since"),
         @Index(columnList = "trial_ends_at"),
         @Index(columnList = "next_billing_date")
 })
@@ -103,6 +104,9 @@ public class Team {
 
     @Column(name = "subscription_ends_at")
     private OffsetDateTime subscriptionEndsAt;
+
+    @Column(name = "past_due_since")
+    private OffsetDateTime pastDueSince;
 
     // Price at time of subscription (for records)
     @Column(name = "subscription_price", precision = 10, scale = 2)
