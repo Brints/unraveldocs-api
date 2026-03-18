@@ -143,8 +143,7 @@ public class FirebaseNotificationProvider implements NotificationProviderService
             TopicManagementResponse response = firebaseMessaging.subscribeToTopic(List.of(deviceToken), topic);
             return response.getSuccessCount() > 0;
         } catch (FirebaseMessagingException e) {
-            log.error("Failed to subscribe {} to topic {}: {}",
-                    sanitizer.sanitizeLogging(deviceToken),
+            log.error("Failed to subscribe to topic {}: {}",
                     sanitizer.sanitizeLogging(topic), e.getMessage());
             return false;
         }
@@ -156,8 +155,7 @@ public class FirebaseNotificationProvider implements NotificationProviderService
             TopicManagementResponse response = firebaseMessaging.unsubscribeFromTopic(List.of(deviceToken), topic);
             return response.getSuccessCount() > 0;
         } catch (FirebaseMessagingException e) {
-            log.error("Failed to unsubscribe {} from topic {}: {}",
-                    sanitizer.sanitizeLogging(deviceToken),
+            log.error("Failed to unsubscribe from topic {}: {}",
                     sanitizer.sanitizeLogging(topic), e.getMessage());
             return false;
         }

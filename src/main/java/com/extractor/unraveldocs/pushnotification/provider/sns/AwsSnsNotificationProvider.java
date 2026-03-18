@@ -205,7 +205,6 @@ public class AwsSnsNotificationProvider implements NotificationProviderService {
             String errorCode = e.awsErrorDetails().errorCode();
             if ("EndpointDisabled".equals(errorCode) || "InvalidParameter".equals(errorCode)) {
                 deviceTokenService.unregisterByToken(endpointArn);
-                log.warn("Invalid or disabled endpoint removed: {}", sanitizer.sanitizeLogging(endpointArn));
             }
         }
     }
