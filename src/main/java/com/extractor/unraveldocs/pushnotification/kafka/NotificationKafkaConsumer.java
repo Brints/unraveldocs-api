@@ -18,6 +18,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -56,9 +57,13 @@ public class NotificationKafkaConsumer {
         this.providers = new java.util.HashMap<>();
         for (NotificationProviderService provider : providerList) {
             if (provider.isEnabled()) {
-                NotificationProviderType type = NotificationProviderType.valueOf(provider.getProviderName());
-                providers.put(type, provider);
-                log.info("Registered notification provider: {}", provider.getProviderName());
+                Optional<NotificationProviderType> type = resolveProviderType(provider.getProviderName());
+                if (type.isPresent()) {
+                    providers.put(type.get(), provider);
+                    log.info("Registered notification provider: {}", provider.getProviderName());
+                } else {
+                    log.warn("Skipping notification provider with unknown name: {}", provider.getProviderName());
+                }
             }
         }
     }
@@ -108,6 +113,18 @@ public class NotificationKafkaConsumer {
 
         } catch (Exception e) {
             log.error("Error processing notification event: {}", e.getMessage(), e);
+            throw new IllegalStateException("Failed to process notification event for user " + event.getUserId(), e);
+        }
+    }
+
+    private Optional<NotificationProviderType> resolveProviderType(String providerName) {
+        if (providerName == null || providerName.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(NotificationProviderType.valueOf(providerName.trim().toUpperCase(Locale.ROOT)));
+        } catch (IllegalArgumentException ignored) {
+            return Optional.empty();
         }
     }
 

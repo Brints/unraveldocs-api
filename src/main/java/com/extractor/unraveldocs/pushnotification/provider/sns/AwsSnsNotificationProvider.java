@@ -1,6 +1,7 @@
 package com.extractor.unraveldocs.pushnotification.provider.sns;
 
 import com.extractor.unraveldocs.pushnotification.config.AwsSnsConfig;
+import com.extractor.unraveldocs.pushnotification.interfaces.DeviceTokenService;
 import com.extractor.unraveldocs.pushnotification.provider.NotificationProviderService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,15 +29,18 @@ public class AwsSnsNotificationProvider implements NotificationProviderService {
     private final AwsSnsConfig config;
     private final SnsClient snsClient;
     private final ObjectMapper objectMapper;
+    private final DeviceTokenService deviceTokenService;
 
     @Autowired
     public AwsSnsNotificationProvider(
             AwsSnsConfig config,
             @Qualifier("snsPushClient") SnsClient snsClient,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            DeviceTokenService deviceTokenService) {
         this.config = config;
         this.snsClient = snsClient;
         this.objectMapper = objectMapper;
+        this.deviceTokenService = deviceTokenService;
         log.info("AWS SNS Notification Provider initialized");
     }
 
@@ -195,7 +199,8 @@ public class AwsSnsNotificationProvider implements NotificationProviderService {
         if (e.awsErrorDetails() != null) {
             String errorCode = e.awsErrorDetails().errorCode();
             if ("EndpointDisabled".equals(errorCode) || "InvalidParameter".equals(errorCode)) {
-                log.warn("Invalid or disabled endpoint, should be removed: {}", endpointArn);
+                deviceTokenService.unregisterByToken(endpointArn);
+                log.warn("Invalid or disabled endpoint removed: {}", endpointArn);
             }
         }
     }

@@ -118,7 +118,7 @@ public class OneSignalNotificationProvider implements NotificationProviderServic
 
     @Override
     public String getProviderName() {
-        return "OneSignal";
+        return "ONESIGNAL";
     }
 
     @Override

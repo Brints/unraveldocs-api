@@ -139,6 +139,14 @@ public class DeviceTokenServiceImpl implements DeviceTokenService {
     }
 
     @Override
+    @Transactional
+    public int deleteAllDeviceTokens(String userId) {
+        int deleted = deviceTokenRepository.deleteAllByUserId(userId);
+        log.info("Deleted {} device tokens for user {}", deleted, userId);
+        return deleted;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public boolean isTokenActive(String deviceToken) {
         return deviceTokenRepository.findByDeviceToken(deviceToken)

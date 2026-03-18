@@ -4000,7 +4000,7 @@ Storage allocation allows tracking document storage usage and limits based on su
 
 Returns current storage usage and limits for the authenticated user.
 
-**Important:** Document upload limits (`documentsUploaded`) and OCR page limits (`ocrPagesUsed`) are **monthly quotas** that reset on the first day of each month. Storage usage (`storageUsed`) is **cumulative** and does not reset.
+**Important:** Upload blocking is enforced by **storage availability** (`storageUsed` vs `storageLimit`). Document usage (`documentsUploaded`) and OCR usage (`ocrPagesUsed`) are monthly counters that reset on the first day of each month.
 
 **Response:**
 
@@ -4048,26 +4048,13 @@ Returns current storage usage and limits for the authenticated user.
 | `ocrPageLimit`          | Integer  | Monthly OCR page limit (resets monthly)                       |
 | `ocrPagesUsed`          | Integer  | OCR pages used this month (resets monthly)                    |
 | `ocrPagesRemaining`     | Integer  | OCR pages remaining this month                                |
-| `documentUploadLimit`   | Integer  | Monthly document upload limit (resets monthly)                |
-| `documentsUploaded`     | Integer  | Documents uploaded this month (resets monthly)                |
-| `documentsRemaining`    | Integer  | Documents remaining this month                                |
+| `documentUploadLimit`   | Integer  | Monthly document allowance shown for plan visibility (informational) |
+| `documentsUploaded`     | Integer  | Documents uploaded this month (informational counter)         |
+| `documentsRemaining`    | Integer  | Remaining monthly document allowance (informational)          |
 | `quotaResetDate`        | DateTime | When monthly quotas (documents, OCR pages) will reset         |
 
 ---
 
-### Monthly Quota Exceeded Error
-
-When uploading documents that would exceed the monthly document limit:
-
-```json
-{
-  "statusCode": 400,
-  "status": "error",
-  "message": "Monthly document upload limit exceeded. Limit: 5, Used this month: 5, Attempting to add: 2. Your quota will reset on the first day of next month."
-}
-```
-
----
 
 ### Run Storage Migration (Admin)
 

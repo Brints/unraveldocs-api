@@ -51,11 +51,11 @@ public class DocumentController {
                                 .orElseThrow(() -> new ForbiddenException("User not found. Please log in again."));
         }
 
-        @Operation(summary = "Upload one or more documents as a collection", description = "Allows users to upload multiple documents. These will be grouped as a single collection. "
+        @Operation(summary = "Upload one or more documents as a collection", description = "Allows users to upload multiple documents. These will be grouped as a single collection. Uploads are gated by available storage capacity. "
                         +
                         "Optional: Provide a collection name and enable encryption (premium feature).", responses = {
                                         @ApiResponse(responseCode = "202_OK", description = "Successfully processed document upload request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DocumentCollectionResponse.class))),
-                                        @ApiResponse(responseCode = "400", description = "Bad Request - No files provided or invalid file(s)"),
+                                        @ApiResponse(responseCode = "400", description = "Bad Request - No files provided, invalid file(s), or storage limit exceeded"),
                                         @ApiResponse(responseCode = "403", description = "Forbidden - User not logged in or not found")
                         })
         @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

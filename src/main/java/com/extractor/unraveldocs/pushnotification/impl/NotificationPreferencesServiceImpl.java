@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.pushnotification.datamodel.NotificationType;
 import com.extractor.unraveldocs.pushnotification.dto.request.UpdatePreferencesRequest;
 import com.extractor.unraveldocs.pushnotification.dto.response.NotificationPreferencesResponse;
+import com.extractor.unraveldocs.pushnotification.interfaces.DeviceTokenService;
 import com.extractor.unraveldocs.pushnotification.interfaces.NotificationPreferencesService;
 import com.extractor.unraveldocs.pushnotification.model.NotificationPreferences;
 import com.extractor.unraveldocs.pushnotification.repository.NotificationPreferencesRepository;
@@ -24,6 +25,7 @@ public class NotificationPreferencesServiceImpl implements NotificationPreferenc
 
     private final NotificationPreferencesRepository preferencesRepository;
     private final UserRepository userRepository;
+    private final DeviceTokenService deviceTokenService;
     private final SanitizeLogging sanitizer;
 
     @Override
@@ -37,6 +39,7 @@ public class NotificationPreferencesServiceImpl implements NotificationPreferenc
     @Transactional
     public NotificationPreferencesResponse updatePreferences(String userId, UpdatePreferencesRequest request) {
         NotificationPreferences preferences = getOrCreatePreferences(userId);
+        boolean wasPushEnabled = preferences.isPushEnabled();
 
         preferences.setPushEnabled(request.getPushEnabled());
         preferences.setEmailEnabled(request.getEmailEnabled());
@@ -59,6 +62,14 @@ public class NotificationPreferencesServiceImpl implements NotificationPreferenc
         }
 
         NotificationPreferences saved = preferencesRepository.save(preferences);
+
+        if (wasPushEnabled && !request.getPushEnabled()) {
+            int deletedTokens = deviceTokenService.deleteAllDeviceTokens(userId);
+            log.info("Push disabled for user {}. Deleted {} device tokens.",
+                    sanitizer.sanitizeLogging(userId),
+                    sanitizer.sanitizeLoggingObject(deletedTokens));
+        }
+
         log.info("Updated notification preferences for user {}", sanitizer.sanitizeLogging(userId));
         return mapToResponse(saved);
     }

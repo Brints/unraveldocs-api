@@ -55,6 +55,27 @@ public interface DeviceTokenRepository extends JpaRepository<UserDeviceToken, St
     int deactivateAllForUser(@Param("userId") String userId);
 
     /**
+     * Deactivate active tokens that have not been used recently.
+     * Falls back to createdAt when lastUsedAt is null.
+     */
+    @Modifying
+    @Query("""
+            UPDATE UserDeviceToken t
+            SET t.isActive = false
+            WHERE t.isActive = true
+              AND ((t.lastUsedAt IS NOT NULL AND t.lastUsedAt < :cutoffDate)
+                OR (t.lastUsedAt IS NULL AND t.createdAt < :cutoffDate))
+            """)
+    int deactivateStaleActiveTokens(@Param("cutoffDate") java.time.OffsetDateTime cutoffDate);
+
+    /**
+     * Hard delete all device tokens for a user.
+     */
+    @Modifying
+    @Query("DELETE FROM UserDeviceToken t WHERE t.user.id = :userId")
+    int deleteAllByUserId(@Param("userId") String userId);
+
+    /**
      * Delete inactive tokens older than a certain date.
      */
     @Modifying

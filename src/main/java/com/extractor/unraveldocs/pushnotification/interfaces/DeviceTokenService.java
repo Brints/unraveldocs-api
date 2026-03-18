@@ -52,6 +52,13 @@ public interface DeviceTokenService {
     void deactivateAllDevices(String userId);
 
     /**
+     * Hard delete all device tokens for a user.
+     *
+     * @return number of deleted device tokens
+     */
+    int deleteAllDeviceTokens(String userId);
+
+    /**
      * Check if a device token is valid/active.
      */
     boolean isTokenActive(String deviceToken);
