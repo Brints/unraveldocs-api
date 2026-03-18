@@ -79,7 +79,6 @@ public class DocumentUploadImpl implements DocumentUploadService {
 
         // Check storage availability before processing uploads
         long totalUploadSize = Arrays.stream(files).mapToLong(MultipartFile::getSize).sum();
-        storageAllocationService.checkDocumentUploadLimit(user, files.length); // Check limit first
         storageAllocationService.checkStorageAvailable(user, totalUploadSize);
 
         for (MultipartFile file : files) {
@@ -156,7 +155,7 @@ public class DocumentUploadImpl implements DocumentUploadService {
                 storageAllocationService.updateStorageUsed(user, successfulUploadSize);
             }
 
-            // Update monthly documents uploaded count (for quota tracking)
+            // Keep monthly upload count for usage visibility/analytics.
             if (successfulUploads > 0) {
                 storageAllocationService.updateMonthlyDocumentsUploaded(user.getId(), successfulUploads);
             }

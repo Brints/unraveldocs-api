@@ -58,6 +58,11 @@ public interface TeamRepository extends JpaRepository<Team, String> {
                         "AND t.subscriptionEndsAt <= :now")
         List<Team> findCancelledTeamsReadyToExpire(@Param("now") OffsetDateTime now);
 
+        @Query("SELECT t FROM Team t WHERE t.subscriptionStatus = 'PAST_DUE' " +
+                        "AND t.pastDueSince IS NOT NULL " +
+                        "AND t.pastDueSince <= :cutoff")
+        List<Team> findPastDueTeamsBeyondGrace(@Param("cutoff") OffsetDateTime cutoff);
+
         // Admin queries
         @Query("SELECT t FROM Team t WHERE t.subscriptionStatus = :status")
         List<Team> findBySubscriptionStatus(@Param("status") TeamSubscriptionStatus status);

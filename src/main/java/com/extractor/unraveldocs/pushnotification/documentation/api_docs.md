@@ -2,7 +2,7 @@
 
 > **Package:** `com.extractor.unraveldocs.pushnotification`  
 > **Base URL:** `/api/v1/notifications`  
-> **Last Updated:** February 26, 2026
+> **Last Updated:** March 18, 2026
 
 ---
 
@@ -48,6 +48,8 @@
 13. [Scheduled Jobs](#scheduled-jobs)
     - [StorageWarningNotificationJob](#storagewarningnotificationjob)
     - [SubscriptionExpiryNotificationJob](#subscriptionexpirynotificationjob)
+    - [StaleTokenCleanupJob](#staletokencleanupjob)
+    - [NotificationCleanupJob](#notificationcleanupjob)
 14. [Configuration Reference](#configuration-reference)
 15. [Flow Diagrams](#flow-diagrams)
 
@@ -57,15 +59,15 @@
 
 The **Push Notification** package provides a complete, multi-provider push notification system. It spans device registration, user-preference gating, quiet hours, Kafka-backed async delivery, persistent notification inbox, and scheduled proactive alerts.
 
-| Capability | Description |
-|---|---|
-| **Multi-Provider** | Pluggable provider system — FCM (Firebase), OneSignal, AWS SNS. Active provider configured via a single property. |
+| Capability                | Description                                                                                                         |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------|
+| **Multi-Provider**        | Pluggable provider system — FCM (Firebase), OneSignal, AWS SNS. Active provider configured via a single property.   |
 | **Kafka-Backed Delivery** | Notifications are published to a Kafka topic and consumed asynchronously. Falls back to logging if Kafka is absent. |
-| **Persistent Inbox** | Every delivered notification is stored in PostgreSQL for the user's notification history, with read/unread state. |
-| **Preference Gating** | Per-category opt-in flags (document, OCR, payment, storage, subscription, team, coupon) + global push toggle. |
-| **Quiet Hours** | User-configurable quiet windows; the consumer skips delivery if the user is in their quiet window. |
-| **Device Registry** | Multi-device support per user (up to `maxDevicesPerUser`, default 10). Token transfer on re-registration. |
-| **Scheduled Alerts** | Two cron jobs: storage usage warnings (80/90/95% thresholds with deduplication) and subscription expiry countdowns (7/3/1 days). |
+| **Persistent Inbox**      | Every delivered notification is stored in PostgreSQL for the user's notification history, with read/unread state.   |
+| **Preference Gating**     | Per-category opt-in flags (document, OCR, payment, storage, subscription, team, coupon) + global push toggle.       |
+| **Quiet Hours**           | User-configurable quiet windows; the consumer skips delivery if the user is in their quiet window.                  |
+| **Device Registry**       | Multi-device support per user (up to `maxDevicesPerUser`, default 10). Token transfer on re-registration.           |
+| **Scheduled Alerts**      | Four cron jobs: storage and subscription alerts, plus stale-token and notification-history cleanup jobs.            |
 
 ---
 
@@ -93,8 +95,8 @@ pushnotification/
 │       ├── NotificationPreferencesResponse.java  # All preference flags + quietHours start/end + audit timestamps
 │       └── NotificationResponse.java        # id, type, typeDisplayName, category, title, message, data, isRead, createdAt, readAt
 ├── impl/
-│   ├── DeviceTokenServiceImpl.java          # Registers/deactivates device tokens; enforces maxDevicesPerUser; transfers stale tokens
-│   ├── NotificationPreferencesServiceImpl.java  # Get/update preferences; lazy-creates defaults; isNotificationTypeEnabled + isInQuietHours
+│   ├── DeviceTokenServiceImpl.java          # Registers/deactivates device tokens; enforces maxDevicesPerUser; supports hard-delete all tokens
+│   ├── NotificationPreferencesServiceImpl.java  # Get/update preferences; lazy-creates defaults; disabling push hard-deletes device tokens
 │   └── NotificationServiceImpl.java         # Send (single/batch/topic); get/count/mark/delete notifications from inbox
 ├── interfaces/
 │   ├── DeviceTokenService.java              # Service interface for device token operations
@@ -102,7 +104,9 @@ pushnotification/
 │   └── NotificationService.java            # Service interface for send + inbox operations
 ├── jobs/
 │   ├── StorageWarningNotificationJob.java   # @Scheduled daily 10AM: 80/90/95% storage threshold warnings with deduplication
-│   └── SubscriptionExpiryNotificationJob.java  # @Scheduled daily 9AM: 7/3/1-day expiry warnings + trial expiry
+│   ├── SubscriptionExpiryNotificationJob.java  # @Scheduled daily 9AM: 7/3/1-day expiry warnings + trial expiry
+│   ├── StaleTokenCleanupJob.java            # @Scheduled daily 2AM: deletes inactive tokens, deactivates stale active tokens
+│   └── NotificationCleanupJob.java          # @Scheduled weekly 3AM Sunday: deletes old notification history
 ├── kafka/
 │   ├── NotificationEvent.java              # Serializable Kafka message: id, userId, type, title, message, data, timestamp
 │   ├── NotificationKafkaConsumer.java       # @KafkaListener: checks prefs + quiet hours → persists → sends via active provider
@@ -121,8 +125,8 @@ pushnotification/
 │   └── sns/
 │       └── AwsSnsNotificationProvider.java    # AWS SNS publish integration
 ├── repository/
-│   ├── DeviceTokenRepository.java           # findByUserIdAndIsActiveTrue, findByDeviceToken, countByUserIdAndIsActiveTrue, deactivateAllForUser
-│   ├── NotificationPreferencesRepository.java # findByUserId, existsByUserId
+│   ├── DeviceTokenRepository.java           # token lookup/count, bulk deactivate/delete, stale-active deactivation, inactive cleanup
+│   ├── NotificationPreferencesRepository.java # findByUserId, existsByUserId, findUserIdsWithPushDisabled
 │   ├── NotificationRepository.java          # findByUserIdOrderByCreatedAtDesc, countByUserIdAndIsReadFalse, markAllAsRead, deleteOlderThan
 │   └── StorageWarningSentRepository.java    # existsByUserIdAndWarningLevel (deduplication check)
 └── documentation/
@@ -401,6 +405,7 @@ User/Admin REST API
 | `notification.respectQuietHours`         | `boolean`                  | `true`                  | Whether the consumer skips delivery during quiet windows |
 | `notification.maxDevicesPerUser`         | `int`                      | `10`                    | Maximum device tokens per user                           |
 | `notification.notificationRetentionDays` | `int`                      | `90`                    | Days before notifications are eligible for cleanup       |
+| `notification.tokenRetentionDays`        | `int`                      | `30`                    | Days before inactive tokens are eligible for hard delete |
 | `notification.kafkaTopic`                | `String`                   | `"notification-events"` | Kafka topic name for notification events                 |
 
 ---
@@ -490,9 +495,9 @@ Serializable Kafka message envelope.
       └─ log info with sent count
 ```
 
-**Provider map:** Built at startup from all `NotificationProviderService` beans where `isEnabled() == true`. Key = `NotificationProviderType.valueOf(provider.getProviderName())`.
+**Provider map:** Built at startup from all enabled `NotificationProviderService` beans. Provider names are resolved defensively (uppercased and validated) and unknown names are skipped with a warning.
 
-> **Error handling:** All exceptions are caught and logged at ERROR level. The consumer does **not** rethrow — notification failures never trigger Kafka retries or DLQ routing (fire-and-forget semantics).
+> **Error handling:** Processing exceptions are logged and rethrown, allowing Kafka retry/DLQ policies (if configured) to apply.
 
 ---
 
@@ -527,7 +532,7 @@ Serializable Kafka message envelope.
 - **APNs (iOS):** Badge count, sound, content-available flag
 - **Webpush:** Actions, icon, badge
 
-**Error handling:** `FirebaseMessagingException` — logs error; for `UNREGISTERED` error code, deactivates the stale device token from the database.
+**Error handling:** `FirebaseMessagingException` — logs error; for `UNREGISTERED` or `INVALID_ARGUMENT`, automatically unregisters invalid tokens (single and batch paths).
 
 ---
 
@@ -543,7 +548,7 @@ Uses OneSignal's REST API (`/notifications` endpoint) to send push notifications
 **Conditional:** `@ConditionalOnProperty(name = "aws.sns.enabled", havingValue = "true")`  
 **Provider Name:** `"AWS_SNS"`
 
-Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, publishes to an SNS topic ARN. Topics correspond to device type segments.
+Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, iterates over endpoint ARNs. On `EndpointDisabled`/`InvalidParameter`, invalid endpoints are auto-unregistered.
 
 ---
 
@@ -585,6 +590,7 @@ Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, p
 | `getActiveTokenEntities(userId)`                | Returns raw `List<UserDeviceToken>` — used internally by consumer                                                 |
 | `updateLastUsed(deviceToken)`                   | Updates `lastUsedAt` timestamp on the token entity                                                                |
 | `deactivateAllDevices(userId)`                  | Bulk-deactivates all tokens for a user (e.g., on account deletion)                                                |
+| `deleteAllDeviceTokens(userId)`                 | Hard-deletes all device tokens for a user (used when push notifications are disabled)                             |
 | `isTokenActive(deviceToken)`                    | Returns `true` if the token exists and `isActive = true`                                                          |
 
 **`registerDevice()` flow:**
@@ -606,10 +612,10 @@ Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, p
 **Interface:** `com.extractor.unraveldocs.pushnotification.interfaces.NotificationPreferencesService`  
 **Implementation:** `NotificationPreferencesServiceImpl`
 
-| Method                                                | Description                                                                               |
-|-------------------------------------------------------|-------------------------------------------------------------------------------------------|
-| `getPreferences(userId)`                              | Gets (or creates default) preferences and maps to `NotificationPreferencesResponse`       |
-| `updatePreferences(userId, UpdatePreferencesRequest)` | Updates all preference fields; quiet hours fields are optional (only updated if non-null) |
+| Method                                                | Description                                                                                                        |
+|-------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `getPreferences(userId)`                              | Gets (or creates default) preferences and maps to `NotificationPreferencesResponse`                                |
+| `updatePreferences(userId, UpdatePreferencesRequest)` | Updates all preference fields; if `pushEnabled` transitions `true -> false`, all user device tokens are deleted |
 | `isNotificationTypeEnabled(userId, type)`             | Returns `true` if no preferences exist (fail-open default)                                |
 | `isInQuietHours(userId)`                              | Returns `false` if no preferences exist                                                   |
 | `isPushEnabled(userId)`                               | Returns `true` if no preferences exist                                                    |
@@ -644,10 +650,14 @@ Uses AWS SDK `SnsClient.publish()` for individual sends. For batch operations, p
 | `findByUserIdAndDeviceTypeAndIsActiveTrue(userId, type)` | Active tokens filtered by device type      |
 | `countByUserIdAndIsActiveTrue(userId)`                   | Device count for `maxDevicesPerUser` check |
 | `deactivateAllForUser(userId)`                           | `@Modifying` JPQL bulk deactivation        |
+| `deactivateStaleActiveTokens(cutoffDate)`               | `@Modifying` JPQL bulk deactivation for stale active tokens |
+| `deleteAllByUserId(userId)`                              | `@Modifying` JPQL hard-delete all user tokens |
+| `deleteInactiveOlderThan(cutoffDate)`                    | `@Modifying` JPQL hard-delete old inactive tokens |
 
 ### `NotificationPreferencesRepository`
 - `findByUserId(userId)` → `Optional<NotificationPreferences>`
 - `existsByUserId(userId)` → `boolean`
+- `findUserIdsWithPushDisabled()` → `List<String>`
 
 ### `StorageWarningSentRepository`
 - `existsByUserIdAndWarningLevel(userId, warningLevel)` → `boolean` (deduplication guard)
@@ -869,6 +879,8 @@ Returns all **active** device tokens for the authenticated user.
 #### GET `/api/v1/notifications/preferences` — Get Preferences
 
 **Response — `200 OK`:** `NotificationPreferencesResponse`  
+
+**Behavior note:** If `pushEnabled` changes from `true` to `false`, all registered device tokens for that user are hard-deleted.
 **Note:** Creates default preferences (all enabled) if none exist.
 
 ---
@@ -950,6 +962,30 @@ Queries subscriptions expiring within specific windows and sends countdown notif
 
 ---
 
+### `StaleTokenCleanupJob`
+**Condition:** `@ConditionalOnProperty(name = "spring.scheduling.enabled", havingValue = "true", matchIfMissing = true)`  
+**Schedule:** `@Scheduled(cron = "0 0 2 * * *")` — daily at **2:00 AM**
+
+Performs token hygiene and enforcement safety-net tasks:
+
+1. Deletes inactive tokens older than `notification.tokenRetentionDays`.
+2. Deactivates active tokens stale for 90+ days (based on `lastUsedAt`, fallback `createdAt`).
+3. Deletes all tokens for users with `pushEnabled = false`.
+
+**Job metrics logged:** `deletedInactive`, `deactivatedStaleActive`, `deletedPushDisabled`, `tokenRetentionDays`.
+
+---
+
+### `NotificationCleanupJob`
+**Condition:** `@ConditionalOnProperty(name = "spring.scheduling.enabled", havingValue = "true", matchIfMissing = true)`  
+**Schedule:** `@Scheduled(cron = "0 0 3 * * SUN")` — weekly at **3:00 AM Sunday**
+
+Deletes notification records older than `notification.notificationRetentionDays` via `notificationRepository.deleteOlderThan(cutoffDate)`.
+
+**Job metrics logged:** `deleted`, `retentionDays`.
+
+---
+
 ## Configuration Reference
 
 ```properties
@@ -959,6 +995,7 @@ notification.persistNotifications=true
 notification.respectQuietHours=true
 notification.maxDevicesPerUser=10
 notification.notificationRetentionDays=90
+notification.tokenRetentionDays=30
 notification.kafkaTopic=notification-events
 
 # Firebase (FCM)

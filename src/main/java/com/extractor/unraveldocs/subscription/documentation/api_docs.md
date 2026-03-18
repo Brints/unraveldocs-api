@@ -52,24 +52,24 @@
 
 The **Subscription** package manages the full lifecycle of subscription plans and user subscriptions in UnravelDocs. It is split across three access tiers:
 
-| Access Tier | Base Path | Description |
-|---|---|---|
-| **Public** | `/api/v1/plans` | Pricing page endpoints — no auth required |
-| **User** | `/api/v1/subscriptions` | Authenticated users view and activate their own subscriptions |
-| **Admin** | `/api/v1/admin/subscriptions` | Admins and Super-Admins create and manage plan definitions |
+| Access Tier | Base Path                     | Description                                                   |
+|-------------|-------------------------------|---------------------------------------------------------------|
+| **Public**  | `/api/v1/plans`               | Pricing page endpoints — no auth required                     |
+| **User**    | `/api/v1/subscriptions`       | Authenticated users view and activate their own subscriptions |
+| **Admin**   | `/api/v1/admin/subscriptions` | Admins and Super-Admins create and manage plan definitions    |
 
 Key capabilities:
 
-| Feature | Description |
-|---|---|
-| Plan Management | Admins create and update `SubscriptionPlan` records with pricing, billing interval, and resource limits |
-| Default Assignment | Every new user is automatically assigned the `FREE` plan on registration; Admins/Super-Admins get `BUSINESS_YEARLY`; Moderators get `PRO_YEARLY` |
-| Public Pricing API | All active individual and team plans returned with real-time currency conversion (64 currencies supported) |
-| Trial Activation | Users can activate a plan trial once; trial period set by the plan's `trialDays` field |
-| Trial Expiry | Hourly cron reverts expired trials back to the FREE plan with push + email notifications |
-| Monthly Quota Reset | Hourly cron resets `monthlyDocumentsUploaded`, `ocrPagesUsed`, and `aiOperationsUsed` when a subscription's `quotaResetDate` is reached |
-| Exchange Rate Refresh | Daily cron at 06:00 fetches live exchange rates from an external API, with built-in fallback rates |
-| Feature Gating | `SubscriptionFeatureService` checks whether a user's plan tier grants access to premium features |
+| Feature               | Description                                                                                                                                      |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| Plan Management       | Admins create and update `SubscriptionPlan` records with pricing, billing interval, and resource limits                                          |
+| Default Assignment    | Every new user is automatically assigned the `FREE` plan on registration; Admins/Super-Admins get `BUSINESS_YEARLY`; Moderators get `PRO_YEARLY` |
+| Public Pricing API    | All active individual and team plans returned with real-time currency conversion (64 currencies supported)                                       |
+| Trial Activation      | Users can activate a plan trial once; trial period set by the plan's `trialDays` field                                                           |
+| Trial Expiry          | Hourly cron reverts expired trials back to the FREE plan with push + email notifications                                                         |
+| Monthly Quota Reset   | Hourly cron resets `monthlyDocumentsUploaded`, `ocrPagesUsed`, and `aiOperationsUsed` when a subscription's `quotaResetDate` is reached          |
+| Exchange Rate Refresh | Daily cron at 06:00 fetches live exchange rates from an external API, with built-in fallback rates                                               |
+| Feature Gating        | `SubscriptionFeatureService` checks whether a user's plan tier grants access to premium features                                                 |
 
 ---
 
@@ -249,25 +249,25 @@ Selected currencies:
 **Package:** `com.extractor.unraveldocs.subscription.model`  
 **Table:** `user_subscriptions`
 
-| Column | Type | Nullable | Description |
-|---|---|---|---|
-| `id` | `String` (UUID) | No | Primary key |
-| `user_id` | FK → `User` | No | One-to-one user relationship (lazy) |
-| `plan_id` | FK → `SubscriptionPlan` | No | Many-to-one plan reference (lazy) |
-| `payment_gateway_subscription_id` | `String` | Yes | External subscription reference (Paystack / Stripe / PayPal) |
-| `status` | `String` | No | `"ACTIVE"`, `"TRIAL"`, `"CANCELLED"`, `"EXPIRED"` |
-| `current_period_start` | `OffsetDateTime` | Yes | Start of the current billing period |
-| `current_period_end` | `OffsetDateTime` | Yes | End of the current billing period |
-| `auto_renew` | `boolean` | No | Default `false` |
-| `trial_ends_at` | `OffsetDateTime` | Yes | When the trial expires; `null` if not on trial |
-| `has_used_trial` | `boolean` | No | Default `false`; prevents second trial |
-| `storage_used` | `Long` | No | Cumulative storage used in bytes (NOT reset monthly) |
-| `ocr_pages_used` | `Integer` | No | OCR pages used in the current billing period (reset monthly) |
-| `monthly_documents_uploaded` | `Integer` | No | Documents uploaded in the current billing period (reset monthly) |
-| `ai_operations_used` | `Integer` | No | AI operations used in the current billing period (reset monthly) |
-| `quota_reset_date` | `OffsetDateTime` | Yes | Next date when monthly quotas will be reset |
-| `created_at` | `OffsetDateTime` | No | Auto-set on insert |
-| `updated_at` | `OffsetDateTime` | No | Auto-set on update |
+| Column                            | Type                    | Nullable | Description                                                      |
+|-----------------------------------|-------------------------|----------|------------------------------------------------------------------|
+| `id`                              | `String` (UUID)         | No       | Primary key                                                      |
+| `user_id`                         | FK → `User`             | No       | One-to-one user relationship (lazy)                              |
+| `plan_id`                         | FK → `SubscriptionPlan` | No       | Many-to-one plan reference (lazy)                                |
+| `payment_gateway_subscription_id` | `String`                | Yes      | External subscription reference (Paystack / Stripe / PayPal)     |
+| `status`                          | `String`                | No       | `"ACTIVE"`, `"TRIAL"`, `"CANCELLED"`, `"EXPIRED"`                |
+| `current_period_start`            | `OffsetDateTime`        | Yes      | Start of the current billing period                              |
+| `current_period_end`              | `OffsetDateTime`        | Yes      | End of the current billing period                                |
+| `auto_renew`                      | `boolean`               | No       | Default `false`                                                  |
+| `trial_ends_at`                   | `OffsetDateTime`        | Yes      | When the trial expires; `null` if not on trial                   |
+| `has_used_trial`                  | `boolean`               | No       | Default `false`; prevents second trial                           |
+| `storage_used`                    | `Long`                  | No       | Cumulative storage used in bytes (NOT reset monthly)             |
+| `ocr_pages_used`                  | `Integer`               | No       | OCR pages used in the current billing period (reset monthly)     |
+| `monthly_documents_uploaded`      | `Integer`               | No       | Documents uploaded in the current billing period (reset monthly) |
+| `ai_operations_used`              | `Integer`               | No       | AI operations used in the current billing period (reset monthly) |
+| `quota_reset_date`                | `OffsetDateTime`        | Yes      | Next date when monthly quotas will be reset                      |
+| `created_at`                      | `OffsetDateTime`        | No       | Auto-set on insert                                               |
+| `updated_at`                      | `OffsetDateTime`        | No       | Auto-set on update                                               |
 
 ---
 
@@ -275,17 +275,17 @@ Selected currencies:
 **Package:** `com.extractor.unraveldocs.subscription.model`  
 **Table:** `discounts`
 
-| Column | Type | Nullable | Description |
-|---|---|---|---|
-| `id` | `String` (UUID) | No | Primary key |
-| `name` | `String` | No | Human-readable discount name |
-| `plan_id` | FK → `SubscriptionPlan` | No | Plan this discount applies to (many-to-one, lazy) |
-| `discount_percent` | `BigDecimal` (DECIMAL 5,2) | No | Percentage reduction (e.g., `20.00` = 20% off) |
-| `start_date` | `OffsetDateTime` | No | When the discount becomes active |
-| `valid_until` | `OffsetDateTime` | No | When the discount expires |
-| `is_active` | `boolean` | No | Whether the discount is currently applicable |
-| `created_at` | `OffsetDateTime` | No | Auto-set on insert |
-| `updated_at` | `OffsetDateTime` | No | Auto-set on update |
+| Column             | Type                       | Nullable | Description                                       |
+|--------------------|----------------------------|----------|---------------------------------------------------|
+| `id`               | `String` (UUID)            | No       | Primary key                                       |
+| `name`             | `String`                   | No       | Human-readable discount name                      |
+| `plan_id`          | FK → `SubscriptionPlan`    | No       | Plan this discount applies to (many-to-one, lazy) |
+| `discount_percent` | `BigDecimal` (DECIMAL 5,2) | No       | Percentage reduction (e.g., `20.00` = 20% off)    |
+| `start_date`       | `OffsetDateTime`           | No       | When the discount becomes active                  |
+| `valid_until`      | `OffsetDateTime`           | No       | When the discount expires                         |
+| `is_active`        | `boolean`                  | No       | Whether the discount is currently applicable      |
+| `created_at`       | `OffsetDateTime`           | No       | Auto-set on insert                                |
+| `updated_at`       | `OffsetDateTime`           | No       | Auto-set on update                                |
 
 ---
 
@@ -294,16 +294,16 @@ Selected currencies:
 #### `CreateSubscriptionPlanRequest`
 **Package:** `com.extractor.unraveldocs.subscription.dto.request`
 
-| Field | Type | Required | Constraints | Description |
-|---|---|---|---|---|
-| `name` | `SubscriptionPlans` | ✅ | Not null | Plan identifier enum value |
-| `price` | `BigDecimal` | ✅ | Not null; ≥ 0 | Base price in USD |
-| `currency` | `SubscriptionCurrency` | ✅ | Not null | Base currency (typically `USD`) |
-| `billingIntervalUnit` | `BillingIntervalUnit` | ✅ | Not null | `MONTH`, `WEEK`, or `YEAR` |
-| `billingIntervalValue` | `Integer` | ✅ | Not null; ≥ 1 | Number of interval units per cycle |
-| `documentUploadLimit` | `Integer` | ✅ | Not null | Document upload cap per billing period |
-| `ocrPageLimit` | `Integer` | ✅ | Not null | OCR page cap per billing period |
-| `trialDays` | `Integer` | ❌ | ≥ 0 | Days of free trial; defaults to `10` if omitted |
+| Field                  | Type                   | Required | Constraints   | Description                                     |
+|------------------------|------------------------|----------|---------------|-------------------------------------------------|
+| `name`                 | `SubscriptionPlans`    | ✅        | Not null      | Plan identifier enum value                      |
+| `price`                | `BigDecimal`           | ✅        | Not null; ≥ 0 | Base price in USD                               |
+| `currency`             | `SubscriptionCurrency` | ✅        | Not null      | Base currency (typically `USD`)                 |
+| `billingIntervalUnit`  | `BillingIntervalUnit`  | ✅        | Not null      | `MONTH`, `WEEK`, or `YEAR`                      |
+| `billingIntervalValue` | `Integer`              | ✅        | Not null; ≥ 1 | Number of interval units per cycle              |
+| `documentUploadLimit`  | `Integer`              | ✅        | Not null      | Document upload cap per billing period          |
+| `ocrPageLimit`         | `Integer`              | ✅        | Not null      | OCR page cap per billing period                 |
+| `trialDays`            | `Integer`              | ❌        | ≥ 0           | Days of free trial; defaults to `10` if omitted |
 
 ---
 
@@ -312,14 +312,14 @@ Selected currencies:
 
 All fields are **optional** — only provided fields are applied.
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `newPlanPrice` | `BigDecimal` | ❌ | New price in USD |
-| `newPlanCurrency` | `SubscriptionCurrency` | ❌ | New base currency (validated against enum; uses `SubscriptionCurrencyDeserializer`) |
-| `billingIntervalUnit` | `BillingIntervalUnit` | ❌ | New billing interval unit |
-| `billingIntervalValue` | `Integer` | ❌ | New billing interval value |
-| `documentUploadLimit` | `Integer` | ❌ | New document upload cap |
-| `ocrPageLimit` | `Integer` | ❌ | New OCR page cap |
+| Field                  | Type                   | Required | Description                                                                         |
+|------------------------|------------------------|----------|-------------------------------------------------------------------------------------|
+| `newPlanPrice`         | `BigDecimal`           | ❌        | New price in USD                                                                    |
+| `newPlanCurrency`      | `SubscriptionCurrency` | ❌        | New base currency (validated against enum; uses `SubscriptionCurrencyDeserializer`) |
+| `billingIntervalUnit`  | `BillingIntervalUnit`  | ❌        | New billing interval unit                                                           |
+| `billingIntervalValue` | `Integer`              | ❌        | New billing interval value                                                          |
+| `documentUploadLimit`  | `Integer`              | ❌        | New document upload cap                                                             |
+| `ocrPageLimit`         | `Integer`              | ❌        | New OCR page cap                                                                    |
 
 ---
 
@@ -328,62 +328,62 @@ All fields are **optional** — only provided fields are applied.
 #### `SubscriptionPlansData`
 Returned inside `UnravelDocsResponse<SubscriptionPlansData>` for admin create/update operations.
 
-| Field | Type | Description |
-|---|---|---|
-| `id` | `String` | Plan UUID |
-| `planName` | `SubscriptionPlans` | Plan identifier enum |
-| `planPrice` | `BigDecimal` | Base price in USD |
-| `planCurrency` | `SubscriptionCurrency` | Base currency |
-| `billingIntervalUnit` | `BillingIntervalUnit` | Billing interval unit |
-| `billingIntervalValue` | `Integer` | Billing interval value |
-| `documentUploadLimit` | `Integer` | Document upload cap |
-| `ocrPageLimit` | `Integer` | OCR page cap |
-| `isActive` | `boolean` | Plan active status |
-| `createdAt` | `OffsetDateTime` | Creation timestamp |
-| `updatedAt` | `OffsetDateTime` | Last update timestamp |
+| Field                  | Type                   | Description            |
+|------------------------|------------------------|------------------------|
+| `id`                   | `String`               | Plan UUID              |
+| `planName`             | `SubscriptionPlans`    | Plan identifier enum   |
+| `planPrice`            | `BigDecimal`           | Base price in USD      |
+| `planCurrency`         | `SubscriptionCurrency` | Base currency          |
+| `billingIntervalUnit`  | `BillingIntervalUnit`  | Billing interval unit  |
+| `billingIntervalValue` | `Integer`              | Billing interval value |
+| `documentUploadLimit`  | `Integer`              | Document upload cap    |
+| `ocrPageLimit`         | `Integer`              | OCR page cap           |
+| `isActive`             | `boolean`              | Plan active status     |
+| `createdAt`            | `OffsetDateTime`       | Creation timestamp     |
+| `updatedAt`            | `OffsetDateTime`       | Last update timestamp  |
 
 ---
 
 #### `UserSubscriptionDetailsDto`
 Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields are omitted from the JSON (`@JsonInclude(NON_NULL)`).
 
-| Field | Type | Description |
-|---|---|---|
-| `subscriptionId` | `String` | Subscription UUID |
-| `status` | `String` | `"ACTIVE"`, `"TRIAL"`, `"CANCELLED"`, `"EXPIRED"`, or `"none"` |
-| `planId` | `String` | Plan UUID |
-| `planName` | `String` | Raw enum name (e.g., `"PRO_MONTHLY"`) |
-| `planDisplayName` | `String` | Human-readable name (e.g., `"Pro Monthly"`) |
-| `planPrice` | `BigDecimal` | Plan base price |
-| `currency` | `String` | Currency code |
-| `billingInterval` | `String` | `"monthly"`, `"yearly"`, `"weekly"`, or `"N units"` |
-| `currentPeriodStart` | `OffsetDateTime` | Billing period start |
-| `currentPeriodEnd` | `OffsetDateTime` | Billing period end |
-| `autoRenew` | `Boolean` | Auto-renewal status |
-| `isOnTrial` | `Boolean` | Whether `trialEndsAt` is in the future |
-| `trialEndsAt` | `OffsetDateTime` | Trial expiry timestamp |
-| `hasUsedTrial` | `Boolean` | Whether trial was ever activated |
-| `trialDaysRemaining` | `Integer` | Days remaining in trial (0 if expired, null if never trialled) |
-| `storageLimit` | `Long` | Max storage in bytes |
-| `storageUsed` | `Long` | Cumulative storage consumed |
-| `documentUploadLimit` | `Integer` | Monthly document upload cap |
-| `documentsUploaded` | `Integer` | Documents uploaded this period |
-| `ocrPageLimit` | `Integer` | Monthly OCR page cap |
-| `ocrPagesUsed` | `Integer` | OCR pages consumed this period |
-| `paymentGatewaySubscriptionId` | `String` | External gateway reference |
-| `createdAt` | `OffsetDateTime` | Subscription creation timestamp |
-| `updatedAt` | `OffsetDateTime` | Last update timestamp |
+| Field                          | Type             | Description                                                    |
+|--------------------------------|------------------|----------------------------------------------------------------|
+| `subscriptionId`               | `String`         | Subscription UUID                                              |
+| `status`                       | `String`         | `"ACTIVE"`, `"TRIAL"`, `"CANCELLED"`, `"EXPIRED"`, or `"none"` |
+| `planId`                       | `String`         | Plan UUID                                                      |
+| `planName`                     | `String`         | Raw enum name (e.g., `"PRO_MONTHLY"`)                          |
+| `planDisplayName`              | `String`         | Human-readable name (e.g., `"Pro Monthly"`)                    |
+| `planPrice`                    | `BigDecimal`     | Plan base price                                                |
+| `currency`                     | `String`         | Currency code                                                  |
+| `billingInterval`              | `String`         | `"monthly"`, `"yearly"`, `"weekly"`, or `"N units"`            |
+| `currentPeriodStart`           | `OffsetDateTime` | Billing period start                                           |
+| `currentPeriodEnd`             | `OffsetDateTime` | Billing period end                                             |
+| `autoRenew`                    | `Boolean`        | Auto-renewal status                                            |
+| `isOnTrial`                    | `Boolean`        | Whether `trialEndsAt` is in the future                         |
+| `trialEndsAt`                  | `OffsetDateTime` | Trial expiry timestamp                                         |
+| `hasUsedTrial`                 | `Boolean`        | Whether trial was ever activated                               |
+| `trialDaysRemaining`           | `Integer`        | Days remaining in trial (0 if expired, null if never trialled) |
+| `storageLimit`                 | `Long`           | Max storage in bytes                                           |
+| `storageUsed`                  | `Long`           | Cumulative storage consumed                                    |
+| `documentUploadLimit`          | `Integer`        | Monthly document upload cap                                    |
+| `documentsUploaded`            | `Integer`        | Documents uploaded this period                                 |
+| `ocrPageLimit`                 | `Integer`        | Monthly OCR page cap                                           |
+| `ocrPagesUsed`                 | `Integer`        | OCR pages consumed this period                                 |
+| `paymentGatewaySubscriptionId` | `String`         | External gateway reference                                     |
+| `createdAt`                    | `OffsetDateTime` | Subscription creation timestamp                                |
+| `updatedAt`                    | `OffsetDateTime` | Last update timestamp                                          |
 
 ---
 
 #### `AllPlansWithPricingResponse`
 
-| Field | Type | Description |
-|---|---|---|
-| `individualPlans` | `List<IndividualPlanPricingDto>` | All active individual subscription plans with converted pricing |
-| `teamPlans` | `List<TeamPlanPricingDto>` | All active team subscription plans with converted pricing |
-| `displayCurrency` | `SubscriptionCurrency` | The currency prices are displayed in |
-| `exchangeRateTimestamp` | `OffsetDateTime` | When the exchange rate data was last refreshed |
+| Field                   | Type                             | Description                                                     |
+|-------------------------|----------------------------------|-----------------------------------------------------------------|
+| `individualPlans`       | `List<IndividualPlanPricingDto>` | All active individual subscription plans with converted pricing |
+| `teamPlans`             | `List<TeamPlanPricingDto>`       | All active team subscription plans with converted pricing       |
+| `displayCurrency`       | `SubscriptionCurrency`           | The currency prices are displayed in                            |
+| `exchangeRateTimestamp` | `OffsetDateTime`                 | When the exchange rate data was last refreshed                  |
 
 ---
 
@@ -405,31 +405,31 @@ Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields a
 
 #### `ConvertedPrice`
 
-| Field | Type | Description |
-|---|---|---|
-| `originalAmountUsd` | `BigDecimal` | The price in USD before conversion |
-| `convertedAmount` | `BigDecimal` | The price in the target currency (rounded to 2 d.p.) |
-| `currency` | `SubscriptionCurrency` | Target currency |
-| `formattedPrice` | `String` | Locale-formatted price string (e.g., `"₦45,000.00"`) |
-| `exchangeRate` | `BigDecimal` | Rate used: 1 USD = X target currency |
-| `rateTimestamp` | `OffsetDateTime` | When this exchange rate was last refreshed |
+| Field               | Type                   | Description                                          |
+|---------------------|------------------------|------------------------------------------------------|
+| `originalAmountUsd` | `BigDecimal`           | The price in USD before conversion                   |
+| `convertedAmount`   | `BigDecimal`           | The price in the target currency (rounded to 2 d.p.) |
+| `currency`          | `SubscriptionCurrency` | Target currency                                      |
+| `formattedPrice`    | `String`               | Locale-formatted price string (e.g., `"₦45,000.00"`) |
+| `exchangeRate`      | `BigDecimal`           | Rate used: 1 USD = X target currency                 |
+| `rateTimestamp`     | `OffsetDateTime`       | When this exchange rate was last refreshed           |
 
 ---
 
 #### `SupportedCurrenciesResponse`
 
-| Field | Type | Description |
-|---|---|---|
-| `currencies` | `List<CurrencyInfo>` | All 64 supported currencies |
-| `totalCount` | `int` | Total number of currencies returned |
+| Field        | Type                 | Description                         |
+|--------------|----------------------|-------------------------------------|
+| `currencies` | `List<CurrencyInfo>` | All 64 supported currencies         |
+| `totalCount` | `int`                | Total number of currencies returned |
 
 **`CurrencyInfo`:**
 
-| Field | Type | Description |
-|---|---|---|
-| `code` | `String` | ISO code (e.g., `"NGN"`) |
-| `symbol` | `String` | Currency symbol (e.g., `"₦"`) |
-| `name` | `String` | Full name (e.g., `"Nigerian Naira"`) |
+| Field    | Type     | Description                          |
+|----------|----------|--------------------------------------|
+| `code`   | `String` | ISO code (e.g., `"NGN"`)             |
+| `symbol` | `String` | Currency symbol (e.g., `"₦"`)        |
+| `name`   | `String` | Full name (e.g., `"Nigerian Naira"`) |
 
 ---
 
@@ -702,19 +702,19 @@ Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields a
 
 **Error Responses**
 
-| Status | Condition |
-|---|---|
+| Status            | Condition                                                                |
+|-------------------|--------------------------------------------------------------------------|
 | `400 Bad Request` | Invalid currency code — includes hint to call `/api/v1/plans/currencies` |
 
 ---
 
 ### 2. Get Supported Currencies (Public)
 
-| Property | Value |
-|---|---|
-| **Method** | `GET` |
-| **Path** | `/api/v1/plans/currencies` |
-| **Auth Required** | No |
+| Property          | Value                      |
+|-------------------|----------------------------|
+| **Method**        | `GET`                      |
+| **Path**          | `/api/v1/plans/currencies` |
+| **Auth Required** | No                         |
 
 **Success Response — `200 OK`**
 
@@ -1077,25 +1077,25 @@ Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields a
 
 **Error Responses**
 
-| Status | Condition |
-|---|---|
+| Status             | Condition         |
+|--------------------|-------------------|
 | `401 Unauthorized` | Not authenticated |
 
 ---
 
 ### 4. Activate Trial
 
-| Property | Value |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/api/v1/subscriptions/trial/{planId}` |
-| **Auth Required** | Yes — `@CurrentUser` |
+| Property          | Value                                  |
+|-------------------|----------------------------------------|
+| **Method**        | `POST`                                 |
+| **Path**          | `/api/v1/subscriptions/trial/{planId}` |
+| **Auth Required** | Yes — `@CurrentUser`                   |
 
 **Path Parameters**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `planId` | `String` | UUID of the `SubscriptionPlan` to trial |
+| Parameter | Type     | Description                             |
+|-----------|----------|-----------------------------------------|
+| `planId`  | `String` | UUID of the `SubscriptionPlan` to trial |
 
 **Success Response — `200 OK`**
 
@@ -1118,22 +1118,22 @@ Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields a
 
 **Error Responses**
 
-| Status | Condition |
-|---|---|
-| `400 Bad Request` | Plan does not support trials (`trialDays` is 0 or null) |
-| `400 Bad Request` | User has already used their trial (`hasUsedTrial == true`) |
-| `400 Bad Request` | User already has an active paid subscription |
-| `401 Unauthorized` | Not authenticated |
-| `404 Not Found` | `planId` does not match any plan |
+| Status             | Condition                                                  |
+|--------------------|------------------------------------------------------------|
+| `400 Bad Request`  | Plan does not support trials (`trialDays` is 0 or null)    |
+| `400 Bad Request`  | User has already used their trial (`hasUsedTrial == true`) |
+| `400 Bad Request`  | User already has an active paid subscription               |
+| `401 Unauthorized` | Not authenticated                                          |
+| `404 Not Found`    | `planId` does not match any plan                           |
 
 ---
 
 ### 5. Create Subscription Plan (Admin)
 
-| Property | Value |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/api/v1/admin/subscriptions/plans` |
+| Property          | Value                                    |
+|-------------------|------------------------------------------|
+| **Method**        | `POST`                                   |
+| **Path**          | `/api/v1/admin/subscriptions/plans`      |
 | **Auth Required** | Yes — `ROLE_ADMIN` or `ROLE_SUPER_ADMIN` |
 
 **Request Body:** `CreateSubscriptionPlanRequest`
@@ -1176,27 +1176,27 @@ Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields a
 
 **Error Responses**
 
-| Status | Condition |
-|---|---|
+| Status            | Condition                                  |
+|-------------------|--------------------------------------------|
 | `400 Bad Request` | A plan with the same `name` already exists |
-| `403 Forbidden` | User is not an Admin or Super-Admin |
+| `403 Forbidden`   | User is not an Admin or Super-Admin        |
 
 ---
 
 ### 6. Update Subscription Plan (Admin)
 
-| Property | Value |
-|---|---|
-| **Method** | `PUT` |
-| **Path** | `/api/v1/admin/subscriptions/plans/{planId}` |
-| **Auth Required** | Yes — `ROLE_ADMIN` or `ROLE_SUPER_ADMIN` |
-| **Content-Type** | `application/json` |
+| Property          | Value                                        |
+|-------------------|----------------------------------------------|
+| **Method**        | `PUT`                                        |
+| **Path**          | `/api/v1/admin/subscriptions/plans/{planId}` |
+| **Auth Required** | Yes — `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`     |
+| **Content-Type**  | `application/json`                           |
 
 **Path Parameters**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `planId` | `String` | UUID of the plan to update |
+| Parameter | Type     | Description                |
+|-----------|----------|----------------------------|
+| `planId`  | `String` | UUID of the plan to update |
 
 **Request Body:** `UpdateSubscriptionPlanRequest`
 
@@ -1236,21 +1236,21 @@ Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields a
 
 **Error Responses**
 
-| Status | Condition |
-|---|---|
+| Status            | Condition                                                     |
+|-------------------|---------------------------------------------------------------|
 | `400 Bad Request` | `newPlanCurrency` is not a valid `SubscriptionCurrency` value |
-| `403 Forbidden` | User is not an Admin or Super-Admin |
-| `404 Not Found` | `planId` does not match any plan |
+| `403 Forbidden`   | User is not an Admin or Super-Admin                           |
+| `404 Not Found`   | `planId` does not match any plan                              |
 
 ---
 
 ### 7. Assign Subscriptions to Existing Users (Admin)
 
-| Property | Value |
-|---|---|
-| **Method** | `POST` |
-| **Path** | `/api/v1/admin/subscriptions/assign-subscriptions-to-existing-users` |
-| **Auth Required** | Yes — `ROLE_ADMIN` or `ROLE_SUPER_ADMIN` |
+| Property          | Value                                                                |
+|-------------------|----------------------------------------------------------------------|
+| **Method**        | `POST`                                                               |
+| **Path**          | `/api/v1/admin/subscriptions/assign-subscriptions-to-existing-users` |
+| **Auth Required** | Yes — `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`                             |
 
 **Success Response — `200 OK`**
 
@@ -1269,8 +1269,8 @@ Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields a
 
 **Error Responses**
 
-| Status | Condition |
-|---|---|
+| Status          | Condition                           |
+|-----------------|-------------------------------------|
 | `403 Forbidden` | User is not an Admin or Super-Admin |
 
 ---
@@ -1282,11 +1282,11 @@ Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields a
 
 Thin admin-facing facade — delegates to interface implementations.
 
-| Method | Delegates To | Description |
-|---|---|---|
-| `createSubscriptionPlan(CreateSubscriptionPlanRequest)` | `AddSubscriptionPlansService` | Create a new plan |
-| `updateSubscriptionPlan(String planId, UpdateSubscriptionPlanRequest)` | `UpdateSubscriptionPlanService` | Patch an existing plan |
-| `assignSubscriptionsToExistingUsers()` | `AssignSubscriptionToUsersService` | Bulk-assign default plans |
+| Method                                                                 | Delegates To                       | Description               |
+|------------------------------------------------------------------------|------------------------------------|---------------------------|
+| `createSubscriptionPlan(CreateSubscriptionPlanRequest)`                | `AddSubscriptionPlansService`      | Create a new plan         |
+| `updateSubscriptionPlan(String planId, UpdateSubscriptionPlanRequest)` | `UpdateSubscriptionPlanService`    | Patch an existing plan    |
+| `assignSubscriptionsToExistingUsers()`                                 | `AssignSubscriptionToUsersService` | Bulk-assign default plans |
 
 ---
 
@@ -1330,12 +1330,12 @@ Utility service used internally (not exposed via REST). Assigns a single default
 
 **Role → Plan mapping:**
 
-| Role | Default Plan |
-|---|---|
+| Role          | Default Plan      |
+|---------------|-------------------|
 | `SUPER_ADMIN` | `BUSINESS_YEARLY` |
-| `ADMIN` | `BUSINESS_YEARLY` |
-| `MODERATOR` | `PRO_YEARLY` |
-| `USER` | `FREE` |
+| `ADMIN`       | `BUSINESS_YEARLY` |
+| `MODERATOR`   | `PRO_YEARLY`      |
+| `USER`        | `FREE`            |
 
 **Logic:**
 ```
@@ -1434,11 +1434,11 @@ Utility service used internally (not exposed via REST). Assigns a single default
 
 **Feature derivation by plan tier:**
 
-| Tier | Features |
-|---|---|
-| FREE | Basic document processing, Limited OCR pages, Email support |
-| STARTER | Standard processing, Increased OCR, Priority email support, API access |
-| PRO | Advanced processing, High OCR, Priority support, Full API, Custom integrations |
+| Tier                  | Features                                                                                                            |
+|-----------------------|---------------------------------------------------------------------------------------------------------------------|
+| FREE                  | Basic document processing, Limited OCR pages, Email support                                                         |
+| STARTER               | Standard processing, Increased OCR, Priority email support, API access                                              |
+| PRO                   | Advanced processing, High OCR, Priority support, Full API, Custom integrations                                      |
 | BUSINESS / ENTERPRISE | Unlimited processing, Unlimited OCR, 24/7 premium support, Full API, Custom integrations, Dedicated account manager |
 
 #### `getSupportedCurrencies()`
@@ -1480,23 +1480,23 @@ Provides programmatic feature gating — called by other packages (e.g., documen
 
 **Premium features (`Feature` enum):**
 
-| Feature | Description |
-|---|---|
-| `DOCUMENT_MOVE` | Move documents between collections |
-| `DOCUMENT_ENCRYPTION` | Encrypt stored documents |
-| `ADVANCED_SEARCH` | Advanced search/filtering capabilities |
-| `PRIORITY_OCR` | Priority queue for OCR processing |
+| Feature               | Description                            |
+|-----------------------|----------------------------------------|
+| `DOCUMENT_MOVE`       | Move documents between collections     |
+| `DOCUMENT_ENCRYPTION` | Encrypt stored documents               |
+| `ADVANCED_SEARCH`     | Advanced search/filtering capabilities |
+| `PRIORITY_OCR`        | Priority queue for OCR processing      |
 
 **Plans with premium access (STARTER and above):**
 `STARTER_MONTHLY`, `STARTER_YEARLY`, `PRO_MONTHLY`, `PRO_YEARLY`, `BUSINESS_MONTHLY`, `BUSINESS_YEARLY`
 
 **Methods:**
 
-| Method | Returns | Description |
-|---|---|---|
-| `hasFeatureAccess(String userId, Feature feature)` | `boolean` | Returns `true` if user's plan is in the premium tier set |
-| `requireFeatureAccess(String userId, Feature feature)` | `void` | Calls `hasFeatureAccess`; throws `ForbiddenException` if access denied |
-| `hasPaidSubscription(String userId)` | `boolean` | Returns `true` if user's plan is not `FREE` |
+| Method                                                 | Returns   | Description                                                            |
+|--------------------------------------------------------|-----------|------------------------------------------------------------------------|
+| `hasFeatureAccess(String userId, Feature feature)`     | `boolean` | Returns `true` if user's plan is in the premium tier set               |
+| `requireFeatureAccess(String userId, Feature feature)` | `void`    | Calls `hasFeatureAccess`; throws `ForbiddenException` if access denied |
+| `hasPaidSubscription(String userId)`                   | `boolean` | Returns `true` if user's plan is not `FREE`                            |
 
 ---
 
@@ -1505,30 +1505,30 @@ Provides programmatic feature gating — called by other packages (e.g., documen
 ### `SubscriptionPlanRepository`
 **Extends:** `JpaRepository<SubscriptionPlan, String>`
 
-| Method | Description |
-|---|---|
+| Method                               | Description                                                                           |
+|--------------------------------------|---------------------------------------------------------------------------------------|
 | `findByName(SubscriptionPlans name)` | Look up a plan by its enum name — used during default assignment and trial activation |
-| `findPlanById(String planId)` | Look up a plan by UUID — used during plan updates |
+| `findPlanById(String planId)`        | Look up a plan by UUID — used during plan updates                                     |
 
 ---
 
 ### `UserSubscriptionRepository`
 **Extends:** `JpaRepository<UserSubscription, String>`
 
-| Method | Description |
-|---|---|
-| `findByUserId(String userId)` | Look up a user's subscription by user ID |
-| `findByUserIdWithPlan(String userId)` | `JOIN FETCH us.plan` — eager loads plan to avoid N+1 |
-| `findByPaymentGatewaySubscriptionId(String id)` | Look up by external gateway subscription ID (webhooks) |
-| `findByCurrentPeriodEndBetweenAndAutoRenewFalse(start, end)` | Find subscriptions expiring soon with auto-renew off |
-| `findByTrialEndsAtBetweenAndStatusEquals(start, end, status)` | Find expired trials — used by `TrialExpiryJob` |
-| `findActivePaidSubscriptions()` | All `ACTIVE` non-FREE subscriptions — used by coupon targeting |
-| `findActiveSubscriptionsByPlanName(String planName)` | Active subscriptions by plan name — used by coupon targeting |
-| `findFreeTierWithHighActivity()` | FREE-plan users with `ocrPagesUsed >= 20` — used by coupon targeting |
-| `findRecentlyExpiredSubscriptions(OffsetDateTime threeMonthsAgo)` | Churned users within 3 months — used by coupon targeting |
-| `findHighActivitySubscriptions()` | Users using > 50% of their OCR page limit — used by coupon targeting |
-| `findSubscriptionsNeedingQuotaReset(OffsetDateTime now)` | Subscriptions where `quotaResetDate <= now` — used by quota reset job |
-| `findSubscriptionsWithoutQuotaResetDate()` | Subscriptions with `quotaResetDate IS NULL` — used by init job |
+| Method                                                            | Description                                                           |
+|-------------------------------------------------------------------|-----------------------------------------------------------------------|
+| `findByUserId(String userId)`                                     | Look up a user's subscription by user ID                              |
+| `findByUserIdWithPlan(String userId)`                             | `JOIN FETCH us.plan` — eager loads plan to avoid N+1                  |
+| `findByPaymentGatewaySubscriptionId(String id)`                   | Look up by external gateway subscription ID (webhooks)                |
+| `findByCurrentPeriodEndBetweenAndAutoRenewFalse(start, end)`      | Find subscriptions expiring soon with auto-renew off                  |
+| `findByTrialEndsAtBetweenAndStatusEquals(start, end, status)`     | Find expired trials — used by `TrialExpiryJob`                        |
+| `findActivePaidSubscriptions()`                                   | All `ACTIVE` non-FREE subscriptions — used by coupon targeting        |
+| `findActiveSubscriptionsByPlanName(String planName)`              | Active subscriptions by plan name — used by coupon targeting          |
+| `findFreeTierWithHighActivity()`                                  | FREE-plan users with `ocrPagesUsed >= 20` — used by coupon targeting  |
+| `findRecentlyExpiredSubscriptions(OffsetDateTime threeMonthsAgo)` | Churned users within 3 months — used by coupon targeting              |
+| `findHighActivitySubscriptions()`                                 | Users using > 50% of their OCR page limit — used by coupon targeting  |
+| `findSubscriptionsNeedingQuotaReset(OffsetDateTime now)`          | Subscriptions where `quotaResetDate <= now` — used by quota reset job |
+| `findSubscriptionsWithoutQuotaResetDate()`                        | Subscriptions with `quotaResetDate IS NULL` — used by init job        |
 
 ---
 
@@ -1650,11 +1650,11 @@ Applied automatically during:
 - **Login** (`LoginUserImpl`) — safety net if the user somehow has no subscription
 - **Admin bulk-assign** (`AssignSubscriptionToUsersImpl`) — backfills existing users
 
-| Role | Default Plan |
-|---|---|
-| `USER` | `FREE` |
-| `MODERATOR` | `PRO_YEARLY` |
-| `ADMIN` | `BUSINESS_YEARLY` |
+| Role          | Default Plan      |
+|---------------|-------------------|
+| `USER`        | `FREE`            |
+| `MODERATOR`   | `PRO_YEARLY`      |
+| `ADMIN`       | `BUSINESS_YEARLY` |
 | `SUPER_ADMIN` | `BUSINESS_YEARLY` |
 
 > ⚠️ If the required default plan does not exist in the database (e.g., plans haven't been seeded by an admin), `assignDefaultSubscription()` returns `null` and logs a warning. The user is saved without a subscription until the bulk-assign endpoint is called.
@@ -1663,29 +1663,29 @@ Applied automatically during:
 
 ## Validation Rules
 
-| Rule | Applied To | Details |
-|---|---|---|
-| `@NotNull` | `name`, `price`, `currency`, `billingIntervalUnit`, `billingIntervalValue`, `documentUploadLimit`, `ocrPageLimit` | All required for plan creation |
-| `@Min(0)` | `price` | Must be a non-negative number |
-| `@Min(1)` | `billingIntervalValue` | Must be at least 1 billing unit |
-| `@Min(0)` | `trialDays` | Cannot be negative |
-| Unique plan name | `AddSubscriptionPlansImpl` | Enforced in service layer via `findByName` check — `BadRequestException` if duplicate |
-| Valid currency | `UpdateSubscriptionPlanImpl` | `SubscriptionCurrency.isValidCurrency()` check — `BadRequestException` if invalid |
-| Plan supports trial | `UserSubscriptionServiceImpl` | `plan.trialDays > 0` — `IllegalArgumentException` if not |
-| Trial not already used | `UserSubscriptionServiceImpl` | `hasUsedTrial == false` — `BadRequestException` if already used |
-| No active paid sub | `UserSubscriptionServiceImpl` | Cannot trial if already on a paid `ACTIVE` plan |
+| Rule                   | Applied To                                                                                                        | Details                                                                               |
+|------------------------|-------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| `@NotNull`             | `name`, `price`, `currency`, `billingIntervalUnit`, `billingIntervalValue`, `documentUploadLimit`, `ocrPageLimit` | All required for plan creation                                                        |
+| `@Min(0)`              | `price`                                                                                                           | Must be a non-negative number                                                         |
+| `@Min(1)`              | `billingIntervalValue`                                                                                            | Must be at least 1 billing unit                                                       |
+| `@Min(0)`              | `trialDays`                                                                                                       | Cannot be negative                                                                    |
+| Unique plan name       | `AddSubscriptionPlansImpl`                                                                                        | Enforced in service layer via `findByName` check — `BadRequestException` if duplicate |
+| Valid currency         | `UpdateSubscriptionPlanImpl`                                                                                      | `SubscriptionCurrency.isValidCurrency()` check — `BadRequestException` if invalid     |
+| Plan supports trial    | `UserSubscriptionServiceImpl`                                                                                     | `plan.trialDays > 0` — `IllegalArgumentException` if not                              |
+| Trial not already used | `UserSubscriptionServiceImpl`                                                                                     | `hasUsedTrial == false` — `BadRequestException` if already used                       |
+| No active paid sub     | `UserSubscriptionServiceImpl`                                                                                     | Cannot trial if already on a paid `ACTIVE` plan                                       |
 
 ---
 
 ## Error Reference
 
-| Exception Class | HTTP Status | Common Trigger |
-|---|---|---|
-| `BadRequestException` | `400 Bad Request` | Duplicate plan name, invalid currency, trial already used, active paid subscription exists |
-| `IllegalArgumentException` | `400 Bad Request` | Invalid currency code (public pricing endpoint), plan not found, plan doesn't support trials |
-| `ForbiddenException` | `403 Forbidden` | Non-admin accessing admin endpoints; feature access denied (from `SubscriptionFeatureService`) |
-| `NotFoundException` | `404 Not Found` | Plan not found by ID during update |
-| `409 Conflict` | `409 Conflict` | (Documented in Swagger for trial endpoint) — effectively returned as `400 Bad Request` in current implementation |
+| Exception Class            | HTTP Status       | Common Trigger                                                                                                   |
+|----------------------------|-------------------|------------------------------------------------------------------------------------------------------------------|
+| `BadRequestException`      | `400 Bad Request` | Duplicate plan name, invalid currency, trial already used, active paid subscription exists                       |
+| `IllegalArgumentException` | `400 Bad Request` | Invalid currency code (public pricing endpoint), plan not found, plan doesn't support trials                     |
+| `ForbiddenException`       | `403 Forbidden`   | Non-admin accessing admin endpoints; feature access denied (from `SubscriptionFeatureService`)                   |
+| `NotFoundException`        | `404 Not Found`   | Plan not found by ID during update                                                                               |
+| `409 Conflict`             | `409 Conflict`    | (Documented in Swagger for trial endpoint) — effectively returned as `400 Bad Request` in current implementation |
 
 ---
 

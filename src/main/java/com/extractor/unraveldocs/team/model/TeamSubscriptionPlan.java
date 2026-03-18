@@ -53,7 +53,7 @@ public class TeamSubscriptionPlan {
     private Integer maxMembers;
 
     @Column(name = "monthly_document_limit")
-    private Integer monthlyDocumentLimit; // NULL = unlimited
+    private Integer monthlyDocumentLimit; // Optional monthly document allowance metadata; NULL = unlimited
 
     // Features
     @Column(name = "has_admin_promotion", nullable = false)

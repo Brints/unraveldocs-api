@@ -43,7 +43,7 @@ public class SubscriptionPlan {
     private Integer billingIntervalValue; // e.g., 1 for monthly, 12 for yearly
 
     @Column(nullable = false, name = "document_upload_limit")
-    private Integer documentUploadLimit; // Maximum number of documents a user can upload
+    private Integer documentUploadLimit; // Monthly document allowance for visibility/plan metadata
 
     @Column(nullable = false, name = "ocr_page_limit")
     private Integer ocrPageLimit;

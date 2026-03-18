@@ -11,8 +11,8 @@ import java.time.OffsetDateTime;
  * DTO containing storage, OCR, and document usage information for a user or
  * team.
  *
- * <p>Monthly quotas (documents uploaded, OCR pages used) reset on the first day of each month.
- * Storage usage is cumulative and does not reset.</p>
+ * <p>Monthly counters (documents uploaded, OCR pages used) reset on the first day of each month.
+ * Storage usage is cumulative and does not reset. Upload blocking is enforced by storage only.</p>
  */
 @Data
 @Builder
@@ -33,7 +33,7 @@ public class StorageInfo {
     private Integer ocrPagesRemaining;
     private boolean ocrUnlimited;
 
-    // Document upload fields (resets monthly)
+    // Document usage fields (monthly counters for visibility/analytics)
     private Integer documentUploadLimit; // null = unlimited
     private Integer documentsUploaded;  // Monthly count, resets on quotaResetDate
     private Integer documentsRemaining;
@@ -77,7 +77,7 @@ public class StorageInfo {
     }
 
     /**
-     * Check if document upload quota is exceeded.
+     * Check if the informational monthly document counter has reached plan allowance.
      */
     public boolean isDocumentQuotaExceeded() {
         if (documentsUnlimited || documentUploadLimit == null) {

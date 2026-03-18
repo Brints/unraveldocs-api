@@ -72,9 +72,8 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
 
         FileUploadValidationUtil.validateTotalFileSize(files);
 
-        // Check document upload limit and storage availability before processing uploads
+        // Check storage availability before processing uploads
         long totalUploadSize = Arrays.stream(files).mapToLong(MultipartFile::getSize).sum();
-        storageAllocationService.checkDocumentUploadLimit(user, files.length);
         storageAllocationService.checkStorageAvailable(user, totalUploadSize);
 
         for (MultipartFile file : files) {
@@ -158,13 +157,11 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    ocrEventPublisher.ifPresent(publisher -> {
-                        successfulFiles.forEach(fileEntry -> {
-                            OcrRequestedEvent event = ocrEventMapper.toOcrRequestedEvent(fileEntry,
-                                    finalSavedCollectionId, startPage, endPage, pages);
-                            publisher.publishOcrRequest(event);
-                        });
-                    });
+                    ocrEventPublisher.ifPresent(publisher -> successfulFiles.forEach(fileEntry -> {
+                        OcrRequestedEvent event = ocrEventMapper.toOcrRequestedEvent(fileEntry,
+                                finalSavedCollectionId, startPage, endPage, pages);
+                        publisher.publishOcrRequest(event);
+                    }));
                 }
             });
 
@@ -172,7 +169,7 @@ public class BulkDocumentUploadExtractionImpl implements BulkDocumentUploadExtra
                     s.sanitizeLogging(savedCollectionId), processedFiles.size(), s.sanitizeLogging(user.getId()),
                     savedCollection.getCollectionStatus());
 
-            // Update monthly documents uploaded count (for quota tracking)
+            // Keep monthly upload count for usage visibility/analytics.
             if (successfulUploads > 0) {
                 storageAllocationService.updateMonthlyDocumentsUploaded(user.getId(), successfulUploads);
             }

@@ -1,5 +1,6 @@
 package com.extractor.unraveldocs.pushnotification.impl;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.pushnotification.config.NotificationConfig;
 import com.extractor.unraveldocs.pushnotification.dto.request.RegisterDeviceRequest;
 import com.extractor.unraveldocs.pushnotification.dto.response.DeviceTokenResponse;
@@ -31,8 +32,6 @@ public class DeviceTokenServiceImpl implements DeviceTokenService {
     @Override
     @Transactional
     public DeviceTokenResponse registerDevice(String userId, RegisterDeviceRequest request) {
-        log.debug("Registering device for user {}: {}", userId, request.getDeviceType());
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
@@ -45,7 +44,6 @@ public class DeviceTokenServiceImpl implements DeviceTokenService {
             // If token belongs to another user, transfer it
             if (!token.getUser().getId().equals(userId)) {
                 token.setUser(user);
-                log.info("Device token transferred to user {}", userId);
             }
             // Reactivate if inactive
             token.setActive(true);
@@ -58,7 +56,6 @@ public class DeviceTokenServiceImpl implements DeviceTokenService {
         // Check max devices limit
         long currentDevices = deviceTokenRepository.countByUserIdAndIsActiveTrue(userId);
         if (currentDevices >= notificationConfig.getMaxDevicesPerUser()) {
-            log.warn("User {} has reached max devices limit ({})", userId, notificationConfig.getMaxDevicesPerUser());
             throw new IllegalStateException("Maximum number of devices reached. Please remove a device first.");
         }
 
@@ -72,7 +69,6 @@ public class DeviceTokenServiceImpl implements DeviceTokenService {
                 .build();
 
         UserDeviceToken saved = deviceTokenRepository.save(newToken);
-        log.info("New device registered for user {}: {}", userId, saved.getId());
         return mapToResponse(saved);
     }
 
@@ -84,7 +80,6 @@ public class DeviceTokenServiceImpl implements DeviceTokenService {
                 .ifPresent(token -> {
                     token.deactivate();
                     deviceTokenRepository.save(token);
-                    log.info("Device {} unregistered for user {}", tokenId, userId);
                 });
     }
 
@@ -95,7 +90,6 @@ public class DeviceTokenServiceImpl implements DeviceTokenService {
                 .ifPresent(token -> {
                     token.deactivate();
                     deviceTokenRepository.save(token);
-                    log.info("Device token unregistered: {}", token.getId());
                 });
     }
 
@@ -135,7 +129,12 @@ public class DeviceTokenServiceImpl implements DeviceTokenService {
     @Transactional
     public void deactivateAllDevices(String userId) {
         int deactivated = deviceTokenRepository.deactivateAllForUser(userId);
-        log.info("Deactivated {} devices for user {}", deactivated, userId);
+    }
+
+    @Override
+    @Transactional
+    public int deleteAllDeviceTokens(String userId) {
+        return deviceTokenRepository.deleteAllByUserId(userId);
     }
 
     @Override

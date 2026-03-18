@@ -4,6 +4,7 @@ import com.extractor.unraveldocs.documents.repository.DocumentCollectionReposito
 import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
 import com.extractor.unraveldocs.storage.dto.StorageInfo;
 import com.extractor.unraveldocs.storage.exception.StorageQuotaExceededException;
+import com.extractor.unraveldocs.subscription.datamodel.SubscriptionSource;
 import com.extractor.unraveldocs.subscription.model.SubscriptionPlan;
 import com.extractor.unraveldocs.subscription.model.UserSubscription;
 import com.extractor.unraveldocs.subscription.repository.UserSubscriptionRepository;
@@ -47,90 +48,13 @@ public class StorageAllocationService {
      * @throws StorageQuotaExceededException if storage limit would be exceeded
      */
     public void checkStorageAvailable(User user, long requiredBytes) {
-        // Check if user is part of a team first
-        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
-        Optional<TeamMember> teamMembership = teamMemberships.stream().findFirst();
-
-        if (teamMembership.isPresent()) {
-            Team team = teamMembership.get().getTeam();
-            if (team.isAccessAllowed()) {
-                checkTeamStorageAvailable(team, requiredBytes);
-                return;
-            }
-        }
-
-        checkIndividualStorageAvailable(user, requiredBytes);
-        checkIndividualStorageAvailable(user, requiredBytes);
-    }
-
-    /**
-     * Check if user has sufficient document upload slots available.
-     *
-     * @param user              The user attempting the upload
-     * @param newDocumentsCount The number of new documents to upload
-     * @throws StorageQuotaExceededException if document limit would be exceeded
-     */
-    public void checkDocumentUploadLimit(User user, int newDocumentsCount) {
-        // Check if user is part of a team first
-        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
-        Optional<TeamMember> teamMembership = teamMemberships.stream().findFirst();
-
-        if (teamMembership.isPresent()) {
-            Team team = teamMembership.get().getTeam();
-            if (team.isAccessAllowed()) {
-                checkTeamDocumentUploadLimit(team, user, newDocumentsCount);
-                return;
-            }
-        }
-
-        checkIndividualDocumentUploadLimit(user, newDocumentsCount);
-    }
-
-    private void checkIndividualDocumentUploadLimit(User user, int newDocumentsCount) {
-        Optional<UserSubscription> subscriptionOpt = userSubscriptionRepository.findByUserIdWithPlan(user.getId());
-        if (subscriptionOpt.isEmpty()) {
-            throw new StorageQuotaExceededException("No active subscription found.");
-        }
-
-        UserSubscription subscription = subscriptionOpt.get();
-        SubscriptionPlan plan = subscription.getPlan();
-        Integer documentUploadLimit = plan.getDocumentUploadLimit();
-
-        if (documentUploadLimit == null || documentUploadLimit == 0) {
-            return; // Unlimited
-        }
-
-        // Use monthly documents uploaded count (resets monthly) instead of total document count
-        int currentMonthlyCount = subscription.getMonthlyDocumentsUploaded() != null
-                ? subscription.getMonthlyDocumentsUploaded() : 0;
-        // Use long arithmetic to prevent integer overflow
-        long totalDocuments = (long) currentMonthlyCount + (long) newDocumentsCount;
-        if (totalDocuments > documentUploadLimit) {
-            throw new StorageQuotaExceededException(
-                    "Monthly document upload limit exceeded. Limit: " + documentUploadLimit +
-                    ", Used this month: " + currentMonthlyCount + ", Attempting to add: " + newDocumentsCount +
-                    ". Your quota will reset on the first day of next month.");
-        }
-    }
-
-    private void checkTeamDocumentUploadLimit(Team team, User user, int newDocumentsCount) {
-        TeamSubscriptionPlan plan = team.getPlan();
-        if (plan == null)
+        Optional<Team> teamContext = resolveEffectiveTeamContext(user);
+        if (teamContext.isPresent()) {
+            checkTeamStorageAvailable(teamContext.get(), requiredBytes);
             return;
-
-        Integer documentUploadLimit = plan.getMonthlyDocumentLimit();
-
-        if (documentUploadLimit == null) {
-            return; // Unlimited (Enterprise)
         }
 
-        long currentCount = documentCollectionRepository.countByUserId(user.getId());
-
-        if (currentCount + newDocumentsCount > documentUploadLimit) {
-            throw new StorageQuotaExceededException(
-                    "Team document upload limit exceeded. Limit: " + documentUploadLimit + ", Current: " + currentCount
-                            + ", New: " + newDocumentsCount);
-        }
+        checkIndividualStorageAvailable(user, requiredBytes);
     }
 
     /**
@@ -195,16 +119,10 @@ public class StorageAllocationService {
      */
     @Transactional
     public void updateStorageUsed(User user, long bytesChange) {
-        // Check if user is part of a team first
-        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
-        Optional<TeamMember> teamMembership = teamMemberships.stream().findFirst();
-
-        if (teamMembership.isPresent()) {
-            Team team = teamMembership.get().getTeam();
-            if (team.isAccessAllowed()) {
-                updateTeamStorageUsed(team, bytesChange);
-                return;
-            }
+        Optional<Team> teamContext = resolveEffectiveTeamContext(user);
+        if (teamContext.isPresent()) {
+            updateTeamStorageUsed(teamContext.get(), bytesChange);
+            return;
         }
 
         updateIndividualStorageUsed(user, bytesChange);
@@ -332,15 +250,9 @@ public class StorageAllocationService {
      */
     @Transactional(readOnly = true)
     public StorageInfo getStorageInfo(User user) {
-        // Check if user is part of a team first
-        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
-        Optional<TeamMember> teamMembership = teamMemberships.stream().findFirst();
-
-        if (teamMembership.isPresent()) {
-            Team team = teamMembership.get().getTeam();
-            if (team.isAccessAllowed()) {
-                return getTeamStorageInfo(team, user);
-            }
+        Optional<Team> teamContext = resolveEffectiveTeamContext(user);
+        if (teamContext.isPresent()) {
+            return getTeamStorageInfo(teamContext.get(), user);
         }
 
         return getIndividualStorageInfo(user);
@@ -386,7 +298,7 @@ public class StorageAllocationService {
         boolean ocrUnlimited = ocrPageLimit == null || ocrPageLimit == 0;
         Integer ocrPagesRemaining = ocrUnlimited ? null : Math.max(0, ocrPageLimit - ocrPagesUsed);
 
-        // Document upload info - use monthly count (resets monthly)
+        // Document usage info - monthly counters returned for visibility/analytics.
         Integer documentUploadLimit = plan.getDocumentUploadLimit();
         int documentsUploaded = subscription.getMonthlyDocumentsUploaded() != null
                 ? subscription.getMonthlyDocumentsUploaded() : 0;
@@ -419,7 +331,7 @@ public class StorageAllocationService {
         boolean ocrUnlimited = true;
         Integer ocrPagesRemaining = null;
 
-        // Document upload info for the user within the team (count in real-time)
+        // Team document usage info for the user, returned for visibility.
         Integer documentUploadLimit = plan != null ? plan.getMonthlyDocumentLimit() : null;
         Long documentsUploadedLong = documentCollectionRepository.countByUserId(user.getId());
         Integer documentsUploaded = documentsUploadedLong != null ? documentsUploadedLong.intValue() : 0;
@@ -434,6 +346,23 @@ public class StorageAllocationService {
         return buildStorageInfo(storageUsed, storageLimit, ocrPageLimit, ocrPagesUsed, ocrPagesRemaining,
                 ocrUnlimited, documentUploadLimit, documentsUploaded, documentsRemaining, documentsUnlimited,
                 subscriptionPlanName, billingInterval, null);
+    }
+
+    /**
+     * Team limits only apply when the subscription currently comes from team
+     * entitlement and the linked team still grants access.
+     */
+    private Optional<Team> resolveEffectiveTeamContext(User user) {
+        Optional<UserSubscription> subscriptionOpt = userSubscriptionRepository.findByUserId(user.getId());
+        if (subscriptionOpt.isEmpty() || subscriptionOpt.get().getSubscriptionSource() != SubscriptionSource.TEAM) {
+            return Optional.empty();
+        }
+
+        List<TeamMember> teamMemberships = teamMemberRepository.findByUserId(user.getId());
+        return teamMemberships.stream()
+                .map(TeamMember::getTeam)
+                .filter(team -> team != null && team.isAccessAllowed())
+                .findFirst();
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.extractor.unraveldocs.pushnotification.provider.firebase;
 
+import com.extractor.unraveldocs.documents.utils.SanitizeLogging;
+import com.extractor.unraveldocs.pushnotification.interfaces.DeviceTokenService;
 import com.extractor.unraveldocs.pushnotification.provider.NotificationProviderService;
 import com.google.firebase.messaging.*;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +23,17 @@ import java.util.Map;
 public class FirebaseNotificationProvider implements NotificationProviderService {
 
     private final FirebaseMessaging firebaseMessaging;
+    private final DeviceTokenService deviceTokenService;
+    private final SanitizeLogging sanitizer;
 
     @Value("${firebase.enabled:false}")
     private boolean enabled;
 
     @Autowired
-    public FirebaseNotificationProvider(FirebaseMessaging firebaseMessaging) {
+    public FirebaseNotificationProvider(FirebaseMessaging firebaseMessaging, DeviceTokenService deviceTokenService,  SanitizeLogging sanitizer) {
         this.firebaseMessaging = firebaseMessaging;
+        this.deviceTokenService = deviceTokenService;
+        this.sanitizer = sanitizer;
         log.info("Firebase Notification Provider initialized");
     }
 
@@ -36,7 +42,7 @@ public class FirebaseNotificationProvider implements NotificationProviderService
         try {
             Message fcmMessage = buildMessage(deviceToken, title, message, data);
             String response = firebaseMessaging.send(fcmMessage);
-            log.debug("FCM message sent successfully: {}", response);
+            log.debug("FCM message sent successfully: {}", sanitizer.sanitizeLogging(response));
             return true;
         } catch (FirebaseMessagingException e) {
             log.error("Failed to send FCM message to {}: {}", deviceToken, e.getMessage());
@@ -80,7 +86,8 @@ public class FirebaseNotificationProvider implements NotificationProviderService
             BatchResponse response = firebaseMessaging.sendEachForMulticast(multicastMessage);
 
             log.debug("FCM batch sent: {} success, {} failure",
-                    response.getSuccessCount(), response.getFailureCount());
+                    sanitizer.sanitizeLoggingInteger(response.getSuccessCount()),
+                    sanitizer.sanitizeLoggingInteger(response.getFailureCount()));
 
             // Handle failed tokens
             if (response.getFailureCount() > 0) {
@@ -110,10 +117,12 @@ public class FirebaseNotificationProvider implements NotificationProviderService
                     .build();
 
             String response = firebaseMessaging.send(fcmMessage);
-            log.debug("FCM topic message sent to {}: {}", topic, response);
+            log.debug("FCM topic message sent to {}: {}",
+                    sanitizer.sanitizeLogging(topic),
+                    sanitizer.sanitizeLogging(response));
             return true;
         } catch (FirebaseMessagingException e) {
-            log.error("Failed to send FCM topic message to {}: {}", topic, e.getMessage());
+            log.error("Failed to send FCM topic message to {}: {}", sanitizer.sanitizeLogging(topic), e.getMessage());
             return false;
         }
     }
@@ -134,7 +143,8 @@ public class FirebaseNotificationProvider implements NotificationProviderService
             TopicManagementResponse response = firebaseMessaging.subscribeToTopic(List.of(deviceToken), topic);
             return response.getSuccessCount() > 0;
         } catch (FirebaseMessagingException e) {
-            log.error("Failed to subscribe {} to topic {}: {}", deviceToken, topic, e.getMessage());
+            log.error("Failed to subscribe to topic {}: {}",
+                    sanitizer.sanitizeLogging(topic), e.getMessage());
             return false;
         }
     }
@@ -145,7 +155,8 @@ public class FirebaseNotificationProvider implements NotificationProviderService
             TopicManagementResponse response = firebaseMessaging.unsubscribeFromTopic(List.of(deviceToken), topic);
             return response.getSuccessCount() > 0;
         } catch (FirebaseMessagingException e) {
-            log.error("Failed to unsubscribe {} from topic {}: {}", deviceToken, topic, e.getMessage());
+            log.error("Failed to unsubscribe from topic {}: {}",
+                    sanitizer.sanitizeLogging(topic), e.getMessage());
             return false;
         }
     }
@@ -194,11 +205,8 @@ public class FirebaseNotificationProvider implements NotificationProviderService
     }
 
     private void handleFirebaseException(FirebaseMessagingException e, String token) {
-        MessagingErrorCode errorCode = e.getMessagingErrorCode();
-        if (errorCode == MessagingErrorCode.UNREGISTERED ||
-                errorCode == MessagingErrorCode.INVALID_ARGUMENT) {
-            log.warn("Invalid or unregistered token, should be removed: {}", token);
-            // Token cleanup would be handled by the calling service
+        if (isInvalidTokenError(e.getMessagingErrorCode())) {
+            deviceTokenService.unregisterByToken(token);
         }
     }
 
@@ -211,8 +219,7 @@ public class FirebaseNotificationProvider implements NotificationProviderService
                 FirebaseMessagingException exception = responses.get(i).getException();
                 if (exception != null) {
                     MessagingErrorCode errorCode = exception.getMessagingErrorCode();
-                    if (errorCode == MessagingErrorCode.UNREGISTERED ||
-                            errorCode == MessagingErrorCode.INVALID_ARGUMENT) {
+                    if (isInvalidTokenError(errorCode)) {
                         invalidTokens.add(tokens.get(i));
                     }
                 }
@@ -220,7 +227,13 @@ public class FirebaseNotificationProvider implements NotificationProviderService
         }
 
         if (!invalidTokens.isEmpty()) {
-            log.warn("Found {} invalid tokens that should be removed", invalidTokens.size());
+            invalidTokens.forEach(deviceTokenService::unregisterByToken);
+            log.warn("Removed {} invalid tokens after batch send",
+                    sanitizer.sanitizeLoggingInteger(invalidTokens.size()));
         }
+    }
+
+    private boolean isInvalidTokenError(MessagingErrorCode errorCode) {
+        return errorCode == MessagingErrorCode.UNREGISTERED || errorCode == MessagingErrorCode.INVALID_ARGUMENT;
     }
 }

@@ -43,6 +43,11 @@ public class NotificationConfig {
     private int notificationRetentionDays = 90;
 
     /**
+     * Number of days to retain inactive device tokens before hard deletion.
+     */
+    private int tokenRetentionDays = 30;
+
+    /**
      * Kafka topic for notification events.
      */
     private String kafkaTopic = "notification-events";
