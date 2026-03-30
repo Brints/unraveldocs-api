@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Repository
 public interface CreditTransactionRepository extends JpaRepository<CreditTransaction, String> {
@@ -21,4 +22,9 @@ public interface CreditTransactionRepository extends JpaRepository<CreditTransac
             "AND t.createdAt >= :startOfMonth")
     int sumTransfersSentInPeriod(@Param("userId") String userId,
             @Param("startOfMonth") OffsetDateTime startOfMonth);
+
+    // --- Admin Stats Aggregation Queries ---
+
+    @Query("SELECT t.type, COUNT(t) FROM CreditTransaction t GROUP BY t.type")
+    List<Object[]> countTransactionsByType();
 }

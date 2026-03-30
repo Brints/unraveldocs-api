@@ -47,4 +47,9 @@ public interface CouponAnalyticsRepository extends JpaRepository<CouponAnalytics
      * Delete analytics older than a certain date.
      */
     void deleteByAnalyticsDateBefore(LocalDate date);
+
+    // --- Admin Stats Aggregation Queries ---
+
+    @Query("SELECT COALESCE(SUM(a.totalDiscountAmount), 0) FROM CouponAnalytics a")
+    BigDecimal sumTotalDiscountAmount();
 }

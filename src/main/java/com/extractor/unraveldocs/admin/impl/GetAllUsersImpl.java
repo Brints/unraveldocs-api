@@ -46,15 +46,7 @@ public class GetAllUsersImpl implements GetAllUsersService {
                 Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
                 // Fetch users from the repository with filtering
-                Page<User> userPage = userRepository.findAllUsers(
-                                request.getSearch(),
-                                request.getFirstName(),
-                                request.getLastName(),
-                                request.getEmail(),
-                                request.getRole(),
-                                request.getIsActive(),
-                                request.getIsVerified(),
-                                pageable);
+                Page<User> userPage = userRepository.findAllUsers(request, pageable);
 
                 // Convert User entities to UserSummary DTOs
                 List<UserSummary> userSummaries = userPage.stream()

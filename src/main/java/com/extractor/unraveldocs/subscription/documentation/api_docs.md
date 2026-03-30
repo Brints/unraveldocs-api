@@ -1275,6 +1275,268 @@ Returned inside `UnravelDocsResponse<UserSubscriptionDetailsDto>`. Null fields a
 
 ---
 
+### 8. Get Subscription Statistics (Admin)
+
+| Property          | Value                                            |
+|-------------------|--------------------------------------------------|
+| **Method**        | `GET`                                            |
+| **Path**          | `/api/v1/admin/subscriptions/stats`              |
+| **Auth Required** | Yes — `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`         |
+
+**Success Response — `200 OK`**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Subscription stats retrieved successfully",
+  "data": {
+    "totalSubscriptions": 1500,
+    "byPlan": {
+      "FREE": 800,
+      "PRO_MONTHLY": 400,
+      "BUSINESS_YEARLY": 300
+    },
+    "byStatus": {
+      "ACTIVE": 1400,
+      "TRIAL": 50,
+      "CANCELLED": 20,
+      "EXPIRED": 30
+    },
+    "bySource": {
+      "WEB": 1000,
+      "MOBILE": 500
+    },
+    "trialConversionRate": 45.5,
+    "churnRate": 3.33,
+    "mrr": 23500.00,
+    "averageRevenuePerUser": 16.78,
+    "usersNearingQuotaLimits": {
+      "storage": 15,
+      "ocr": 25,
+      "ai": 5,
+      "documents": 10
+    }
+  }
+}
+```
+
+---
+
+### 9. Get All Plans (Admin)
+
+| Property          | Value                                   |
+|-------------------|-----------------------------------------|
+| **Method**        | `GET`                                   |
+| **Path**          | `/api/v1/admin/subscriptions/plans`     |
+| **Auth Required** | Yes — `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`|
+
+**Success Response — `200 OK`**
+
+Returns a list of all `SubscriptionPlan` entities, including inactive ones.
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Plans retrieved successfully",
+  "data": [
+    {
+      "id": "plan-uuid",
+      "planName": "STARTER_MONTHLY",
+      "planPrice": 12.99,
+      "planCurrency": "USD",
+      "billingIntervalUnit": "MONTH",
+      "billingIntervalValue": 1,
+      "documentUploadLimit": 75,
+      "ocrPageLimit": 300,
+      "isActive": true,
+      "createdAt": "2026-02-26T10:00:00Z",
+      "updatedAt": "2026-02-27T15:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### 10. Toggle Plan Status (Admin)
+
+| Property          | Value                                               |
+|-------------------|-----------------------------------------------------|
+| **Method**        | `PATCH`                                             |
+| **Path**          | `/api/v1/admin/subscriptions/plans/{planId}/status` |
+| **Auth Required** | Yes — `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`            |
+
+Toggles the `isActive` flag of a subscription plan.
+
+**Success Response — `200 OK`**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Plan status toggled successfully.",
+  "data": {
+    "isActive": false
+  }
+}
+```
+
+---
+
+### 11. Get Plan Subscribers (Admin)
+
+| Property          | Value                                                    |
+|-------------------|----------------------------------------------------------|
+| **Method**        | `GET`                                                    |
+| **Path**          | `/api/v1/admin/subscriptions/plans/{planId}/subscribers` |
+| **Auth Required** | Yes — `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`                 |
+
+Retrieves a paginated list of users subscribed to a specific plan.
+
+**Query Parameters**
+
+| Parameter | Type      | Required | Default | Description |
+|-----------|-----------|----------|---------|-------------|
+| `page`    | `Integer` | ❌        | `0`     | Page number |
+| `size`    | `Integer` | ❌        | `20`    | Page size   |
+
+**Success Response — `200 OK`**
+
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Plan subscribers retrieved successfully",
+  "data": {
+    "users": [
+      {
+        "id": "user-uuid",
+        "email": "user@example.com",
+        "firstName": "John",
+        "lastName": "Doe",
+        "isActive": true,
+        "isVerified": true,
+        "createdAt": "2026-01-01T10:00:00Z",
+        "roles": [
+          "USER"
+        ]
+      }
+    ],
+    "currentPage": 0,
+    "totalItems": 150,
+    "totalPages": 8,
+    "hasNext": true
+  }
+}
+```
+
+---
+
+## 4. Payment & Revenue Admin API (Phase 4)
+
+### 4.1. Get Payment & Revenue Statistics
+**Endpoint**: `GET /api/v1/admin/payments/stats`  
+**Description**: Fetches aggregated payment metrics and revenue figures including total revenue, transactions, and breakdowns.  
+**Roles Required**: `SUPER_ADMIN`, `ADMIN`
+
+**Response (`200 OK`)**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Payment stats retrieved successfully",
+  "data": {
+    "totalTransactions": 1500,
+    "totalRevenue": 25000.00,
+    "revenueByProvider": {
+      "STRIPE": 15000.00,
+      "PAYPAL": 10000.00
+    },
+    "revenueByCurrency": {
+      "USD": 25000.00
+    },
+    "revenueByPaymentMethod": {
+      "CARD": 25000.00
+    },
+    "averageTransactionValue": 16.67,
+    "pendingReceiptEmails": 2,
+    "revenueToday": 500.00,
+    "revenueThisWeek": 3500.00,
+    "revenueThisMonth": 12000.00
+  }
+}
+```
+
+### 4.2. Get All Receipts
+**Endpoint**: `GET /api/v1/admin/receipts`  
+**Description**: Retrieves a paginated list of receipts with optional filtering.  
+**Roles Required**: `SUPER_ADMIN`, `ADMIN`
+
+**Query Parameters**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `userId` | `String` | ❌ | Filter by user ID |
+| `provider`| `String` | ❌ | e.g. `STRIPE`, `PAYPAL` |
+| `currency`| `String` | ❌ | e.g. `USD`, `EUR` |
+| `dateFrom`| `String` | ❌ | ISO-8601 Date |
+| `dateTo`  | `String` | ❌ | ISO-8601 Date |
+| `page`    | `Integer`| ❌ | Default: 0 |
+| `size`    | `Integer`| ❌ | Default: 10 |
+
+**Response (`200 OK`)**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Receipts retrieved successfully",
+  "data": {
+    "content": [
+      {
+        "id": "receipt-uuid",
+        "receiptNumber": "RCP-20261021-000001",
+        "paymentProvider": "STRIPE",
+        "amount": 100.00,
+        "currency": "USD",
+        "userId": "user-uuid",
+        "userEmail": "user@example.com",
+        "userFullName": "John Doe",
+        "paidAt": "2026-10-21T10:00:00Z"
+      }
+    ],
+    "pageable": { ... },
+    "totalPages": 5,
+    "totalElements": 50
+  }
+}
+```
+
+### 4.3. Get Receipt Details
+**Endpoint**: `GET /api/v1/admin/receipts/{id}`  
+**Description**: Retrieves detailed information about a specific receipt.  
+**Roles Required**: `SUPER_ADMIN`, `ADMIN`
+
+**Response (`200 OK`)**
+*(Returns full `AdminReceiptDto` including `paymentMethodDetails`, `description`, `receiptUrl`)*
+
+### 4.4. Resend Receipt Email
+**Endpoint**: `POST /api/v1/admin/receipts/{id}/resend`  
+**Description**: Regenerates the receipt PDF and re-triggers the receipt email to the user.  
+**Roles Required**: `SUPER_ADMIN`, `ADMIN`
+
+**Response (`200 OK`)**
+```json
+{
+  "statusCode": 200,
+  "status": "success",
+  "message": "Success",
+  "data": "Receipt email resend triggered successfully"
+}
+```
+
+---
+
 ## Service Layer
 
 ### `SubscriptionPlansService` (Facade)

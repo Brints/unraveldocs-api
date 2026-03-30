@@ -14,4 +14,6 @@ public interface CreditPackRepository extends JpaRepository<CreditPack, String> 
     List<CreditPack> findByIsActiveTrue();
 
     Optional<CreditPack> findByName(CreditPackName name);
+
+    long countByIsActiveTrue();
 }

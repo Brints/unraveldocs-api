@@ -114,16 +114,7 @@ class GetAllUsersImplTest {
                 Sort.by(Sort.Direction.fromString(userFilterDto.getSortOrder()), userFilterDto.getSortBy())
         );
 
-        when(userRepository.findAllUsers(
-                userFilterDto.getSearch(),
-                userFilterDto.getFirstName(),
-                userFilterDto.getLastName(),
-                userFilterDto.getEmail(),
-                userFilterDto.getRole(),
-                userFilterDto.getIsActive(),
-                userFilterDto.getIsVerified(),
-                pageable
-        )).thenReturn(userPage);
+        when(userRepository.findAllUsers(userFilterDto, pageable)).thenReturn(userPage);
 
         when(responseBuilder.buildUserResponse(
                 any(UserListData.class),
@@ -151,16 +142,7 @@ class GetAllUsersImplTest {
         assertEquals(userPage.getSize(), actualResponse.getData().getPageSize());
 
 
-        verify(userRepository).findAllUsers(
-                userFilterDto.getSearch(),
-                userFilterDto.getFirstName(),
-                userFilterDto.getLastName(),
-                userFilterDto.getEmail(),
-                userFilterDto.getRole(),
-                userFilterDto.getIsActive(),
-                userFilterDto.getIsVerified(),
-                pageable
-        );
+        verify(userRepository).findAllUsers(userFilterDto, pageable);
         verify(responseBuilder).buildUserResponse(
                 any(UserListData.class),
                 eq(HttpStatus.OK),
@@ -179,16 +161,7 @@ class GetAllUsersImplTest {
                 Sort.by(Sort.Direction.fromString(userFilterDto.getSortOrder()), userFilterDto.getSortBy())
         );
 
-        when(userRepository.findAllUsers(
-                userFilterDto.getSearch(),
-                userFilterDto.getFirstName(),
-                userFilterDto.getLastName(),
-                userFilterDto.getEmail(),
-                userFilterDto.getRole(),
-                userFilterDto.getIsActive(),
-                userFilterDto.getIsVerified(),
-                pageable
-        )).thenReturn(emptyPage);
+        when(userRepository.findAllUsers(userFilterDto, pageable)).thenReturn(emptyPage);
 
         UserListData emptyUserListData = new UserListData();
         emptyUserListData.setUsers(Collections.emptyList());
@@ -217,16 +190,7 @@ class GetAllUsersImplTest {
         assertTrue(actualResponse.getData().getUsers().isEmpty());
         assertEquals(0, actualResponse.getData().getTotalUsers());
 
-        verify(userRepository).findAllUsers(
-                userFilterDto.getSearch(),
-                userFilterDto.getFirstName(),
-                userFilterDto.getLastName(),
-                userFilterDto.getEmail(),
-                userFilterDto.getRole(),
-                userFilterDto.getIsActive(),
-                userFilterDto.getIsVerified(),
-                pageable
-        );
+        verify(userRepository).findAllUsers(userFilterDto, pageable);
         verify(responseBuilder).buildUserResponse(
                 any(UserListData.class),
                 eq(HttpStatus.OK),

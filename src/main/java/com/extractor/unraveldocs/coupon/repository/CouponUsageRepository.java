@@ -75,4 +75,9 @@ public interface CouponUsageRepository extends JpaRepository<CouponUsage, String
     List<CouponUsage> findUsagesForDate(
             @Param("startOfDay") OffsetDateTime startOfDay,
             @Param("endOfDay") OffsetDateTime endOfDay);
+
+    // --- Admin Stats Aggregation Queries ---
+
+    @Query("SELECT COUNT(DISTINCT u.user.id) FROM CouponUsage u")
+    long countGlobalUniqueUsers();
 }

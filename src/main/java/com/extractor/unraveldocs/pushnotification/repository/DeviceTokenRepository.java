@@ -86,4 +86,9 @@ public interface DeviceTokenRepository extends JpaRepository<UserDeviceToken, St
      * Check if a device token exists.
      */
     boolean existsByDeviceToken(String deviceToken);
+
+    // --- Admin Stats Aggregation Queries ---
+
+    @Query("SELECT d.deviceType, COUNT(d) FROM UserDeviceToken d GROUP BY d.deviceType")
+    List<Object[]> countDevicesByType();
 }
