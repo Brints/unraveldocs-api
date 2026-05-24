@@ -93,4 +93,68 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
          */
         @Query("SELECT us FROM UserSubscription us WHERE us.quotaResetDate IS NULL")
         List<UserSubscription> findSubscriptionsWithoutQuotaResetDate();
+
+        // ========== Dashboard KPI Query Methods ==========
+
+        long countByStatusIgnoreCase(String status);
+
+        @Query("SELECT p.name AS planName, COUNT(us) AS userCount FROM UserSubscription us JOIN us.plan p GROUP BY p.name")
+        List<Object[]> countUsersByPlan();
+
+        @Query("SELECT us.status AS status, COUNT(us) AS userCount FROM UserSubscription us GROUP BY us.status")
+        List<Object[]> countUsersByStatus();
+
+        @Query("SELECT SUM(us.storageUsed) FROM UserSubscription us WHERE us.storageUsed IS NOT NULL")
+        Long sumTotalStorageUsed();
+
+        // ========== Phase 3A Admin Dashboard Stats Queries ==========
+
+        @Query("SELECT us.subscriptionSource AS source, COUNT(us) AS sourceCount FROM UserSubscription us GROUP BY us.subscriptionSource")
+        List<Object[]> countBySubscriptionSourceGrouped();
+
+        /**
+         * Calculate MRR (Monthly Recurring Revenue) by summing prices of active plans.
+         * Note: Yearly plans price division by 12 should preferably be handled in the service layer,
+         * or this query can be adjusted to sum up Monthly-equivalent prices.
+         */
+        @Query("SELECT p.billingIntervalValue, p.billingIntervalUnit, SUM(p.price) " +
+               "FROM UserSubscription us JOIN us.plan p " +
+               "WHERE UPPER(us.status) = 'ACTIVE' AND p.price IS NOT NULL AND p.price > 0 " +
+               "GROUP BY p.billingIntervalValue, p.billingIntervalUnit")
+        List<Object[]> sumPricesForActivePaidSubscriptionsGroupedByInterval();
+
+        long countByHasUsedTrialTrueAndStatusIgnoreCase(String status);
+        
+        long countByStatusInIgnoreCase(List<String> statuses);
+
+        // Quota near-limit warnings (>80% usage)
+        @Query("SELECT COUNT(us) FROM UserSubscription us JOIN us.plan p " +
+               "WHERE us.storageUsed IS NOT NULL AND p.storageLimit IS NOT NULL AND p.storageLimit > 0 " +
+               "AND (CAST(us.storageUsed AS double) / CAST(p.storageLimit AS double)) > 0.8")
+        long countUsersNearStorageLimit();
+
+        @Query("SELECT COUNT(us) FROM UserSubscription us JOIN us.plan p " +
+               "WHERE us.ocrPagesUsed IS NOT NULL AND p.ocrPageLimit IS NOT NULL AND p.ocrPageLimit > 0 " +
+               "AND (CAST(us.ocrPagesUsed AS double) / CAST(p.ocrPageLimit AS double)) > 0.8")
+        long countUsersNearOcrLimit();
+
+        @Query("SELECT COUNT(us) FROM UserSubscription us JOIN us.plan p " +
+               "WHERE us.monthlyDocumentsUploaded IS NOT NULL AND p.documentUploadLimit IS NOT NULL AND p.documentUploadLimit > 0 " +
+               "AND (CAST(us.monthlyDocumentsUploaded AS double) / CAST(p.documentUploadLimit AS double)) > 0.8")
+        long countUsersNearDocLimit();
+
+        @Query("SELECT COUNT(us) FROM UserSubscription us JOIN us.plan p " +
+               "WHERE us.aiOperationsUsed IS NOT NULL AND p.aiOperationsLimit IS NOT NULL AND p.aiOperationsLimit > 0 " +
+               "AND (CAST(us.aiOperationsUsed AS double) / CAST(p.aiOperationsLimit AS double)) > 0.8")
+        long countUsersNearAiLimit();
+
+        @Query("SELECT COUNT(us) FROM UserSubscription us JOIN us.plan p " +
+               "WHERE UPPER(us.status) = 'ACTIVE' AND p.name <> com.extractor.unraveldocs.subscription.datamodel.SubscriptionPlans.FREE")
+        long countActivePaidSubscriptions();
+
+        // ========== Phase 3C Plan Subscribers Query ==========
+
+        @Query("SELECT us FROM UserSubscription us JOIN FETCH us.user WHERE us.plan.id = :planId " +
+               "ORDER BY us.createdAt DESC")
+        org.springframework.data.domain.Page<UserSubscription> findByPlanIdWithUser(@Param("planId") String planId, org.springframework.data.domain.Pageable pageable);
 }

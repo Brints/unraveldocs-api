@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -71,4 +72,24 @@ public interface CouponRepository extends JpaRepository<Coupon, String> {
      * Count coupons by template.
      */
     int countByTemplateId(String templateId);
+
+    // --- Admin Stats Aggregation Queries ---
+
+    @Query("SELECT COUNT(c) FROM Coupon c WHERE c.isActive = true AND c.validFrom <= :now AND c.validUntil > :now")
+    long countActiveCoupons(@Param("now") OffsetDateTime now);
+
+    @Query("SELECT COUNT(c) FROM Coupon c WHERE c.validUntil < :now")
+    long countExpiredCoupons(@Param("now") OffsetDateTime now);
+
+    @Query("SELECT COALESCE(SUM(c.currentUsageCount), 0) FROM Coupon c")
+    long sumTotalUsages();
+
+    @Query("SELECT COALESCE(AVG(c.discountPercentage), 0) FROM Coupon c")
+    BigDecimal averageDiscountPercentage();
+
+    @Query("SELECT COUNT(c) FROM Coupon c WHERE c.isActive = true AND c.validFrom <= :now AND c.validUntil > :now AND c.validUntil <= :expiryDate")
+    long countCouponsNearExpiry(@Param("now") OffsetDateTime now, @Param("expiryDate") OffsetDateTime expiryDate);
+
+    @Query("SELECT COUNT(c) FROM Coupon c WHERE c.maxUsageCount IS NOT NULL AND c.currentUsageCount >= c.maxUsageCount")
+    long countCouponsAtUsageLimit();
 }

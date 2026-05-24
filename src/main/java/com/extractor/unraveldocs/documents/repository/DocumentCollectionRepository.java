@@ -18,4 +18,21 @@ public interface DocumentCollectionRepository extends JpaRepository<DocumentColl
     @Modifying
     @Query("DELETE FROM DocumentCollection dc WHERE dc.user.id = :userId")
     void deleteAllByUserId(@Param("userId") String userId);
+
+    // --- Admin Stats Aggregation Queries ---
+
+    @Query("SELECT COUNT(f) FROM DocumentCollection c JOIN c.files f")
+    long countTotalFiles();
+
+    @Query("SELECT COALESCE(SUM(f.fileSize), 0) FROM DocumentCollection c JOIN c.files f")
+    long sumTotalStorageBytes();
+
+    @Query("SELECT f.fileType, COUNT(f) FROM DocumentCollection c JOIN c.files f GROUP BY f.fileType")
+    List<Object[]> countFilesByType();
+
+    @Query("SELECT f.uploadStatus, COUNT(f) FROM DocumentCollection c JOIN c.files f GROUP BY f.uploadStatus")
+    List<Object[]> countFilesByStatus();
+
+    @Query("SELECT COUNT(f) FROM DocumentCollection c JOIN c.files f WHERE f.isEncrypted = true")
+    long countEncryptedDocuments();
 }

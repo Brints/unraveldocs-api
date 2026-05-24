@@ -59,4 +59,13 @@ public interface NotificationRepository extends JpaRepository<Notification, Stri
      */
     List<Notification> findByUserIdAndTypeAndCreatedAtAfter(
             String userId, NotificationType type, OffsetDateTime after);
+
+    // --- Admin Stats Aggregation Queries ---
+
+    long countByIsReadTrue();
+
+    long countByIsReadFalse();
+
+    @Query("SELECT n.type, COUNT(n) FROM Notification n GROUP BY n.type")
+    List<Object[]> countNotificationsByType();
 }
