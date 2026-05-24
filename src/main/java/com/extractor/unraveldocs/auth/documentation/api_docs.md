@@ -53,7 +53,7 @@ Key capabilities:
 |---------------------|------------------------------------------------------------------------------------------------------------------------------|
 | User Registration   | Creates a new user account, assigns a default subscription, grants sign-up credits, and sends a verification email via Kafka |
 | Email Verification  | Token-based verification with configurable TTL (default 3 hours)                                                             |
-| Login               | Authenticates credentials, issues JWT access token in body + refresh token as HttpOnly cookie, tracks login attempts          |
+| Login               | Authenticates credentials, issues JWT access token in body + refresh token as HttpOnly cookie, tracks login attempts         |
 | Token Refresh       | Rolling refresh token strategy — reads refresh token from HttpOnly cookie, invalidates old, issues new pair                  |
 | Logout              | Blacklists the current access token, invalidates all refresh tokens, clears the cookie, returns `204 No Content`             |
 | Logout All Devices  | Invalidates all active sessions across all devices for the user                                                              |
@@ -281,12 +281,12 @@ Returned inside `UnravelDocsResponse<SignupData>` on successful registration.
 #### `LoginData`
 Returned inside `UnravelDocsResponse<LoginData>` on successful login. Contains **only authentication data**; user profile data is available via `GET /api/v1/user/me`.
 
-| Field            | Type     | Description                                |
-|------------------|----------|--------------------------------------------|
-| `userId`         | `String` | User UUID                                  |
-| `accessToken`    | `String` | Short-lived JWT access token               |
-| `tokenType`      | `String` | Always `"Bearer"`                          |
-| `accessExpiresIn`| `Long`   | Access token TTL in milliseconds           |
+| Field             | Type     | Description                      |
+|-------------------|----------|----------------------------------|
+| `userId`          | `String` | User UUID                        |
+| `accessToken`     | `String` | Short-lived JWT access token     |
+| `tokenType`       | `String` | Always `"Bearer"`                |
+| `accessExpiresIn` | `Long`   | Access token TTL in milliseconds |
 
 > ℹ️ The refresh token is **not** included in the JSON body. It is set as an `HttpOnly` cookie by the server.
 
@@ -295,11 +295,11 @@ Returned inside `UnravelDocsResponse<LoginData>` on successful login. Contains *
 #### `RefreshLoginData`
 Returned inside `UnravelDocsResponse<RefreshLoginData>` on successful token refresh. Contains **only the new access token**; the new refresh token is set as an `HttpOnly` cookie.
 
-| Field            | Type     | Description                        |
-|------------------|----------|------------------------------------|
-| `accessToken`    | `String` | Newly issued JWT access token      |
-| `tokenType`      | `String` | Always `"Bearer"`                  |
-| `accessExpiresIn`| `Long`   | Access token TTL in milliseconds   |
+| Field             | Type     | Description                      |
+|-------------------|----------|----------------------------------|
+| `accessToken`     | `String` | Newly issued JWT access token    |
+| `tokenType`       | `String` | Always `"Bearer"`                |
+| `accessExpiresIn` | `Long`   | Access token TTL in milliseconds |
 
 ---
 
@@ -477,12 +477,12 @@ Set-Cookie: __Host-refresh_token=eyJhbGci...; Path=/api/v1/auth; HttpOnly; Secur
 
 **Error Responses**
 
-| Status              | `errorCode`          | Condition                                         |
-|---------------------|----------------------|---------------------------------------------------|
-| `400 Bad Request`   | `ACCOUNT_DEACTIVATED`| Account has been soft-deleted                     |
-| `401 Unauthorized`  | `INVALID_CREDENTIALS`| Invalid email or password                         |
-| `403 Forbidden`     | `ACCOUNT_NOT_VERIFIED`| Account is disabled (email not verified)          |
-| `403 Forbidden`     | `ACCOUNT_LOCKED`     | Account is locked due to too many failed attempts |
+| Status             | `errorCode`            | Condition                                         |
+|--------------------|------------------------|---------------------------------------------------|
+| `400 Bad Request`  | `ACCOUNT_DEACTIVATED`  | Account has been soft-deleted                     |
+| `401 Unauthorized` | `INVALID_CREDENTIALS`  | Invalid email or password                         |
+| `403 Forbidden`    | `ACCOUNT_NOT_VERIFIED` | Account is disabled (email not verified)          |
+| `403 Forbidden`    | `ACCOUNT_LOCKED`       | Account is locked due to too many failed attempts |
 
 ---
 
@@ -620,12 +620,12 @@ Set-Cookie: __Host-refresh_token=eyJhbGci...; Path=/api/v1/auth; HttpOnly; Secur
 
 **Error Responses**
 
-| Status             | `errorCode`          | Condition                                                       |
-|--------------------|----------------------|-----------------------------------------------------------------|
-| `401 Unauthorized` | `TOKEN_MISSING`      | No refresh token cookie present                                 |
-| `401 Unauthorized` | `TOKEN_INVALID`      | Token is malformed, expired, or JTI not found in store          |
-| `401 Unauthorized` | `TOKEN_INVALID`      | Token `type` claim is not `"REFRESH"`                           |
-| `401 Unauthorized` | `ACCOUNT_NOT_VERIFIED`| User account is not active or not verified                     |
+| Status             | `errorCode`            | Condition                                              |
+|--------------------|------------------------|--------------------------------------------------------|
+| `401 Unauthorized` | `TOKEN_MISSING`        | No refresh token cookie present                        |
+| `401 Unauthorized` | `TOKEN_INVALID`        | Token is malformed, expired, or JTI not found in store |
+| `401 Unauthorized` | `TOKEN_INVALID`        | Token `type` claim is not `"REFRESH"`                  |
+| `401 Unauthorized` | `ACCOUNT_NOT_VERIFIED` | User account is not active or not verified             |
 
 ---
 
@@ -706,13 +706,13 @@ A thin orchestration layer that delegates every operation to the appropriate int
 | Method                                                | Delegates To               | Description                              |
 |-------------------------------------------------------|----------------------------|------------------------------------------|
 | `registerUser(SignupRequestDto)`                      | `SignupUserService`        | User registration                        |
-| `loginUser(LoginRequestDto)` → `LoginResult`         | `LoginUserService`         | User login (returns token + raw refresh) |
+| `loginUser(LoginRequestDto)` → `LoginResult`          | `LoginUserService`         | User login (returns token + raw refresh) |
 | `verifyEmail(String, String)`                         | `EmailVerificationService` | Email verification                       |
 | `resendEmailVerification(ResendEmailVerificationDto)` | `EmailVerificationService` | Resend verification email                |
 | `generatePassword(GeneratePasswordDto)`               | `GeneratePasswordService`  | Password generation                      |
 | `refreshToken(String)` → `RefreshResult`              | `RefreshTokenService`      | Token refresh (from cookie)              |
 | `logout(HttpServletRequest)`                          | `RefreshTokenService`      | Logout / token + cookie invalidation     |
-| `logoutAllDevices(HttpServletRequest)`                 | `RefreshTokenService`      | Logout all devices                       |
+| `logoutAllDevices(HttpServletRequest)`                | `RefreshTokenService`      | Logout all devices                       |
 
 ---
 

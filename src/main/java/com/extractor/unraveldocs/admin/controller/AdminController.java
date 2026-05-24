@@ -286,7 +286,7 @@ public class AdminController {
     }
 
     // ==========================================
-    // COUPON STATISTICS (Phase 6A)
+    // COUPON STATISTICS
     // ==========================================
 
     @Operation(
